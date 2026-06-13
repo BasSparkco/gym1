@@ -1,0 +1,350 @@
+{
+  "reportingDate": "2026-06-05",
+  "branches": [
+    {
+      "id": "branch-ramallah-main",
+      "tenantId": "tenant-spark-gym",
+      "name": "Ramallah Main Branch",
+      "address": "Al-Irsal St, Ramallah",
+      "phone": "+970-2-296-0000",
+      "status": "active"
+    },
+    {
+      "id": "branch-nablus-north",
+      "tenantId": "tenant-spark-gym",
+      "name": "Nablus North Branch",
+      "address": "Rafidia St, Nablus",
+      "phone": "+970-9-238-0000",
+      "status": "active"
+    },
+    {
+      "id": "branch-other-gym-main",
+      "tenantId": "tenant-other-gym",
+      "name": "Other Gym Main Branch",
+      "status": "active"
+    }
+  ],
+  "members": [
+    {
+      "id": "member-001",
+      "tenantId": "tenant-spark-gym",
+      "homeBranchId": "branch-ramallah-main",
+      "memberNumber": "MEM-0001",
+      "fullName": "Lina Ahmad",
+      "status": "active"
+    },
+    {
+      "id": "member-002",
+      "tenantId": "tenant-spark-gym",
+      "homeBranchId": "branch-ramallah-main",
+      "memberNumber": "MEM-0002",
+      "fullName": "Omar Khalil",
+      "status": "active"
+    },
+    {
+      "id": "member-003",
+      "tenantId": "tenant-spark-gym",
+      "homeBranchId": "branch-ramallah-main",
+      "memberNumber": "MEM-0003",
+      "fullName": "Maya Saleh",
+      "status": "active"
+    },
+    {
+      "id": "member-004",
+      "tenantId": "tenant-spark-gym",
+      "homeBranchId": "branch-ramallah-main",
+      "memberNumber": "MEM-0004",
+      "fullName": "Tariq Nasser",
+      "status": "inactive"
+    },
+    {
+      "id": "member-005",
+      "tenantId": "tenant-spark-gym",
+      "homeBranchId": "branch-nablus-north",
+      "memberNumber": "MEM-0005",
+      "fullName": "Dana Faris",
+      "status": "active"
+    },
+    {
+      "id": "member-006",
+      "tenantId": "tenant-other-gym",
+      "homeBranchId": "branch-other-gym-main",
+      "memberNumber": "MEM-0001",
+      "fullName": "Ali Salem",
+      "status": "active"
+    }
+  ],
+  "membershipPlans": [
+    {
+      "id": "plan-monthly-flex",
+      "tenantId": "tenant-spark-gym",
+      "name": "Monthly Flex",
+      "planType": "duration",
+      "durationDays": 30,
+      "price": 120,
+      "allowAllBranches": true,
+      "freezeAllowed": true,
+      "freezeMaxDays": 7
+    },
+    {
+      "id": "plan-ramallah-standard",
+      "tenantId": "tenant-spark-gym",
+      "name": "Ramallah Standard",
+      "planType": "duration",
+      "durationDays": 30,
+      "price": 95,
+      "allowAllBranches": false,
+      "freezeAllowed": false
+    },
+    {
+      "id": "plan-other-monthly",
+      "tenantId": "tenant-other-gym",
+      "name": "Other Monthly",
+      "planType": "duration",
+      "durationDays": 30,
+      "price": 150,
+      "allowAllBranches": false,
+      "freezeAllowed": false
+    }
+  ],
+  "memberships": [
+    {
+      "id": "membership-001",
+      "memberId": "member-001",
+      "planId": "plan-monthly-flex",
+      "startDate": "2026-05-15",
+      "endDate": "2026-06-20",
+      "status": "active",
+      "finalPrice": 120
+    },
+    {
+      "id": "membership-002",
+      "memberId": "member-002",
+      "planId": "plan-ramallah-standard",
+      "startDate": "2026-06-01",
+      "endDate": "2026-06-08",
+      "status": "active",
+      "finalPrice": 95
+    },
+    {
+      "id": "membership-003",
+      "memberId": "member-003",
+      "planId": "plan-monthly-flex",
+      "startDate": "2026-05-01",
+      "endDate": "2026-06-06",
+      "status": "active",
+      "finalPrice": 110
+    },
+    {
+      "id": "membership-004",
+      "memberId": "member-004",
+      "planId": "plan-ramallah-standard",
+      "startDate": "2026-05-01",
+      "endDate": "2026-06-30",
+      "status": "active",
+      "finalPrice": 85
+    },
+    {
+      "id": "membership-005",
+      "memberId": "member-005",
+      "planId": "plan-monthly-flex",
+      "startDate": "2026-05-12",
+      "endDate": "2026-06-25",
+      "status": "active",
+      "finalPrice": 140
+    },
+    {
+      "id": "membership-006",
+      "memberId": "member-006",
+      "planId": "plan-other-monthly",
+      "startDate": "2026-05-10",
+      "endDate": "2026-06-18",
+      "status": "active",
+      "finalPrice": 150
+    },
+    {
+      "id": "membership-007",
+      "memberId": "member-003",
+      "planId": "plan-monthly-flex",
+      "startDate": "2026-04-01",
+      "endDate": "2026-04-30",
+      "status": "expired",
+      "finalPrice": 90
+    }
+  ],
+  "visits": [
+    {
+      "id": "visit-001",
+      "memberId": "member-001",
+      "branchId": "branch-ramallah-main",
+      "checkInTime": "2026-06-05T08:05:00.000Z",
+      "checkOutTime": "2026-06-05T09:45:00.000Z",
+      "accessMethod": "manual"
+    },
+    {
+      "id": "visit-002",
+      "memberId": "member-002",
+      "branchId": "branch-ramallah-main",
+      "checkInTime": "2026-06-05T09:15:00.000Z",
+      "checkOutTime": "2026-06-05T10:50:00.000Z",
+      "accessMethod": "qr"
+    },
+    {
+      "id": "visit-003",
+      "memberId": "member-003",
+      "branchId": "branch-ramallah-main",
+      "checkInTime": "2026-06-05T18:20:00.000Z",
+      "checkOutTime": null,
+      "accessMethod": "manual"
+    },
+    {
+      "id": "visit-004",
+      "memberId": "member-005",
+      "branchId": "branch-nablus-north",
+      "checkInTime": "2026-06-05T10:00:00.000Z",
+      "checkOutTime": null,
+      "accessMethod": "qr"
+    },
+    {
+      "id": "visit-005",
+      "memberId": "member-001",
+      "branchId": "branch-ramallah-main",
+      "checkInTime": "2026-06-04T17:10:00.000Z",
+      "checkOutTime": "2026-06-04T18:55:00.000Z",
+      "accessMethod": "manual"
+    },
+    {
+      "id": "visit-006",
+      "memberId": "member-006",
+      "branchId": "branch-other-gym-main",
+      "checkInTime": "2026-06-05T11:00:00.000Z",
+      "checkOutTime": null,
+      "accessMethod": "qr"
+    }
+  ],
+  "payments": [
+    {
+      "id": "payment-001",
+      "tenantId": "tenant-spark-gym",
+      "branchId": "branch-ramallah-main",
+      "memberId": "member-001",
+      "membershipId": "membership-001",
+      "amount": 120,
+      "paymentDate": "2026-06-05T08:30:00.000Z",
+      "status": "paid",
+      "paymentMethod": "card"
+    },
+    {
+      "id": "payment-002",
+      "tenantId": "tenant-spark-gym",
+      "branchId": "branch-ramallah-main",
+      "memberId": "member-002",
+      "membershipId": "membership-002",
+      "amount": 95,
+      "paymentDate": "2026-06-05T11:45:00.000Z",
+      "status": "paid",
+      "paymentMethod": "cash"
+    },
+    {
+      "id": "payment-003",
+      "tenantId": "tenant-spark-gym",
+      "branchId": "branch-ramallah-main",
+      "memberId": "member-003",
+      "membershipId": "membership-003",
+      "amount": 75,
+      "paymentDate": "2026-06-05T12:00:00.000Z",
+      "status": "pending",
+      "paymentMethod": "transfer"
+    },
+    {
+      "id": "payment-004",
+      "tenantId": "tenant-spark-gym",
+      "branchId": "branch-nablus-north",
+      "memberId": "member-005",
+      "membershipId": "membership-005",
+      "amount": 140,
+      "paymentDate": "2026-06-05T13:00:00.000Z",
+      "status": "paid",
+      "paymentMethod": "card"
+    },
+    {
+      "id": "payment-005",
+      "tenantId": "tenant-other-gym",
+      "branchId": "branch-other-gym-main",
+      "memberId": "member-006",
+      "membershipId": "membership-006",
+      "amount": 150,
+      "paymentDate": "2026-06-05T09:20:00.000Z",
+      "status": "paid",
+      "paymentMethod": "cash"
+    },
+    {
+      "id": "payment-006",
+      "tenantId": "tenant-spark-gym",
+      "branchId": "branch-ramallah-main",
+      "memberId": "member-003",
+      "membershipId": "membership-003",
+      "amount": 90,
+      "paymentDate": "2026-06-04T15:00:00.000Z",
+      "status": "paid",
+      "paymentMethod": "card"
+    }
+  ],
+  "freezes": [],
+  "notifications": [
+    {
+      "id": "notif-001",
+      "tenantId": "tenant-spark-gym",
+      "memberId": "member-002",
+      "channel": "sms",
+      "subject": "Membership expiring soon",
+      "body": "Your membership expires on 2026-06-08. Renew now to keep your access.",
+      "status": "sent",
+      "sentAt": "2026-06-04T09:00:00.000Z",
+      "createdAt": "2026-06-04T09:00:00.000Z"
+    },
+    {
+      "id": "notif-002",
+      "tenantId": "tenant-spark-gym",
+      "memberId": "member-003",
+      "channel": "whatsapp",
+      "subject": "Membership expired",
+      "body": "Your membership has expired. Visit the front desk to renew.",
+      "status": "sent",
+      "sentAt": "2026-06-05T08:00:00.000Z",
+      "createdAt": "2026-06-05T08:00:00.000Z"
+    },
+    {
+      "id": "notif-003",
+      "tenantId": "tenant-spark-gym",
+      "memberId": "member-001",
+      "channel": "email",
+      "subject": "Welcome to Spark Gym",
+      "body": "Thank you for joining Spark Gym. Your membership is now active.",
+      "status": "sent",
+      "sentAt": "2026-05-15T10:00:00.000Z",
+      "createdAt": "2026-05-15T10:00:00.000Z"
+    },
+    {
+      "id": "notif-004",
+      "tenantId": "tenant-spark-gym",
+      "memberId": "member-005",
+      "channel": "sms",
+      "subject": "Payment reminder",
+      "body": "You have a pending payment. Please settle your balance at the front desk.",
+      "status": "failed",
+      "createdAt": "2026-06-05T07:30:00.000Z"
+    },
+    {
+      "id": "notif-005",
+      "tenantId": "tenant-other-gym",
+      "memberId": "member-006",
+      "channel": "sms",
+      "subject": "Membership expiring soon",
+      "body": "Your membership expires on 2026-06-18.",
+      "status": "sent",
+      "sentAt": "2026-06-05T08:00:00.000Z",
+      "createdAt": "2026-06-05T08:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './modules/auth/auth.module';
+import { BranchesModule } from './modules/branches/branches.module';
+import { MembersModule } from './modules/members/members.module';
+import { MembershipsModule } from './modules/memberships/memberships.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { SettingsModule } from './modules/settings/settings.module';
+import { TenancyModule } from './modules/tenancy/tenancy.module';
+import { UsersModule } from './modules/users/users.module';
+import { VisitsModule } from './modules/visits/visits.module';
+
+@Module({
+  imports: [
+    ScheduleModule.forRoot(),
+    AuthModule,
+    TenancyModule,
+    BranchesModule,
+    UsersModule,
+    MembersModule,
+    MembershipsModule,
+    PaymentsModule,
+    VisitsModule,
+    NotificationsModule,
+    ReportsModule,
+    SettingsModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}

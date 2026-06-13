@@ -1,0 +1,48 @@
+{
+  "tenants": [
+    {
+      "tenantId": "tenant-spark-gym",
+      "defaultLanguage": "en",
+      "enabledLanguages": [
+        "en",
+        "ar",
+        "he"
+      ],
+      "notificationSettings": {
+        "membershipExpiring": {
+          "enabled": true,
+          "channels": {
+            "sms": true,
+            "whatsapp": true,
+            "email": false
+          },
+          "daysBefore": 3
+        },
+        "membershipExpired": {
+          "enabled": true,
+          "channels": {
+            "sms": true,
+            "whatsapp": false,
+            "email": false
+          }
+        },
+        "paymentPending": {
+          "enabled": true,
+          "channels": {
+            "sms": true,
+            "whatsapp": false,
+            "email": false
+          }
+        },
+        "membershipActivated": {
+          "enabled": true,
+          "channels": {
+            "sms": false,
+            "whatsapp": false,
+            "email": true
+          }
+        }
+      }
+    }
+  ]
+}

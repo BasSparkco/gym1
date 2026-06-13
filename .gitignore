@@ -1,0 +1,14 @@
+node_modules/
+pnpm-lock.yaml
+
+apps/*/node_modules/
+apps/*/.next/
+apps/*/dist/
+apps/*/coverage/
+apps/*/.local/
+
+.DS_Store
+*.log
+coverage/
+
+messages.md

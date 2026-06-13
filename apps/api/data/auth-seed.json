@@ -1,0 +1,36 @@
+{
+  "users": [
+    {
+      "id": "user-owner-001",
+      "email": "owner@sparkgym.local",
+      "username": "owner",
+      "passwordHash": "scrypt:7dd174123a6767616d8bbbd028f4c5f1:04fef104953bb3c1df97d712e62e9f00ea9a5bdfc74de175d84ab87b427d941c6f367d26e445851f6a7c1172450b9a770da0470d6e06a478f52c711f10aa314f",
+      "name": "Spark Gym Owner",
+      "role": "owner",
+      "tenant": {
+        "id": "tenant-spark-gym",
+        "name": "Spark Gym"
+      },
+      "branch": {
+        "id": "branch-ramallah-main",
+        "name": "Ramallah Main Branch"
+      }
+    },
+    {
+      "id": "user-frontdesk-001",
+      "email": "frontdesk@sparkgym.local",
+      "username": "frontdesk",
+      "passwordHash": "scrypt:006e979410fbccb0600f59871608d011:192ceb1ce366f13d6a46c0ae49243f53e53bbf49b0d60eb6fef528967d7c23fc0b6d2fe0c8d4a07781c5e59751136d09f95c57272b8426ee7131e9b914422543",
+      "name": "Front Desk User",
+      "role": "front-desk",
+      "tenant": {
+        "id": "tenant-spark-gym",
+        "name": "Spark Gym"
+      },
+      "branch": {
+        "id": "branch-ramallah-main",
+        "name": "Ramallah Main Branch"
+      }
+    }
+  ]
+}
