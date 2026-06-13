@@ -12,3 +12,7 @@ apps/*/.local/
 coverage/
 
 messages.md
+
+.env
+.env.*
+!.env.example
