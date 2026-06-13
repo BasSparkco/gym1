@@ -343,7 +343,6 @@ export type Dict = {
     eventPaymentPendingHelp: string;
     eventMembershipActivatedHelp: string;
     channelsSectionTitle: string;
-    channelSms: string;
     channelWhatsapp: string;
     channelEmail: string;
     daysBefore: string;
@@ -352,19 +351,8 @@ export type Dict = {
     saveNotificationSettings: string;
     sendersSectionTitle: string;
     sendersSectionDescription: string;
-    senderSmsFrom: string;
-    senderSmsFromHelp: string;
-    senderWhatsappFrom: string;
-    senderWhatsappFromHelp: string;
     senderEmailFrom: string;
     senderEmailFromHelp: string;
-    messagingProviderLabel: string;
-    messagingProviderHelp: string;
-    messagingProviderConsole: string;
-    messagingProviderTwilio: string;
-    messagingProviderSentdm: string;
-    sentdmTemplateName: string;
-    sentdmTemplateNameHelp: string;
   };
 };
 
@@ -708,28 +696,16 @@ const en: Dict = {
     eventPaymentPendingHelp: "Remind members with an outstanding balance.",
     eventMembershipActivatedHelp: "Welcome message when a new membership is activated.",
     channelsSectionTitle: "Delivery channels",
-    channelSms: "SMS",
     channelWhatsapp: "WhatsApp",
     channelEmail: "Email",
     daysBefore: "Days before expiry",
     daysBeforeUnit: "days",
     enableEvent: "Enable this notification",
     saveNotificationSettings: "Save notification settings",
-    sendersSectionTitle: "Sender identities",
-    sendersSectionDescription: "The \"from\" number or address your members will see when a notification arrives. Required by the delivery provider (e.g. Twilio, SendGrid) once it is connected.",
-    senderSmsFrom: "SMS sender number",
-    senderSmsFromHelp: "Phone number messages are sent from, e.g. +1 415 555 0100.",
-    senderWhatsappFrom: "WhatsApp sender number",
-    senderWhatsappFromHelp: "WhatsApp Business number messages are sent from.",
+    sendersSectionTitle: "Sender identity",
+    sendersSectionDescription: "The email address your members will see in the \"from\" field when they receive a notification.",
     senderEmailFrom: "Email sender address",
     senderEmailFromHelp: "Email address members will see in the \"from\" field, e.g. notices@yourgym.com.",
-    messagingProviderLabel: "SMS & WhatsApp provider",
-    messagingProviderHelp: "Choose which service delivers SMS and WhatsApp messages.",
-    messagingProviderConsole: "Console (development only)",
-    messagingProviderTwilio: "Twilio",
-    messagingProviderSentdm: "Sent.dm",
-    sentdmTemplateName: "Sent.dm template name",
-    sentdmTemplateNameHelp: "Name of the template in your Sent.dm dashboard. Create a template with a {{body}} parameter and enter its name here.",
   },
 };
 
@@ -1073,28 +1049,16 @@ const ar: Dict = {
     eventPaymentPendingHelp: "تذكير الأعضاء الذين لديهم رصيد مستحق.",
     eventMembershipActivatedHelp: "رسالة ترحيب عند تفعيل اشتراك جديد.",
     channelsSectionTitle: "قنوات الإرسال",
-    channelSms: "رسالة نصية",
     channelWhatsapp: "واتساب",
     channelEmail: "البريد الإلكتروني",
     daysBefore: "أيام قبل الانتهاء",
     daysBeforeUnit: "أيام",
     enableEvent: "تفعيل هذا الإشعار",
     saveNotificationSettings: "حفظ إعدادات الإشعارات",
-    sendersSectionTitle: "هويات المرسل",
-    sendersSectionDescription: "الرقم أو العنوان الذي سيظهر للأعضاء كمرسل عند وصول الإشعار. مطلوب من مزوّد الإرسال (مثل Twilio أو SendGrid) عند ربطه.",
-    senderSmsFrom: "رقم مرسل الرسائل النصية",
-    senderSmsFromHelp: "رقم الهاتف الذي تُرسل منه الرسائل، مثل ‎+1 415 555 0100.",
-    senderWhatsappFrom: "رقم مرسل واتساب",
-    senderWhatsappFromHelp: "رقم واتساب للأعمال الذي تُرسل منه الرسائل.",
+    sendersSectionTitle: "هوية المرسل",
+    sendersSectionDescription: "عنوان البريد الإلكتروني الذي سيظهر للأعضاء في خانة \"من\" عند استلام الإشعار.",
     senderEmailFrom: "عنوان البريد الإلكتروني للمرسل",
     senderEmailFromHelp: "عنوان البريد الإلكتروني الذي سيظهر للأعضاء في خانة \"من\"، مثل notices@yourgym.com.",
-    messagingProviderLabel: "مزوّد SMS وواتساب",
-    messagingProviderHelp: "اختر الخدمة التي تُرسل من خلالها رسائل SMS وواتساب.",
-    messagingProviderConsole: "وحدة التحكم (للتطوير فقط)",
-    messagingProviderTwilio: "Twilio",
-    messagingProviderSentdm: "Sent.dm",
-    sentdmTemplateName: "اسم قالب Sent.dm",
-    sentdmTemplateNameHelp: "اسم القالب في لوحة تحكم Sent.dm. أنشئ قالبًا بمعامل {{body}} وأدخل اسمه هنا.",
   },
 };
 
@@ -1438,28 +1402,16 @@ const he: Dict = {
     eventPaymentPendingHelp: "תזכורת לחברים עם יתרה פתוחה.",
     eventMembershipActivatedHelp: "הודעת ברוך הבא כאשר מנוי חדש מופעל.",
     channelsSectionTitle: "ערוצי מסירה",
-    channelSms: "SMS",
     channelWhatsapp: "WhatsApp",
     channelEmail: "דוא\"ל",
     daysBefore: "ימים לפני פקיעה",
     daysBeforeUnit: "ימים",
     enableEvent: "הפעל התראה זו",
     saveNotificationSettings: "שמור הגדרות התראות",
-    sendersSectionTitle: "זהויות השולח",
-    sendersSectionDescription: "המספר או הכתובת שהחברים יראו כשולח ההתראה. נדרש על ידי ספק המסירה (כגון Twilio או SendGrid) לאחר חיבורו.",
-    senderSmsFrom: "מספר שולח SMS",
-    senderSmsFromHelp: "מספר הטלפון שממנו נשלחות ההודעות, למשל ‎+1 415 555 0100.",
-    senderWhatsappFrom: "מספר שולח WhatsApp",
-    senderWhatsappFromHelp: "מספר ה-WhatsApp Business שממנו נשלחות ההודעות.",
+    sendersSectionTitle: "זהות השולח",
+    sendersSectionDescription: "כתובת הדוא\"ל שהחברים יראו בשדה \"מאת\" כשמתקבלת התראה.",
     senderEmailFrom: "כתובת דוא\"ל של השולח",
     senderEmailFromHelp: "כתובת הדוא\"ל שהחברים יראו בשדה \"מאת\", למשל notices@yourgym.com.",
-    messagingProviderLabel: "ספק SMS ו-WhatsApp",
-    messagingProviderHelp: "בחר את השירות שמספק שליחת SMS ו-WhatsApp.",
-    messagingProviderConsole: "קונסולה (לפיתוח בלבד)",
-    messagingProviderTwilio: "Twilio",
-    messagingProviderSentdm: "Sent.dm",
-    sentdmTemplateName: "שם תבנית Sent.dm",
-    sentdmTemplateNameHelp: "שם התבנית בלוח הבקרה של Sent.dm. צור תבנית עם פרמטר {{body}} והזן כאן את שמה.",
   },
 };
 

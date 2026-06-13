@@ -7,7 +7,6 @@ import {
   defaultNotificationSenders,
   NotificationSettings,
   NotificationSenderSettings,
-  MessagingProvider,
 } from "@/lib/settings";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
@@ -23,7 +22,7 @@ const EVENTS = [
 
 type EventKey = (typeof EVENTS)[number];
 
-const CHANNELS = ["sms", "whatsapp", "email"] as const;
+const CHANNELS = ["whatsapp", "email"] as const;
 type Channel = (typeof CHANNELS)[number];
 
 function buildNotificationSettings(formData: FormData): NotificationSettings {
@@ -34,6 +33,8 @@ function buildNotificationSettings(formData: FormData): NotificationSettings {
     for (const channel of CHANNELS) {
       result[event].channels[channel] = formData.get(`${event}_${channel}`) === "on";
     }
+    // SMS stays in the data model but is always disabled from the UI
+    result[event].channels.sms = false;
   }
 
   const daysBeforeRaw = Number(formData.get("membershipExpiring_daysBefore"));
@@ -45,23 +46,12 @@ function buildNotificationSettings(formData: FormData): NotificationSettings {
   return result;
 }
 
-const MESSAGING_PROVIDERS: MessagingProvider[] = ["console", "twilio", "sentdm"];
-
 function buildNotificationSenders(formData: FormData): NotificationSenderSettings {
   const asString = (value: FormDataEntryValue | null) =>
     typeof value === "string" ? value.trim() || undefined : undefined;
 
-  const providerRaw = formData.get("sender_messagingProvider");
-  const messagingProvider = MESSAGING_PROVIDERS.includes(providerRaw as MessagingProvider)
-    ? (providerRaw as MessagingProvider)
-    : undefined;
-
   return {
-    smsFrom: asString(formData.get("sender_smsFrom")),
-    whatsappFrom: asString(formData.get("sender_whatsappFrom")),
     emailFrom: asString(formData.get("sender_emailFrom")),
-    messagingProvider,
-    sentdmTemplateName: asString(formData.get("sender_sentdmTemplateName")),
   };
 }
 
@@ -101,7 +91,6 @@ export default async function NotificationSettingsPage() {
   };
 
   const channelLabels: Record<Channel, string> = {
-    sms: t.settings.channelSms,
     whatsapp: t.settings.channelWhatsapp,
     email: t.settings.channelEmail,
   };
@@ -141,74 +130,10 @@ export default async function NotificationSettingsPage() {
 
       <form action={handleSave} className="grid gap-5">
         <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
-          <p className="text-base font-semibold">{t.settings.messagingProviderLabel}</p>
-          <p className="mt-0.5 text-xs text-foreground/60">{t.settings.messagingProviderHelp}</p>
-
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-line bg-white px-4 py-4">
-              <label className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
-                {t.settings.messagingProviderLabel}
-              </label>
-              <select
-                name="sender_messagingProvider"
-                defaultValue={senders.messagingProvider ?? "console"}
-                className="mt-3 w-full rounded-2xl border border-line bg-background px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
-                <option value="console">{t.settings.messagingProviderConsole}</option>
-                <option value="twilio">{t.settings.messagingProviderTwilio}</option>
-                <option value="sentdm">{t.settings.messagingProviderSentdm}</option>
-              </select>
-            </div>
-
-            <div className="rounded-2xl border border-line bg-white px-4 py-4">
-              <label className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
-                {t.settings.sentdmTemplateName}
-              </label>
-              <input
-                type="text"
-                name="sender_sentdmTemplateName"
-                defaultValue={senders.sentdmTemplateName ?? ""}
-                placeholder="notification"
-                className="mt-3 w-full rounded-2xl border border-line bg-background px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-              <p className="mt-2 text-xs text-foreground/60">{t.settings.sentdmTemplateNameHelp}</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
           <p className="text-base font-semibold">{t.settings.sendersSectionTitle}</p>
           <p className="mt-0.5 text-xs text-foreground/60">{t.settings.sendersSectionDescription}</p>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-line bg-white px-4 py-4">
-              <label className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
-                {t.settings.senderSmsFrom}
-              </label>
-              <input
-                type="text"
-                name="sender_smsFrom"
-                defaultValue={senders.smsFrom ?? ""}
-                placeholder="+1 415 555 0100"
-                className="mt-3 w-full rounded-2xl border border-line bg-background px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-              <p className="mt-2 text-xs text-foreground/60">{t.settings.senderSmsFromHelp}</p>
-            </div>
-
-            <div className="rounded-2xl border border-line bg-white px-4 py-4">
-              <label className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
-                {t.settings.senderWhatsappFrom}
-              </label>
-              <input
-                type="text"
-                name="sender_whatsappFrom"
-                defaultValue={senders.whatsappFrom ?? ""}
-                placeholder="+1 415 555 0100"
-                className="mt-3 w-full rounded-2xl border border-line bg-background px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-              <p className="mt-2 text-xs text-foreground/60">{t.settings.senderWhatsappFromHelp}</p>
-            </div>
-
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-line bg-white px-4 py-4">
               <label className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
                 {t.settings.senderEmailFrom}

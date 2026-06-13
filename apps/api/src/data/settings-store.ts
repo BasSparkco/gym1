@@ -33,20 +33,11 @@ export type NotificationSettings = {
   membershipActivated: NotificationEventRule;
 };
 
-/**
- * The "from" identity each provider sends as: a phone number for SMS/WhatsApp
- * (e.g. a Twilio number) and an email address for email (e.g. a verified
- * SendGrid/SMTP sender). Stored per tenant so each gym's notifications carry
- * its own sender identity once real provider credentials are wired in.
- */
-export type MessagingProvider = 'console' | 'twilio' | 'sentdm';
-
 export type NotificationSenderSettings = {
+  /** Reserved for future paid SMS tier. */
   smsFrom?: string;
-  whatsappFrom?: string;
+  /** Sender email address shown in the "from" field (required by SMTP). */
   emailFrom?: string;
-  messagingProvider?: MessagingProvider;
-  sentdmTemplateName?: string;
 };
 
 export type TenantSettingsRecord = {
@@ -64,16 +55,16 @@ type SettingsStoreData = {
 const defaultNotificationSettings: NotificationSettings = {
   membershipExpiring: {
     enabled: true,
-    channels: { sms: true, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false },
     daysBefore: 3,
   },
   membershipExpired: {
     enabled: true,
-    channels: { sms: true, whatsapp: false, email: false },
+    channels: { sms: false, whatsapp: true, email: false },
   },
   paymentPending: {
     enabled: true,
-    channels: { sms: true, whatsapp: false, email: false },
+    channels: { sms: false, whatsapp: true, email: false },
   },
   membershipActivated: {
     enabled: true,

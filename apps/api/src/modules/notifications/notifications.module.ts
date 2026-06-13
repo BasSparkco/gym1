@@ -5,9 +5,8 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsSchedulerService } from './notifications-scheduler.service';
 import { NotificationsService } from './notifications.service';
 import { ConsoleNotificationProvider } from './providers/console-notification.provider';
-import { SentdmNotificationProvider } from './providers/sentdm-notification.provider';
 import { SmtpNotificationProvider } from './providers/smtp-notification.provider';
-import { TwilioNotificationProvider } from './providers/twilio-notification.provider';
+import { SparkcoNotificationProvider } from './providers/sparkco-notification.provider';
 
 @Module({
   imports: [AuthModule],
@@ -17,8 +16,7 @@ import { TwilioNotificationProvider } from './providers/twilio-notification.prov
     NotificationDispatchService,
     NotificationsSchedulerService,
     ConsoleNotificationProvider,
-    TwilioNotificationProvider,
-    SentdmNotificationProvider,
+    SparkcoNotificationProvider,
     SmtpNotificationProvider,
   ],
   exports: [NotificationsService],

@@ -29,16 +29,16 @@ export type NotificationSettings = {
 export const defaultNotificationSettings: NotificationSettings = {
   membershipExpiring: {
     enabled: true,
-    channels: { sms: true, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false },
     daysBefore: 3,
   },
   membershipExpired: {
     enabled: true,
-    channels: { sms: true, whatsapp: false, email: false },
+    channels: { sms: false, whatsapp: true, email: false },
   },
   paymentPending: {
     enabled: true,
-    channels: { sms: true, whatsapp: false, email: false },
+    channels: { sms: false, whatsapp: true, email: false },
   },
   membershipActivated: {
     enabled: true,
@@ -46,14 +46,11 @@ export const defaultNotificationSettings: NotificationSettings = {
   },
 };
 
-export type MessagingProvider = "console" | "twilio" | "sentdm";
-
 export type NotificationSenderSettings = {
+  /** Reserved for future paid SMS tier. */
   smsFrom?: string;
-  whatsappFrom?: string;
+  /** Sender address shown in the email "from" field (used by SMTP). */
   emailFrom?: string;
-  messagingProvider?: MessagingProvider;
-  sentdmTemplateName?: string;
 };
 
 export const defaultNotificationSenders: NotificationSenderSettings = {};

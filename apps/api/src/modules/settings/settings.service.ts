@@ -103,10 +103,7 @@ export class SettingsService {
   ): NotificationSenderSettings {
     return {
       smsFrom: input.smsFrom?.trim() || undefined,
-      whatsappFrom: input.whatsappFrom?.trim() || undefined,
       emailFrom: input.emailFrom?.trim().toLowerCase() || undefined,
-      messagingProvider: input.messagingProvider ?? undefined,
-      sentdmTemplateName: input.sentdmTemplateName?.trim() || undefined,
     };
   }
 }

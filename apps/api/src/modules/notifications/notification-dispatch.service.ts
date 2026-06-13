@@ -11,16 +11,14 @@ import {
   writeOperationsStore,
 } from '../../data/operations-store';
 import {
-  MessagingProvider,
   NotificationSenderSettings,
   getDefaultTenantSettings,
   readSettingsStore,
 } from '../../data/settings-store';
 import { ConsoleNotificationProvider } from './providers/console-notification.provider';
 import type { NotificationProvider } from './providers/notification-provider.interface';
-import { SentdmNotificationProvider } from './providers/sentdm-notification.provider';
 import { SmtpNotificationProvider } from './providers/smtp-notification.provider';
-import { TwilioNotificationProvider } from './providers/twilio-notification.provider';
+import { SparkcoNotificationProvider } from './providers/sparkco-notification.provider';
 
 export type DispatchSummary = {
   dispatched: number;
@@ -32,8 +30,7 @@ export type DispatchSummary = {
 export class NotificationDispatchService {
   constructor(
     private readonly consoleProvider: ConsoleNotificationProvider,
-    private readonly twilioProvider: TwilioNotificationProvider,
-    private readonly sentdmProvider: SentdmNotificationProvider,
+    private readonly sparkcoProvider: SparkcoNotificationProvider,
     private readonly smtpProvider: SmtpNotificationProvider,
   ) {}
 
@@ -120,16 +117,13 @@ export class NotificationDispatchService {
       return { ...notification, status: 'failed', failedReason: 'No contact address on file for this member.' };
     }
 
-    const provider = this.selectProvider(notification.channel, senders);
+    const provider = this.selectProvider(notification.channel);
     const result = await provider.send({
       channel: notification.channel,
       to,
-      from: this.resolveFrom(notification.channel, senders),
+      from: notification.channel === 'email' ? senders.emailFrom : undefined,
       subject: notification.subject,
       body: notification.body,
-      providerOptions: {
-        sentdmTemplateName: senders.sentdmTemplateName,
-      },
     });
 
     return result.status === 'sent'
@@ -137,10 +131,7 @@ export class NotificationDispatchService {
       : { ...notification, status: 'failed', failedReason: result.error };
   }
 
-  private selectProvider(
-    channel: NotificationChannel,
-    senders: NotificationSenderSettings,
-  ): NotificationProvider {
+  private selectProvider(channel: NotificationChannel): NotificationProvider {
     if (channel === 'email') {
       const hasSmtp = !!(
         process.env.SMTP_HOST &&
@@ -150,23 +141,13 @@ export class NotificationDispatchService {
       return hasSmtp ? this.smtpProvider : this.consoleProvider;
     }
 
-    const chosen: MessagingProvider = senders.messagingProvider ?? 'console';
-
-    if (chosen === 'twilio') {
-      const hasTwilio = !!(
-        process.env.TWILIO_ACCOUNT_SID &&
-        (process.env.TWILIO_AUTH_TOKEN ||
-          (process.env.TWILIO_API_KEY && process.env.TWILIO_API_KEY_SECRET))
-      );
-      return hasTwilio ? this.twilioProvider : this.consoleProvider;
-    }
-
-    if (chosen === 'sentdm') {
-      return process.env.SENT_DM_API_KEY
-        ? this.sentdmProvider
+    if (channel === 'whatsapp') {
+      return process.env.SPARKCO_API_KEY
+        ? this.sparkcoProvider
         : this.consoleProvider;
     }
 
+    // SMS: reserved for future paid tier — falls back to console for now
     return this.consoleProvider;
   }
 
@@ -179,20 +160,6 @@ export class NotificationDispatchService {
     }
 
     return channel === 'email' ? member.email : member.phone;
-  }
-
-  private resolveFrom(
-    channel: NotificationChannel,
-    senders: NotificationSenderSettings,
-  ): string | undefined {
-    switch (channel) {
-      case 'sms':
-        return senders.smsFrom;
-      case 'whatsapp':
-        return senders.whatsappFrom;
-      case 'email':
-        return senders.emailFrom;
-    }
   }
 
   private getNotificationSendersForTenant(
