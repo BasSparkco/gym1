@@ -4,6 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { normalizePhone } from '../../common/phone';
+import { findCountryByCode } from '../../data/countries';
 import {
   MemberRecord,
   readOperationsStore,
@@ -86,6 +88,8 @@ export class MembersService {
     const homeBranchId = input.homeBranchId ?? branchId;
     this.ensureBranchBelongsToTenant(store, tenantId, homeBranchId);
 
+    const dialCode = this.getDialCodeForBranch(store, homeBranchId);
+
     const member: MemberRecord = {
       id: `member-${randomUUID()}`,
       tenantId,
@@ -93,11 +97,11 @@ export class MembersService {
       memberNumber: this.getNextMemberNumber(store.members, tenantId),
       fullName,
       status: this.normalizeMemberStatus(input.status),
-      phone: input.phone?.trim() || undefined,
+      phone: normalizePhone(input.phone, dialCode),
       email: input.email?.trim().toLowerCase() || undefined,
       dateOfBirth: input.dateOfBirth?.trim() || undefined,
       emergencyContactName: input.emergencyContactName?.trim() || undefined,
-      emergencyContactPhone: input.emergencyContactPhone?.trim() || undefined,
+      emergencyContactPhone: normalizePhone(input.emergencyContactPhone, dialCode),
       medicalNotes: input.medicalNotes?.trim() || undefined,
     };
 
@@ -135,6 +139,8 @@ export class MembersService {
 
     this.ensureBranchBelongsToTenant(store, tenantId, nextHomeBranchId);
 
+    const dialCode = this.getDialCodeForBranch(store, nextHomeBranchId);
+
     const nextMember: MemberRecord = {
       ...currentMember,
       fullName: nextFullName,
@@ -146,7 +152,7 @@ export class MembersService {
       phone:
         input.phone === undefined
           ? currentMember.phone
-          : input.phone.trim() || undefined,
+          : normalizePhone(input.phone, dialCode),
       email:
         input.email === undefined
           ? currentMember.email
@@ -162,7 +168,7 @@ export class MembersService {
       emergencyContactPhone:
         input.emergencyContactPhone === undefined
           ? currentMember.emergencyContactPhone
-          : input.emergencyContactPhone.trim() || undefined,
+          : normalizePhone(input.emergencyContactPhone, dialCode),
       medicalNotes:
         input.medicalNotes === undefined
           ? currentMember.medicalNotes
@@ -195,6 +201,15 @@ export class MembersService {
     }
 
     return status;
+  }
+
+  private getDialCodeForBranch(
+    store: ReturnType<typeof readOperationsStore>,
+    branchId: string,
+  ): string | undefined {
+    const branch = store.branches.find((b) => b.id === branchId);
+    if (!branch?.countryCode) return undefined;
+    return findCountryByCode(branch.countryCode)?.dialCode;
   }
 
   private ensureBranchBelongsToTenant(

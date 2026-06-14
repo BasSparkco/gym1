@@ -1,6 +1,7 @@
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { COUNTRIES } from "@/lib/countries";
 import Link from "next/link";
 
 export default async function BranchesPage() {
@@ -57,8 +58,14 @@ export default async function BranchesPage() {
                     {branch.status === "active" ? t.status.active : t.status.inactive}
                   </span>
                 </div>
-                {branch.address && (
-                  <p className="mt-1 text-sm text-foreground/60">{branch.address}</p>
+                {(branch.address || branch.countryCode) && (
+                  <p className="mt-1 text-sm text-foreground/60">
+                    {branch.address}
+                    {branch.address && branch.countryCode && ", "}
+                    {branch.countryCode &&
+                      (COUNTRIES.find((c) => c.code === branch.countryCode)?.name ??
+                        branch.countryCode)}
+                  </p>
                 )}
                 {branch.phone && (
                   <p className="mt-0.5 text-sm text-foreground/60">{branch.phone}</p>

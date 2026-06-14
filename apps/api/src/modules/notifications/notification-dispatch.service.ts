@@ -117,6 +117,14 @@ export class NotificationDispatchService {
       return { ...notification, status: 'failed', failedReason: 'No contact address on file for this member.' };
     }
 
+    if (notification.channel === 'whatsapp' && !to.startsWith('+')) {
+      return {
+        ...notification,
+        status: 'failed',
+        failedReason: `Phone number "${to}" is missing a country code. Edit the member's profile and set the correct international number (e.g. +970515622300).`,
+      };
+    }
+
     const provider = this.selectProvider(notification.channel);
     const result = await provider.send({
       channel: notification.channel,

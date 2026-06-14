@@ -116,6 +116,10 @@ export type Dict = {
     contactPhone: string;
     notes: string;
     statusLabel: string;
+    showQrCode: string;
+    qrCode: string;
+    qrCodeDescription: string;
+    printQrCode: string;
   };
   plans: {
     title: string;
@@ -240,6 +244,7 @@ export type Dict = {
     branchName: string;
     address: string;
     phone: string;
+    country: string;
     statusLabel: string;
     details: string;
     noBranches: string;
@@ -469,6 +474,10 @@ const en: Dict = {
     contactPhone: "Contact phone",
     notes: "Notes",
     statusLabel: "Status",
+    showQrCode: "Show QR code",
+    qrCode: "Member QR code",
+    qrCodeDescription: "Scan this code at the check-in terminal to log a visit.",
+    printQrCode: "Print",
   },
   plans: {
     title: "Membership plans",
@@ -593,6 +602,7 @@ const en: Dict = {
     branchName: "Branch name",
     address: "Address",
     phone: "Phone",
+    country: "Country",
     statusLabel: "Status",
     details: "Details",
     noBranches: "No branches yet. Create the first one.",
@@ -822,6 +832,10 @@ const ar: Dict = {
     contactPhone: "هاتف جهة الاتصال",
     notes: "ملاحظات",
     statusLabel: "الحالة",
+    showQrCode: "عرض رمز QR",
+    qrCode: "رمز QR للعضو",
+    qrCodeDescription: "امسح هذا الرمز في نقطة تسجيل الدخول لتسجيل زيارة.",
+    printQrCode: "طباعة",
   },
   plans: {
     title: "خطط الاشتراك",
@@ -946,6 +960,7 @@ const ar: Dict = {
     branchName: "اسم الفرع",
     address: "العنوان",
     phone: "الهاتف",
+    country: "الدولة",
     statusLabel: "الحالة",
     details: "التفاصيل",
     noBranches: "لا توجد فروع بعد. أنشئ أول فرع.",
@@ -1175,6 +1190,10 @@ const he: Dict = {
     contactPhone: "טלפון איש קשר",
     notes: "הערות",
     statusLabel: "סטטוס",
+    showQrCode: "הצג קוד QR",
+    qrCode: "קוד QR של חבר",
+    qrCodeDescription: "סרוק קוד זה בדלפק הכניסה לרישום ביקור.",
+    printQrCode: "הדפס",
   },
   plans: {
     title: "תוכניות מנוי",
@@ -1299,6 +1318,7 @@ const he: Dict = {
     branchName: "שם סניף",
     address: "כתובת",
     phone: "טלפון",
+    country: "מדינה",
     statusLabel: "סטטוס",
     details: "פרטים",
     noBranches: "אין סניפים עדיין. צור את הראשון.",

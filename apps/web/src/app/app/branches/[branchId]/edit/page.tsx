@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { COUNTRIES } from "@/lib/countries";
 
 type Props = {
   params: Promise<{ branchId: string }>;
@@ -22,6 +23,7 @@ export default async function EditBranchPage({ params }: Props) {
       name: (formData.get("name") as string) || undefined,
       address: (formData.get("address") as string) || undefined,
       phone: (formData.get("phone") as string) || undefined,
+      countryCode: (formData.get("countryCode") as string) || undefined,
       status: formData.get("status") as "active" | "inactive",
     });
     redirect(`/app/branches/${branchId}`);
@@ -74,6 +76,25 @@ export default async function EditBranchPage({ params }: Props) {
               defaultValue={branch.phone ?? ""}
               className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="countryCode" className="text-sm font-medium">
+              {t.branches.country}
+            </label>
+            <select
+              id="countryCode"
+              name="countryCode"
+              defaultValue={branch.countryCode ?? ""}
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            >
+              <option value="">— Select country —</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name} (+{c.dialCode})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid gap-1.5">

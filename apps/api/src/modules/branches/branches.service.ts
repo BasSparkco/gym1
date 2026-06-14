@@ -14,6 +14,7 @@ type CreateBranchInput = {
   name?: string;
   address?: string;
   phone?: string;
+  countryCode?: string;
   status?: BranchRecord['status'];
 };
 
@@ -21,6 +22,7 @@ type UpdateBranchInput = {
   name?: string;
   address?: string;
   phone?: string;
+  countryCode?: string;
   status?: BranchRecord['status'];
 };
 
@@ -64,6 +66,7 @@ export class BranchesService {
       name,
       address: input.address?.trim() || undefined,
       phone: input.phone?.trim() || undefined,
+      countryCode: input.countryCode?.trim().toUpperCase() || undefined,
       status: this.normalizeBranchStatus(input.status),
     };
 
@@ -103,6 +106,10 @@ export class BranchesService {
         input.phone === undefined
           ? current.phone
           : input.phone.trim() || undefined,
+      countryCode:
+        input.countryCode === undefined
+          ? current.countryCode
+          : input.countryCode.trim().toUpperCase() || undefined,
       status:
         input.status === undefined
           ? current.status

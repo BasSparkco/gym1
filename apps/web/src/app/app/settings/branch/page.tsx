@@ -4,6 +4,7 @@ import { listBranches, switchBranch } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
 export default async function BranchSettingsPage() {
@@ -22,6 +23,7 @@ export default async function BranchSettingsPage() {
     const branchId = formData.get("branchId") as string;
     if (!branchId) return;
     await switchBranch(branchId);
+    revalidatePath("/app", "layout");
     redirect("/app/settings/branch");
   }
 

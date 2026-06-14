@@ -19,6 +19,9 @@ export type BranchRecord = {
   name: string;
   address?: string;
   phone?: string;
+  /** ISO 3166-1 alpha-2 country code (e.g. 'IL', 'PS'). Used to derive the
+   *  dial code for normalising member phone numbers into E.164 format. */
+  countryCode?: string;
   status: 'active' | 'inactive';
 };
 
@@ -134,6 +137,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
       name: 'Ramallah Main Branch',
       address: 'Al-Irsal St, Ramallah',
       phone: '+970-2-296-0000',
+      countryCode: 'PS',
       status: 'active' as const,
     },
     {
@@ -142,6 +146,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
       name: 'Nablus North Branch',
       address: 'Rafidia St, Nablus',
       phone: '+970-9-238-0000',
+      countryCode: 'PS',
       status: 'active' as const,
     },
     {

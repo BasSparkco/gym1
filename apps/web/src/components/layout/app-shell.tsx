@@ -1,6 +1,7 @@
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MemberSearchInput } from "@/components/layout/member-search-input";
 import { NavMenu } from "@/components/layout/nav-menu";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import type { SessionUser } from "@/lib/auth";
 import type { Dict } from "@/lib/i18n";
 
@@ -43,8 +44,9 @@ export function AppShell({ children, user, t }: AppShellProps) {
                 <p className="mt-2 text-sm text-foreground/60">{user.tenant.name}</p>
               </div>
 
-              <div className="flex flex-wrap gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 <MemberSearchInput placeholder={t.shell.searchMembers} />
+                <LanguageSwitcher />
                 <SignOutButton name={user.name} role={user.role} label={t.auth.signOut} />
               </div>
             </div>

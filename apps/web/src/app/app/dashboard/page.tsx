@@ -124,8 +124,10 @@ export default async function DashboardPage() {
                 {t.dashboard.overviewTenantLabel}
               </p>
               <p className="mt-2 text-lg font-semibold">{session.tenant.name}</p>
-              <p className="mt-1 text-sm text-foreground/70">
-                {session.branch.name} &middot; {t.dashboard.overviewRoleLabel}: {session.role}
+              <p className="mt-1 text-sm text-foreground/70">{session.branch.name}</p>
+              <p className="mt-0.5 text-sm text-foreground/70">
+                {t.dashboard.overviewRoleLabel}:{" "}
+                <span className="font-semibold text-foreground">{session.role}</span>
               </p>
             </div>
             <div className="rounded-3xl border border-line bg-white p-4">

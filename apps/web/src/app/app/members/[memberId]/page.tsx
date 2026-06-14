@@ -184,6 +184,12 @@ export default async function MemberProfilePage({ params }: Props) {
           >
             {t.members.editDetails}
           </Link>
+          <Link
+            href={`/app/members/${member.id}/qr`}
+            className="rounded-2xl border border-line bg-white px-4 py-3 text-sm font-medium transition hover:border-brand hover:text-brand"
+          >
+            {t.members.showQrCode}
+          </Link>
           {activeMembership ? (
             <Link
               href={`/app/members/${member.id}/payments/new`}

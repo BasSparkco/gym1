@@ -5,6 +5,40 @@ Add the newest update at the top so the latest status is always visible first.
 
 ---
 
+## 2026-06-14
+
+Completed
+
+* Fixed branch detail page (`/app/branches/[branchId]`) not displaying the country name after a country was selected on a branch. Imported `COUNTRIES` list, resolved `branch.countryCode` to its display name at render time, and added a **Country** row to the details card (falls back to `—` when unset).
+
+---
+
+## 2026-06-13 (Multi-Country Support & Phone Number Normalization)
+
+Completed
+
+* **Replaced Twilio and sent.dm with SparkCo** (`apps/api/src/modules/notifications/providers/sparkco-notification.provider.ts`). WhatsApp now routes through the privately-operated SparkCo communication service (`api.sparkco.vip`). Email continues via SMTP. SMS channel is preserved in the data model for a future paid tier but always falls back to console. `SPARKCO_API_KEY` / `SPARKCO_API_URL` env vars replace all Twilio/sentdm vars. Removed `twilio` and `@sentdm/sentdm` npm packages; removed the provider-selection dropdown and sentdm template field from the Settings → Notifications page.
+* **Country per branch (Option 2):** Added a static `COUNTRIES` list (`apps/api/src/data/countries.ts`, mirrored at `apps/web/src/lib/countries.ts`) containing ~60 countries with ISO 3166-1 alpha-2 codes and E.164 dial codes. Added `countryCode?: string` to `BranchRecord`; branches without a country set are backward-compatible and skip normalization. Updated `BranchesService` / `BranchesController` to accept `countryCode` on create and update; added a country dropdown to the branch new/edit pages.
+* **Phone normalization:** Added `normalizePhone(raw, dialCode)` in `apps/api/src/common/phone.ts`. Called by `MembersService` on `createMember` and `updateMember` for both `phone` and `emergencyContactPhone`. Numbers already starting with `+` are left unchanged; local numbers get the branch's dial code prepended after stripping leading zeros. If the branch has no `countryCode` the raw value is stored unchanged (opt-in per branch).
+* **Pre-flight validation in dispatch:** `NotificationDispatchService.deliver` now rejects WhatsApp sends with a clear `failedReason` when the stored phone number does not start with `+`, so owners can identify and fix malformed numbers through the Notifications log rather than sending to an invalid recipient.
+
+In Progress
+
+* n/a
+
+Next
+
+* Pilot release gate walkthrough with real credentials end-to-end.
+* Normalize existing member phone numbers in the live `.local/` store (manual edit or a one-time migration script).
+
+Notes
+
+* Existing members in the live store keep their current (possibly un-normalized) phone numbers. Edit and re-save a member to trigger normalization once their branch has a `countryCode` assigned.
+* The `countryCode` field on branches is optional; existing branch records without it continue to work — member phones are stored as-is and dispatch returns a clear error if the number lacks a country code.
+* SparkCo WhatsApp sends the message from the platform's linked WhatsApp number — no "from" phone number needs to be configured per tenant.
+
+---
+
 ## 2026-06-08 (Notification Delivery — Real Provider Scaffolding)
 
 Completed

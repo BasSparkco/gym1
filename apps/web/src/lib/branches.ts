@@ -10,6 +10,8 @@ export type Branch = {
   name: string;
   address?: string;
   phone?: string;
+  /** ISO 3166-1 alpha-2 country code (e.g. 'IL', 'PS'). */
+  countryCode?: string;
   status: "active" | "inactive";
 };
 
@@ -58,6 +60,7 @@ export async function createBranch(data: {
   name: string;
   address?: string;
   phone?: string;
+  countryCode?: string;
   status?: "active" | "inactive";
 }): Promise<Branch> {
   const response = await authedFetch("/branches", {
@@ -74,6 +77,7 @@ export async function updateBranch(
     name?: string;
     address?: string;
     phone?: string;
+    countryCode?: string;
     status?: "active" | "inactive";
   }
 ): Promise<Branch> {
