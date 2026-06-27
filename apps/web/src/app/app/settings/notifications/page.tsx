@@ -123,9 +123,27 @@ export default async function NotificationSettingsPage() {
         >
           {t.settings.language}
         </Link>
+        <Link
+          href="/app/settings/display"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+        >
+          {t.settings.display}
+        </Link>
         <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white">
           {t.nav.notifications}
         </span>
+        <Link
+          href="/app/settings/whatsapp"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+        >
+          {t.settings.whatsapp}
+        </Link>
+        <Link
+          href="/app/settings/gates"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+        >
+          {t.settings.gates}
+        </Link>
       </nav>
 
       <form action={handleSave} className="grid gap-5">

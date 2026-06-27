@@ -1,0 +1,62 @@
+# Production: Traefik on host (HTTPS). Join external network traefik.
+# Requires: the traefik stack at /opt/sites/traefik is running
+# DNS: A record for gym.sparkco.vip → this server
+#
+# From this directory:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Loads DOMAIN from ./.env (see .env.example)
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file: apps/api/.env
+    environment:
+      PORT: "3002"
+      FRONTEND_ORIGIN: "https://${DOMAIN}"
+    volumes:
+      - api-data:/app/.local
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.gym-api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.gym-api.entrypoints=websecure"
+      - "traefik.http.routers.gym-api.tls=true"
+      - "traefik.http.routers.gym-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.gym-api.priority=100"
+      - "traefik.http.services.gym-api.loadbalancer.server.port=3002"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: "https://${DOMAIN}/api"
+    restart: unless-stopped
+    environment:
+      PORT: "3001"
+      HOSTNAME: "0.0.0.0"
+    depends_on:
+      - api
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.gym-web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.gym-web.entrypoints=websecure"
+      - "traefik.http.routers.gym-web.tls=true"
+      - "traefik.http.routers.gym-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.gym-web.loadbalancer.server.port=3001"
+
+volumes:
+  api-data:
+
+networks:
+  traefik-public:
+    external: true

@@ -5,7 +5,6 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsSchedulerService } from './notifications-scheduler.service';
 import { NotificationsService } from './notifications.service';
 import { ConsoleNotificationProvider } from './providers/console-notification.provider';
-import { SmtpNotificationProvider } from './providers/smtp-notification.provider';
 import { SparkcoNotificationProvider } from './providers/sparkco-notification.provider';
 
 @Module({
@@ -17,7 +16,6 @@ import { SparkcoNotificationProvider } from './providers/sparkco-notification.pr
     NotificationsSchedulerService,
     ConsoleNotificationProvider,
     SparkcoNotificationProvider,
-    SmtpNotificationProvider,
   ],
   exports: [NotificationsService],
 })

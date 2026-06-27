@@ -15,9 +15,16 @@ import { join } from 'node:path';
 
 const SESSION_COOKIE_NAME = 'spark_gym_session';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
-const API_ROOT_PATH = join(__dirname, '..', '..', '..');
-const AUTH_SEED_PATH = join(API_ROOT_PATH, 'data', 'auth-seed.json');
-const AUTH_STORE_PATH = join(API_ROOT_PATH, '.local', 'auth-store.json');
+
+function getAuthPaths() {
+  const root = process.env.API_DATA_ROOT ?? join(__dirname, '..', '..', '..');
+  return {
+    seedPath: join(root, 'data', 'auth-seed.json'),
+    storePath: join(root, '.local', 'auth-store.json'),
+    dataDir: join(root, 'data'),
+    localDir: join(root, '.local'),
+  };
+}
 
 export type SessionUser = {
   id: string;
@@ -99,7 +106,7 @@ const defaultAuthSeed: AuthSeed = {
         name: 'Spark Gym',
       },
       branch: {
-        id: 'branch-ramallah-main',
+        id: 'Platinum Fitness',
         name: 'Ramallah Main Branch',
       },
     },
@@ -116,7 +123,7 @@ const defaultAuthSeed: AuthSeed = {
         name: 'Spark Gym',
       },
       branch: {
-        id: 'branch-ramallah-main',
+        id: 'Platinum Fitness',
         name: 'Ramallah Main Branch',
       },
     },
@@ -414,7 +421,8 @@ export class AuthService implements OnModuleInit {
   private readStore() {
     this.ensureStoreFile();
 
-    const rawStore = readFileSync(AUTH_STORE_PATH, 'utf8');
+    const { storePath } = getAuthPaths();
+    const rawStore = readFileSync(storePath, 'utf8');
     const parsedStore = JSON.parse(rawStore) as AuthStore;
 
     return {
@@ -425,24 +433,26 @@ export class AuthService implements OnModuleInit {
 
   private writeStore() {
     this.ensureStoreFile();
-    writeFileSync(AUTH_STORE_PATH, JSON.stringify(this.store, null, 2) + '\n');
+    const { storePath } = getAuthPaths();
+    writeFileSync(storePath, JSON.stringify(this.store, null, 2) + '\n');
   }
 
   private ensureStoreFile() {
-    const storeDirectory = join(API_ROOT_PATH, '.local');
+    const { localDir, storePath } = getAuthPaths();
 
-    if (!existsSync(storeDirectory)) {
-      mkdirSync(storeDirectory, { recursive: true });
+    if (!existsSync(localDir)) {
+      mkdirSync(localDir, { recursive: true });
     }
 
     this.ensureSeedFile();
 
-    if (!existsSync(AUTH_STORE_PATH)) {
-      const rawSeed = readFileSync(AUTH_SEED_PATH, 'utf8');
+    if (!existsSync(storePath)) {
+      const { seedPath } = getAuthPaths();
+      const rawSeed = readFileSync(seedPath, 'utf8');
       const parsedSeed = JSON.parse(rawSeed) as AuthSeed;
 
       writeFileSync(
-        AUTH_STORE_PATH,
+        storePath,
         JSON.stringify(
           {
             users: parsedSeed.users,
@@ -456,15 +466,15 @@ export class AuthService implements OnModuleInit {
   }
 
   private ensureSeedFile() {
-    const seedDirectory = join(API_ROOT_PATH, 'data');
+    const { dataDir, seedPath } = getAuthPaths();
 
-    if (!existsSync(seedDirectory)) {
-      mkdirSync(seedDirectory, { recursive: true });
+    if (!existsSync(dataDir)) {
+      mkdirSync(dataDir, { recursive: true });
     }
 
-    if (!existsSync(AUTH_SEED_PATH)) {
+    if (!existsSync(seedPath)) {
       writeFileSync(
-        AUTH_SEED_PATH,
+        seedPath,
         JSON.stringify(defaultAuthSeed, null, 2) + '\n',
       );
     }

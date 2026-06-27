@@ -2,6 +2,8 @@ import { listNotifications } from "@/lib/notifications";
 import { listMembers } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 
 const channelLabel: Record<string, string> = {
@@ -26,10 +28,12 @@ export default async function NotificationsPage() {
   await requireSession();
   const t = await getT();
 
-  const [notifications, members] = await Promise.all([
+  const [notifications, members, settings] = await Promise.all([
     listNotifications(),
     listMembers(),
+    getSettings(),
   ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
 
@@ -54,10 +58,7 @@ export default async function NotificationsPage() {
           <div className="grid gap-2">
             {notifications.map((notif) => {
               const member = memberMap.get(notif.memberId);
-              const localTime = new Date(notif.createdAt).toLocaleString("en-US", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              });
+              const localTime = formatDateTime(notif.createdAt, dateFormat);
 
               return (
                 <Link

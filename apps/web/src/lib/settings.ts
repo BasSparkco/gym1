@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 export type Language = "en" | "ar" | "he";
 
+export type DateFormat = "dd/mm/yyyy" | "mm/dd/yyyy";
+
 export type NotificationEventRule = {
   enabled: boolean;
   channels: {
@@ -61,6 +63,7 @@ export type TenantSettings = {
   enabledLanguages: Language[];
   notificationSettings: NotificationSettings;
   notificationSenders: NotificationSenderSettings;
+  dateFormat: DateFormat;
 };
 
 export const LANGUAGE_LABELS: Record<Language, string> = {
@@ -108,6 +111,7 @@ export async function updateSettings(data: {
   enabledLanguages?: Language[];
   notificationSettings?: NotificationSettings;
   notificationSenders?: NotificationSenderSettings;
+  dateFormat?: DateFormat;
 }): Promise<TenantSettings> {
   const response = await authedFetch("/settings", {
     method: "PATCH",

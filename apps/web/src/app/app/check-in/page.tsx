@@ -1,17 +1,19 @@
 "use server";
 
 import { performCheckIn } from "@/lib/check-in";
+import { listGates } from "@/lib/gates";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { CheckInMemberPicker } from "@/components/check-in/member-picker";
+import { GateOpenButton } from "@/components/check-in/gate-open-button";
 
 type Props = {
   searchParams: Promise<Record<string, string | undefined>>;
 };
 
 export default async function CheckInPage({ searchParams }: Props) {
-  await requireSession();
+  const session = await requireSession();
   const t = await getT();
   const params = await searchParams;
 
@@ -19,10 +21,13 @@ export default async function CheckInPage({ searchParams }: Props) {
   const granted = resultStatus === "granted";
   const denied = resultStatus === "denied";
 
+  const gates = await listGates(session.branch.id).catch(() => []);
+  const enabledGates = gates.filter((g) => g.enabled);
+
   async function handleCheckIn(formData: FormData) {
     "use server";
     const identifier = (formData.get("identifier") as string ?? "").trim();
-    const accessMethod = (formData.get("accessMethod") as "manual" | "qr") ?? "manual";
+    const accessMethod = "manual" as const;
 
     const result = await performCheckIn(identifier, accessMethod);
 
@@ -47,14 +52,38 @@ export default async function CheckInPage({ searchParams }: Props) {
   return (
     <div className="grid gap-6">
       {/* Header */}
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.checkIn}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.checkIn.title}</h1>
-        <p className="mt-2 text-sm text-foreground/60">
-          {t.checkIn.description}
-        </p>
+      <section className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
+            {t.nav.checkIn}
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Manual Check-In</h1>
+          <p className="mt-2 text-sm text-foreground/60">
+            Staff override — use this when a member has forgotten or lost their access card.
+            Search by name or member number.
+          </p>
+        </div>
+
+        {/* Gate open buttons — one per enabled gate, or legacy single button */}
+        <div className="mt-2 flex shrink-0 flex-wrap gap-3">
+          {enabledGates.length > 0 ? (
+            enabledGates.map((gate) => (
+              <GateOpenButton
+                key={gate.id}
+                gateId={gate.id}
+                label={gate.name}
+                successLabel={t.checkIn.gateOpened}
+                failLabel={t.checkIn.gateOpenFailed}
+              />
+            ))
+          ) : (
+            <GateOpenButton
+              label={t.checkIn.openGate}
+              successLabel={t.checkIn.gateOpened}
+              failLabel={t.checkIn.gateOpenFailed}
+            />
+          )}
+        </div>
       </section>
 
       {/* Result banner */}
@@ -108,21 +137,6 @@ export default async function CheckInPage({ searchParams }: Props) {
               selectedLabel={t.checkIn.selectedMember}
               clearLabel={t.checkIn.clearSelection}
             />
-          </div>
-
-          <div className="grid gap-1.5">
-            <label htmlFor="accessMethod" className="text-sm font-medium">
-              {t.checkIn.accessMethod}
-            </label>
-            <select
-              id="accessMethod"
-              name="accessMethod"
-              defaultValue="manual"
-              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            >
-              <option value="manual">{t.checkIn.manualEntry}</option>
-              <option value="qr">{t.checkIn.qrScan}</option>
-            </select>
           </div>
 
           <button

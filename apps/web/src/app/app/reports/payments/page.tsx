@@ -1,6 +1,8 @@
 import { getPaymentsReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 
 type Props = { searchParams: Promise<{ dateFrom?: string; dateTo?: string }> };
@@ -18,7 +20,11 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
   const t = await getT();
   const { dateFrom, dateTo } = await searchParams;
 
-  const report = await getPaymentsReport(dateFrom, dateTo);
+  const [report, settings] = await Promise.all([
+    getPaymentsReport(dateFrom, dateTo),
+    getSettings(),
+  ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   return (
     <div className="grid gap-6">
@@ -59,10 +65,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => {
-                  const localDate = new Date(row.paymentDate).toLocaleString("en-US", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  });
+                  const localDate = formatDateTime(row.paymentDate, dateFormat);
 
                   return (
                     <tr key={row.paymentId} className="py-3">

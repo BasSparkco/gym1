@@ -1,13 +1,19 @@
 import { getExpiredMembershipsReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 
 export default async function ExpiredMembershipsReportPage() {
   await requireSession();
   const t = await getT();
 
-  const { rows, total, asOfDate } = await getExpiredMembershipsReport();
+  const [{ rows, total, asOfDate }, settings] = await Promise.all([
+    getExpiredMembershipsReport(),
+    getSettings(),
+  ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   return (
     <div className="grid gap-6">
@@ -60,8 +66,8 @@ export default async function ExpiredMembershipsReportPage() {
                       )}
                     </td>
                     <td className="py-3 pr-4 text-foreground/70">{row.planName ?? "—"}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{row.startDate}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{row.endDate}</td>
+                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{formatDate(row.startDate, dateFormat)}</td>
+                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{formatDate(row.endDate, dateFormat)}</td>
                     <td className="py-3 pr-4">
                       <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
                         {row.status}

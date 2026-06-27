@@ -1,6 +1,8 @@
 import { getVisitsReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 
 type Props = { searchParams: Promise<{ dateFrom?: string; dateTo?: string }> };
@@ -10,7 +12,11 @@ export default async function VisitsReportPage({ searchParams }: Props) {
   const t = await getT();
   const { dateFrom, dateTo } = await searchParams;
 
-  const report = await getVisitsReport(dateFrom, dateTo);
+  const [report, settings] = await Promise.all([
+    getVisitsReport(dateFrom, dateTo),
+    getSettings(),
+  ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   return (
     <div className="grid gap-6">
@@ -48,10 +54,7 @@ export default async function VisitsReportPage({ searchParams }: Props) {
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => {
-                  const localTime = new Date(row.checkInTime).toLocaleString("en-US", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  });
+                  const localTime = formatDateTime(row.checkInTime, dateFormat);
 
                   return (
                     <tr key={row.visitId} className="py-3">

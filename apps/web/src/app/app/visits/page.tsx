@@ -2,11 +2,15 @@ import { listVisits } from "@/lib/visits";
 import { listMembers } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 
 type Period = "today" | "week" | "month" | "all";
+type Presence = "all" | "inside" | "out";
 
 const PERIODS: Period[] = ["today", "week", "month", "all"];
+const PRESENCES: Presence[] = ["all", "inside", "out"];
 
 function filterByPeriod(
   visits: Awaited<ReturnType<typeof listVisits>>,
@@ -29,6 +33,15 @@ function filterByPeriod(
   return visits.filter((v) => new Date(v.checkInTime).getTime() >= cutoffMs);
 }
 
+function filterByPresence(
+  visits: Awaited<ReturnType<typeof listVisits>>,
+  presence: Presence,
+) {
+  if (presence === "inside") return visits.filter((v) => v.checkOutTime === null);
+  if (presence === "out") return visits.filter((v) => v.checkOutTime !== null);
+  return visits;
+}
+
 export default async function VisitsPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
@@ -42,7 +55,14 @@ export default async function VisitsPage(props: {
       ? (rawPeriod as Period)
       : "week";
 
-  const [visits, members] = await Promise.all([listVisits(), listMembers()]);
+  const rawPresence = searchParams.presence;
+  const presence: Presence =
+    typeof rawPresence === "string" && (PRESENCES as string[]).includes(rawPresence)
+      ? (rawPresence as Presence)
+      : "all";
+
+  const [visits, members, settings] = await Promise.all([listVisits(), listMembers(), getSettings()]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
 
@@ -50,13 +70,19 @@ export default async function VisitsPage(props: {
     .slice()
     .sort((a, b) => b.checkInTime.localeCompare(a.checkInTime));
 
-  const filtered = filterByPeriod(allSorted, period);
+  const filtered = filterByPresence(filterByPeriod(allSorted, period), presence);
 
   const periodLabel: Record<Period, string> = {
     today: t.visits.filterToday,
     week: t.visits.filterWeek,
     month: t.visits.filterMonth,
     all: t.visits.filterAll,
+  };
+
+  const presenceLabel: Record<Presence, string> = {
+    all: t.visits.filterPresenceAll,
+    inside: t.visits.filterInside,
+    out: t.visits.filterCheckedOut,
   };
 
   return (
@@ -72,6 +98,7 @@ export default async function VisitsPage(props: {
           <p className="mt-2 text-sm text-foreground/60">
             {filtered.length} visit{filtered.length !== 1 ? "s" : ""} &middot;{" "}
             {periodLabel[period]}
+            {presence !== "all" && <> &middot; {presenceLabel[presence]}</>}
           </p>
         </div>
         <Link
@@ -96,10 +123,42 @@ export default async function VisitsPage(props: {
           ) : (
             <Link
               key={p}
-              href={`/app/visits?period=${p}`}
+              href={`/app/visits?period=${p}&presence=${presence}`}
               className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
             >
               {periodLabel[p]}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Presence filter */}
+      <nav className="flex gap-2 flex-wrap">
+        {PRESENCES.map((pr) => {
+          const isActive = pr === presence;
+          return isActive ? (
+            <span
+              key={pr}
+              className={[
+                "rounded-full px-4 py-1.5 text-sm font-medium",
+                pr === "inside"
+                  ? "bg-green-600 text-white"
+                  : pr === "out"
+                    ? "bg-gray-500 text-white"
+                    : "bg-foreground/80 text-white",
+              ].join(" ")}
+            >
+              {pr === "inside" && <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-200 align-middle" />}
+              {presenceLabel[pr]}
+            </span>
+          ) : (
+            <Link
+              key={pr}
+              href={`/app/visits?period=${period}&presence=${pr}`}
+              className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+            >
+              {pr === "inside" && <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500 align-middle" />}
+              {presenceLabel[pr]}
             </Link>
           );
         })}
@@ -114,13 +173,7 @@ export default async function VisitsPage(props: {
           <div className="grid gap-2">
             {filtered.map((visit) => {
               const member = memberMap.get(visit.memberId);
-              const localTime = new Date(visit.checkInTime).toLocaleString(
-                "en-US",
-                {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                },
-              );
+              const localTime = formatDateTime(visit.checkInTime, dateFormat);
 
               return (
                 <Link
@@ -161,12 +214,16 @@ export default async function VisitsPage(props: {
                         "rounded-full px-2 py-0.5 text-xs font-medium",
                         visit.accessMethod === "qr"
                           ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-600",
+                          : visit.accessMethod === "rfid"
+                            ? "bg-violet-100 text-violet-700"
+                            : "bg-gray-100 text-gray-600",
                       ].join(" ")}
                     >
                       {visit.accessMethod === "qr"
                         ? t.visits.qrScan
-                        : t.visits.manualEntry}
+                        : visit.accessMethod === "rfid"
+                          ? "RFID"
+                          : t.visits.manualEntry}
                     </span>
                     <span className="text-xs">{localTime}</span>
                   </div>

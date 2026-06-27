@@ -20,6 +20,7 @@ type UpdateSettingsRequestBody = {
   enabledLanguages?: string[];
   notificationSettings?: NotificationSettings;
   notificationSenders?: NotificationSenderSettings;
+  dateFormat?: string;
 };
 
 @Controller('settings')

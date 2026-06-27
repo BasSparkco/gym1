@@ -1,9 +1,12 @@
-import { getMember } from "@/lib/members";
+import { getMember, getMemberPhotoUrl } from "@/lib/members";
 import { listMembershipsForMember } from "@/lib/memberships";
 import { listPaymentsForMember } from "@/lib/payments";
 import { listBranches } from "@/lib/branches";
+import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 
 type Props = { params: Promise<{ memberId: string }> };
@@ -28,14 +31,19 @@ export default async function MemberProfilePage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const [member, memberships, payments, branches] = await Promise.all([
+  const [member, memberships, payments, branches, employees, settings] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
     listPaymentsForMember(memberId),
     listBranches(),
+    listEmployees(),
+    getSettings(),
   ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const homeBranch = branches.find((b) => b.id === member.homeBranchId);
+  const registeredEmployee = employees.find((e) => e.id === member.registeredEmployeeId);
+  const photoUrl = getMemberPhotoUrl(member.pictureUrl);
 
   const activeMembership = memberships.find((ms) => ms.status === "active");
   const frozenMembership = memberships.find((ms) => ms.status === "frozen");
@@ -60,21 +68,34 @@ export default async function MemberProfilePage({ params }: Props) {
     <div className="grid gap-6">
       {/* Header */}
       <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.members}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight">{member.fullName}</h1>
-            <span className="text-lg text-foreground/50">{member.memberNumber}</span>
-            <span
-              className={[
-                "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                member.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500",
-              ].join(" ")}
-            >
-              {statusLabel(member.status)}
-            </span>
+        <div className="flex items-center gap-4">
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={member.fullName}
+              className="h-16 w-16 rounded-2xl object-cover border border-line flex-shrink-0"
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-line bg-white text-foreground/30 text-2xl flex-shrink-0">
+              👤
+            </div>
+          )}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
+              {t.nav.members}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl font-semibold tracking-tight">{member.fullName}</h1>
+              <span className="text-lg text-foreground/50">{member.memberNumber}</span>
+              <span
+                className={[
+                  "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  member.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500",
+                ].join(" ")}
+              >
+                {statusLabel(member.status)}
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -106,6 +127,20 @@ export default async function MemberProfilePage({ params }: Props) {
               <dt className="text-foreground/55">{t.members.memberNumber}</dt>
               <dd className="mt-0.5 font-mono font-medium">{member.memberNumber}</dd>
             </div>
+            {member.sex && (
+              <div>
+                <dt className="text-foreground/55">{t.members.sex}</dt>
+                <dd className="mt-0.5 font-medium capitalize">
+                  {member.sex === "male" ? t.members.male : t.members.female}
+                </dd>
+              </div>
+            )}
+            {member.idNumber && (
+              <div>
+                <dt className="text-foreground/55">{t.members.idNumber}</dt>
+                <dd className="mt-0.5 font-medium font-mono">{member.idNumber}</dd>
+              </div>
+            )}
             {member.phone && (
               <div>
                 <dt className="text-foreground/55">{t.members.phone}</dt>
@@ -121,7 +156,35 @@ export default async function MemberProfilePage({ params }: Props) {
             {member.dateOfBirth && (
               <div>
                 <dt className="text-foreground/55">{t.members.dateOfBirth}</dt>
-                <dd className="mt-0.5 font-medium">{member.dateOfBirth}</dd>
+                <dd className="mt-0.5 font-medium">{formatDate(member.dateOfBirth, dateFormat)}</dd>
+              </div>
+            )}
+            {member.address && (
+              <div>
+                <dt className="text-foreground/55">{t.members.address}</dt>
+                <dd className="mt-0.5 font-medium">{member.address}</dd>
+              </div>
+            )}
+            {(member.height || member.weight) && (
+              <div className="flex gap-6">
+                {member.height && (
+                  <div>
+                    <dt className="text-foreground/55">{t.members.height}</dt>
+                    <dd className="mt-0.5 font-medium">{member.height} cm</dd>
+                  </div>
+                )}
+                {member.weight && (
+                  <div>
+                    <dt className="text-foreground/55">{t.members.weight}</dt>
+                    <dd className="mt-0.5 font-medium">{member.weight} kg</dd>
+                  </div>
+                )}
+              </div>
+            )}
+            {member.joinDate && (
+              <div>
+                <dt className="text-foreground/55">{t.members.joinDate}</dt>
+                <dd className="mt-0.5 font-medium">{formatDate(member.joinDate, dateFormat)}</dd>
               </div>
             )}
             <div>
@@ -139,6 +202,22 @@ export default async function MemberProfilePage({ params }: Props) {
                 )}
               </dd>
             </div>
+            {registeredEmployee && (
+              <div>
+                <dt className="text-foreground/55">{t.members.registeredEmployee}</dt>
+                <dd className="mt-0.5 font-medium">{registeredEmployee.fullName}</dd>
+              </div>
+            )}
+            {member.rfidTag && (
+              <div>
+                <dt className="text-foreground/55">RFID Tag</dt>
+                <dd className="mt-0.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-0.5 text-xs font-mono font-medium text-violet-700 ring-1 ring-inset ring-violet-200">
+                    {member.rfidTag}
+                  </span>
+                </dd>
+              </div>
+            )}
           </dl>
         </article>
 
@@ -257,7 +336,7 @@ export default async function MemberProfilePage({ params }: Props) {
                   <div>
                     <span className="font-medium">{ms.plan?.name ?? ms.planId}</span>
                     <span className="ml-2 text-foreground/50">
-                      {ms.startDate} → {ms.endDate}
+                      {formatDate(ms.startDate, dateFormat)} → {formatDate(ms.endDate, dateFormat)}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -305,7 +384,7 @@ export default async function MemberProfilePage({ params }: Props) {
                     <span className="font-mono font-medium">${pmt.amount}</span>
                     <span className="ml-2 text-foreground/50 capitalize">{pmt.paymentMethod}</span>
                     <span className="ml-2 text-foreground/40 text-xs">
-                      {new Date(pmt.paymentDate).toLocaleDateString()}
+                      {formatDate(pmt.paymentDate, dateFormat)}
                     </span>
                   </div>
                   <span

@@ -10,7 +10,7 @@ export type Visit = {
   branchId: string;
   checkInTime: string;
   checkOutTime: string | null;
-  accessMethod: "manual" | "qr";
+  accessMethod: "manual" | "qr" | "rfid";
 };
 
 async function authedFetch(path: string, init?: RequestInit) {

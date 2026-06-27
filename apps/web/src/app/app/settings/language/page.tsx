@@ -67,10 +67,28 @@ export default async function LanguageSettingsPage() {
           {t.settings.language}
         </span>
         <Link
+          href="/app/settings/display"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+        >
+          {t.settings.display}
+        </Link>
+        <Link
           href="/app/settings/notifications"
           className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
         >
           {t.nav.notifications}
+        </Link>
+        <Link
+          href="/app/settings/whatsapp"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+        >
+          {t.settings.whatsapp}
+        </Link>
+        <Link
+          href="/app/settings/gates"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+        >
+          {t.settings.gates}
         </Link>
       </nav>
 

@@ -4,13 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { addDays } from '../../common/date';
+import { makeQrPublicUrl } from '../../common/qr';
 import {
   FreezeRecord,
   MembershipPlanRecord,
+  MemberRecord,
   MembershipRecord,
   readOperationsStore,
   writeOperationsStore,
 } from '../../data/operations-store';
+import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 type CreateMembershipPlanInput = {
@@ -61,10 +65,28 @@ const validMembershipStatuses = new Set<MembershipRecord['status']>([
 
 @Injectable()
 export class MembershipsService {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly basIpSyncService: BasIpSyncService,
+  ) {}
+
+  private autoExpireStale(store: ReturnType<typeof readOperationsStore>): boolean {
+    const today = new Date().toISOString().slice(0, 10);
+    let dirty = false;
+    for (let i = 0; i < store.memberships.length; i++) {
+      const ms = store.memberships[i];
+      if (ms.status === 'active' && ms.endDate < today) {
+        store.memberships[i] = { ...ms, status: 'expired' };
+        dirty = true;
+      }
+    }
+    return dirty;
+  }
 
   listMembershipsForTenant(tenantId: string) {
     const store = readOperationsStore();
+    if (this.autoExpireStale(store)) writeOperationsStore(store);
+
     const tenantMemberIds = new Set(
       store.members
         .filter((member) => member.tenantId === tenantId)
@@ -198,6 +220,8 @@ export class MembershipsService {
 
   getMembershipForTenant(tenantId: string, membershipId: string) {
     const store = readOperationsStore();
+    if (this.autoExpireStale(store)) writeOperationsStore(store);
+
     const tenantMemberIds = new Set(
       store.members
         .filter((member) => member.tenantId === tenantId)
@@ -261,6 +285,8 @@ export class MembershipsService {
 
   listMembershipsForMember(tenantId: string, memberId: string) {
     const store = readOperationsStore();
+    if (this.autoExpireStale(store)) writeOperationsStore(store);
+
     const member = store.members.find(
       (candidate) =>
         candidate.id === memberId && candidate.tenantId === tenantId,
@@ -311,16 +337,12 @@ export class MembershipsService {
     // Default start: day after old end; fall back to provided date
     let startDate = input.startDate;
     if (!startDate) {
-      const oldEnd = new Date(old.endDate);
-      oldEnd.setDate(oldEnd.getDate() + 1);
-      startDate = oldEnd.toISOString().slice(0, 10);
+      startDate = addDays(old.endDate, 1);
     }
 
     let endDate: string;
     if (plan.planType === 'duration' && plan.durationDays) {
-      const start = new Date(startDate);
-      start.setDate(start.getDate() + plan.durationDays);
-      endDate = start.toISOString().slice(0, 10);
+      endDate = addDays(startDate, plan.durationDays);
     } else {
       throw new BadRequestException(
         'Cannot auto-compute end date for this plan type; provide endDate.',
@@ -356,6 +378,9 @@ export class MembershipsService {
         relatedId: renewal.id,
       },
     );
+
+    const member = store.members.find((m) => m.id === renewal.memberId);
+    if (member) this.syncToDevice(member, renewal);
 
     return renewal;
   }
@@ -437,13 +462,10 @@ export class MembershipsService {
     }
 
     // Extend membership end date by the freeze duration
-    const currentEnd = new Date(membership.endDate);
-    currentEnd.setDate(currentEnd.getDate() + freezeDays);
-
     store.memberships[msIdx] = {
       ...membership,
       status: 'frozen',
-      endDate: currentEnd.toISOString().slice(0, 10),
+      endDate: addDays(membership.endDate, freezeDays),
     };
 
     const freeze: FreezeRecord = {
@@ -457,7 +479,12 @@ export class MembershipsService {
     store.freezes.push(freeze);
     writeOperationsStore(store);
 
-    return { freeze, membership: store.memberships[msIdx] };
+    // Push updated end date so the device extends the valid window
+    const frozenMembership = store.memberships[msIdx];
+    const member = store.members.find((m) => m.id === frozenMembership.memberId);
+    if (member) this.syncToDevice(member, frozenMembership);
+
+    return { freeze, membership: frozenMembership };
   }
 
   unfreezeM(tenantId: string, membershipId: string) {
@@ -493,6 +520,7 @@ export class MembershipsService {
     }
 
     const store = readOperationsStore();
+    this.autoExpireStale(store);
     const member = store.members.find((candidate) => {
       return candidate.id === input.memberId && candidate.tenantId === tenantId;
     });
@@ -522,9 +550,7 @@ export class MembershipsService {
 
     if (!endDate) {
       if (plan.planType === 'duration' && plan.durationDays) {
-        const start = new Date(input.startDate);
-        start.setDate(start.getDate() + plan.durationDays);
-        endDate = start.toISOString().slice(0, 10);
+        endDate = addDays(input.startDate, plan.durationDays);
       } else {
         throw new BadRequestException(
           'End date is required for this plan type.',
@@ -546,18 +572,38 @@ export class MembershipsService {
     writeOperationsStore(store);
 
     if (membership.status === 'active') {
+      const qrUrl = makeQrPublicUrl(member.id);
       await this.notificationsService.createNotificationsForEvent(
         tenantId,
         'membershipActivated',
         membership.memberId,
         {
           subject: 'Welcome to Spark Gym',
-          body: `Your ${plan.name} membership is now active and runs through ${membership.endDate}.`,
+          body:
+            `Your ${plan.name} membership is now active and runs through ${membership.endDate}.\n\n` +
+            `Download your QR code (show it at the entrance to enter):\n${qrUrl}`,
           relatedId: membership.id,
         },
       );
+
+      this.syncToDevice(member, membership);
     }
 
     return membership;
+  }
+
+  /**
+   * Best-effort push of a QR identifier to the BAS-IP device's local list so
+   * the device can grant access offline. Every member always gets a QR
+   * identifier regardless of whether they have an RFID tag.
+   * Failures are logged but never propagated.
+   */
+  private syncToDevice(member: MemberRecord, membership: MembershipRecord): void {
+    void this.basIpSyncService.pushQrIdentifier(
+      member.id,
+      member.fullName,
+      membership.startDate,
+      membership.endDate,
+    );
   }
 }

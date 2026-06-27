@@ -1,17 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const API_ROOT_PATH = join(__dirname, '..', '..');
-const OPERATIONS_SEED_PATH = join(
-  API_ROOT_PATH,
-  'data',
-  'operations-seed.json',
-);
-const OPERATIONS_STORE_PATH = join(
-  API_ROOT_PATH,
-  '.local',
-  'operations-store.json',
-);
+function getStorePaths() {
+  const root = process.env.API_DATA_ROOT ?? join(__dirname, '..', '..');
+  return {
+    seedPath: join(root, 'data', 'operations-seed.json'),
+    storePath: join(root, '.local', 'operations-store.json'),
+    dataDir: join(root, 'data'),
+    localDir: join(root, '.local'),
+  };
+}
 
 export type BranchRecord = {
   id: string;
@@ -25,19 +23,65 @@ export type BranchRecord = {
   status: 'active' | 'inactive';
 };
 
+export type EmployeeRecord = {
+  id: string;
+  tenantId: string;
+  branchId: string;
+  employeeNumber: string;
+  fullName: string;
+  status: 'active' | 'inactive';
+  idNumber?: string;
+  phone?: string;
+  sex?: 'male' | 'female';
+  dateOfBirth?: string;
+  job?: string;
+  salary?: number;
+  workType?: 'fullTime' | 'partTime' | 'trainee';
+  startDate?: string;
+  /** If set, the employee has left — treated as terminated */
+  endDate?: string;
+  isUser?: boolean;
+  /** Gate IDs this employee can manually open (null/absent = no gate access) */
+  gateIds?: string[];
+};
+
+export type GateRecord = {
+  id: string;
+  tenantId: string;
+  branchId: string;
+  name: string;
+  /** Which gender this gate serves; null means no restriction */
+  genderRestriction: 'male' | 'female' | null;
+  deviceUrl: string;
+  deviceUsername: string;
+  /** Plaintext password — hashed to MD5 on each BAS-IP login request */
+  devicePassword: string;
+  lockNumber: number;
+  enabled: boolean;
+};
+
 export type MemberRecord = {
   id: string;
   tenantId: string;
   homeBranchId: string;
   memberNumber: string;
   fullName: string;
-  status: 'active' | 'inactive';
+  status?: 'active' | 'inactive';
   phone?: string;
   email?: string;
   dateOfBirth?: string;
+  sex?: 'male' | 'female';
+  idNumber?: string;
+  address?: string;
+  joinDate?: string;
+  height?: number;
+  weight?: number;
+  registeredEmployeeId?: string;
+  pictureUrl?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   medicalNotes?: string;
+  rfidTag?: string;
 };
 
 export type MembershipPlanRecord = {
@@ -78,7 +122,8 @@ export type VisitRecord = {
   branchId: string;
   checkInTime: string;
   checkOutTime: string | null;
-  accessMethod: 'manual' | 'qr';
+  accessMethod: 'manual' | 'qr' | 'rfid';
+  gateId?: string;
 };
 
 export type PaymentRecord = {
@@ -119,6 +164,8 @@ export type NotificationRecord = {
 export type OperationsStoreData = {
   reportingDate: string;
   branches: BranchRecord[];
+  employees: EmployeeRecord[];
+  gates: GateRecord[];
   members: MemberRecord[];
   membershipPlans: MembershipPlanRecord[];
   memberships: MembershipRecord[];
@@ -130,9 +177,10 @@ export type OperationsStoreData = {
 
 export const defaultOperationsSeed: OperationsStoreData = {
   reportingDate: '2026-06-05',
+  gates: [],
   branches: [
     {
-      id: 'branch-ramallah-main',
+      id: 'Platinum Fitness',
       tenantId: 'tenant-spark-gym',
       name: 'Ramallah Main Branch',
       address: 'Al-Irsal St, Ramallah',
@@ -156,11 +204,37 @@ export const defaultOperationsSeed: OperationsStoreData = {
       status: 'active' as const,
     },
   ],
+  employees: [
+    {
+      id: 'emp-001',
+      tenantId: 'tenant-spark-gym',
+      branchId: 'Platinum Fitness',
+      employeeNumber: 'EMP-0001',
+      fullName: 'Sami Haddad',
+      status: 'active' as const,
+    },
+    {
+      id: 'emp-002',
+      tenantId: 'tenant-spark-gym',
+      branchId: 'Platinum Fitness',
+      employeeNumber: 'EMP-0002',
+      fullName: 'Rasha Barakat',
+      status: 'active' as const,
+    },
+    {
+      id: 'emp-003',
+      tenantId: 'tenant-spark-gym',
+      branchId: 'branch-nablus-north',
+      employeeNumber: 'EMP-0003',
+      fullName: 'Khalid Mansour',
+      status: 'active' as const,
+    },
+  ],
   members: [
     {
       id: 'member-001',
       tenantId: 'tenant-spark-gym',
-      homeBranchId: 'branch-ramallah-main',
+      homeBranchId: 'Platinum Fitness',
       memberNumber: 'MEM-0001',
       fullName: 'Lina Ahmad',
       status: 'active',
@@ -168,7 +242,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'member-002',
       tenantId: 'tenant-spark-gym',
-      homeBranchId: 'branch-ramallah-main',
+      homeBranchId: 'Platinum Fitness',
       memberNumber: 'MEM-0002',
       fullName: 'Omar Khalil',
       status: 'active',
@@ -176,7 +250,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'member-003',
       tenantId: 'tenant-spark-gym',
-      homeBranchId: 'branch-ramallah-main',
+      homeBranchId: 'Platinum Fitness',
       memberNumber: 'MEM-0003',
       fullName: 'Maya Saleh',
       status: 'active',
@@ -184,7 +258,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'member-004',
       tenantId: 'tenant-spark-gym',
-      homeBranchId: 'branch-ramallah-main',
+      homeBranchId: 'Platinum Fitness',
       memberNumber: 'MEM-0004',
       fullName: 'Tariq Nasser',
       status: 'inactive',
@@ -244,8 +318,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-001',
       memberId: 'member-001',
       planId: 'plan-monthly-flex',
-      startDate: '2026-05-15',
-      endDate: '2026-06-20',
+      startDate: '2026-06-01',
+      endDate: '2027-06-01',
       status: 'active',
       finalPrice: 120,
     },
@@ -254,7 +328,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
       memberId: 'member-002',
       planId: 'plan-ramallah-standard',
       startDate: '2026-06-01',
-      endDate: '2026-06-08',
+      endDate: '2027-06-01',
       status: 'active',
       finalPrice: 95,
     },
@@ -262,8 +336,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-003',
       memberId: 'member-003',
       planId: 'plan-monthly-flex',
-      startDate: '2026-05-01',
-      endDate: '2026-06-06',
+      startDate: '2026-06-01',
+      endDate: '2027-06-01',
       status: 'active',
       finalPrice: 110,
     },
@@ -271,8 +345,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-004',
       memberId: 'member-004',
       planId: 'plan-ramallah-standard',
-      startDate: '2026-05-01',
-      endDate: '2026-06-30',
+      startDate: '2026-06-01',
+      endDate: '2027-06-01',
       status: 'active',
       finalPrice: 85,
     },
@@ -280,8 +354,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-005',
       memberId: 'member-005',
       planId: 'plan-monthly-flex',
-      startDate: '2026-05-12',
-      endDate: '2026-06-25',
+      startDate: '2026-06-01',
+      endDate: '2027-06-01',
       status: 'active',
       finalPrice: 140,
     },
@@ -289,8 +363,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-006',
       memberId: 'member-006',
       planId: 'plan-other-monthly',
-      startDate: '2026-05-10',
-      endDate: '2026-06-18',
+      startDate: '2026-06-01',
+      endDate: '2027-06-01',
       status: 'active',
       finalPrice: 150,
     },
@@ -308,7 +382,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'visit-001',
       memberId: 'member-001',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       checkInTime: '2026-06-05T08:05:00.000Z',
       checkOutTime: '2026-06-05T09:45:00.000Z',
       accessMethod: 'manual',
@@ -316,7 +390,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'visit-002',
       memberId: 'member-002',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       checkInTime: '2026-06-05T09:15:00.000Z',
       checkOutTime: '2026-06-05T10:50:00.000Z',
       accessMethod: 'qr',
@@ -324,7 +398,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'visit-003',
       memberId: 'member-003',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       checkInTime: '2026-06-05T18:20:00.000Z',
       checkOutTime: null,
       accessMethod: 'manual',
@@ -340,7 +414,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'visit-005',
       memberId: 'member-001',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       checkInTime: '2026-06-04T17:10:00.000Z',
       checkOutTime: '2026-06-04T18:55:00.000Z',
       accessMethod: 'manual',
@@ -358,7 +432,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'payment-001',
       tenantId: 'tenant-spark-gym',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       memberId: 'member-001',
       membershipId: 'membership-001',
       amount: 120,
@@ -369,7 +443,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'payment-002',
       tenantId: 'tenant-spark-gym',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       memberId: 'member-002',
       membershipId: 'membership-002',
       amount: 95,
@@ -380,7 +454,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'payment-003',
       tenantId: 'tenant-spark-gym',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       memberId: 'member-003',
       membershipId: 'membership-003',
       amount: 75,
@@ -413,7 +487,7 @@ export const defaultOperationsSeed: OperationsStoreData = {
     {
       id: 'payment-006',
       tenantId: 'tenant-spark-gym',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       memberId: 'member-003',
       membershipId: 'membership-003',
       amount: 90,
@@ -484,7 +558,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
 export function readOperationsStore() {
   ensureOperationsStoreFile();
 
-  const rawStore = readFileSync(OPERATIONS_STORE_PATH, 'utf8');
+  const { storePath } = getStorePaths();
+  const rawStore = readFileSync(storePath, 'utf8');
   const parsedStore = JSON.parse(rawStore) as OperationsStoreData;
   const normalizedStore = normalizeOperationsStore(parsedStore);
 
@@ -497,38 +572,35 @@ export function readOperationsStore() {
 
 export function writeOperationsStore(store: OperationsStoreData) {
   ensureOperationsStoreFile();
-  writeFileSync(OPERATIONS_STORE_PATH, JSON.stringify(store, null, 2) + '\n');
+  const { storePath } = getStorePaths();
+  writeFileSync(storePath, JSON.stringify(store, null, 2) + '\n');
 }
 
 function ensureOperationsStoreFile() {
-  const dataDirectory = join(API_ROOT_PATH, 'data');
-  const localDirectory = join(API_ROOT_PATH, '.local');
+  const { seedPath, storePath, dataDir, localDir } = getStorePaths();
 
-  if (!existsSync(dataDirectory)) {
-    mkdirSync(dataDirectory, { recursive: true });
+  if (!existsSync(dataDir)) {
+    mkdirSync(dataDir, { recursive: true });
   }
 
-  if (!existsSync(localDirectory)) {
-    mkdirSync(localDirectory, { recursive: true });
+  if (!existsSync(localDir)) {
+    mkdirSync(localDir, { recursive: true });
   }
 
-  if (!existsSync(OPERATIONS_SEED_PATH)) {
+  if (!existsSync(seedPath)) {
     writeFileSync(
-      OPERATIONS_SEED_PATH,
+      seedPath,
       JSON.stringify(defaultOperationsSeed, null, 2) + '\n',
     );
   }
 
-  if (!existsSync(OPERATIONS_STORE_PATH)) {
-    const rawSeed = readFileSync(OPERATIONS_SEED_PATH, 'utf8');
+  if (!existsSync(storePath)) {
+    const rawSeed = readFileSync(seedPath, 'utf8');
     const parsedSeed = normalizeOperationsStore(
       JSON.parse(rawSeed) as OperationsStoreData,
     );
 
-    writeFileSync(
-      OPERATIONS_STORE_PATH,
-      JSON.stringify(parsedSeed, null, 2) + '\n',
-    );
+    writeFileSync(storePath, JSON.stringify(parsedSeed, null, 2) + '\n');
   }
 }
 
@@ -558,6 +630,8 @@ function normalizeOperationsStore(store: OperationsStoreData) {
     ...store,
     notifications: store.notifications ?? [],
     freezes: store.freezes ?? [],
+    gates: store.gates ?? [],
+    employees: store.employees ?? [],
     branches: store.branches.map((branch) => ({
       ...branch,
       status: branch.status ?? 'active',

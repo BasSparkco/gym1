@@ -5,6 +5,8 @@ import { listMembershipsForMember, renewMembership } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import DateInput from "@/components/date-input";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -15,11 +17,13 @@ export default async function RenewMembershipPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const [member, memberships, plans] = await Promise.all([
+  const [member, memberships, plans, settings] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
     listMembershipPlans(),
+    getSettings(),
   ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const sorted = memberships
     .slice()
@@ -153,13 +157,7 @@ export default async function RenewMembershipPage({ params }: Props) {
                       — defaults to day after current end
                     </span>
                   </label>
-                  <input
-                    id="startDate"
-                    name="startDate"
-                    type="date"
-                    defaultValue={defaultStartDate}
-                    className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  />
+                  <DateInput id="startDate" name="startDate" dateFormat={dateFormat} defaultValue={defaultStartDate} />
                 </div>
 
                 <div className="grid gap-1.5">

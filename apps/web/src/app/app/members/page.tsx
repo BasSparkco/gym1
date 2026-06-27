@@ -3,6 +3,8 @@ import { listAllMemberships } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 
 type SearchParams = { q?: string; ms?: string };
@@ -41,11 +43,13 @@ export default async function MembersPage({
   const t = await getT();
   const { q, ms } = await searchParams;
 
-  const [allMembers, allMemberships, allPlans] = await Promise.all([
+  const [allMembers, allMemberships, allPlans, settings] = await Promise.all([
     listMembers(),
     listAllMemberships(),
     listMembershipPlans(),
+    getSettings(),
   ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const planMap = new Map(allPlans.map((p) => [p.id, p]));
 
@@ -272,7 +276,7 @@ export default async function MembersPage({
                         {primaryMs.endDate && (
                           <span className="text-foreground/40">
                             · expires{" "}
-                            {new Date(primaryMs.endDate).toLocaleDateString()}
+                            {formatDate(primaryMs.endDate, dateFormat)}
                           </span>
                         )}
                         <span

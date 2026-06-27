@@ -4,6 +4,8 @@ import { getVisit, checkOutVisit } from "@/lib/visits";
 import { getMember } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 
@@ -14,7 +16,8 @@ export default async function VisitDetailPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const visit = await getVisit(visitId);
+  const [visit, settings] = await Promise.all([getVisit(visitId), getSettings()]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   let member = null;
   try {
@@ -29,15 +32,9 @@ export default async function VisitDetailPage({ params }: Props) {
     revalidatePath(`/app/visits/${visitId}`);
   }
 
-  const localCheckInTime = new Date(visit.checkInTime).toLocaleString("en-US", {
-    dateStyle: "long",
-    timeStyle: "medium",
-  });
+  const localCheckInTime = formatDateTime(visit.checkInTime, dateFormat);
   const localCheckOutTime = visit.checkOutTime
-    ? new Date(visit.checkOutTime).toLocaleString("en-US", {
-        dateStyle: "long",
-        timeStyle: "medium",
-      })
+    ? formatDateTime(visit.checkOutTime, dateFormat)
     : null;
 
   return (
@@ -91,10 +88,16 @@ export default async function VisitDetailPage({ params }: Props) {
                     "rounded-full px-2.5 py-0.5 text-xs font-medium",
                     visit.accessMethod === "qr"
                       ? "bg-blue-100 text-blue-700"
-                      : "bg-gray-100 text-gray-600",
+                      : visit.accessMethod === "rfid"
+                        ? "bg-violet-100 text-violet-700"
+                        : "bg-gray-100 text-gray-600",
                   ].join(" ")}
                 >
-                  {visit.accessMethod === "qr" ? t.visits.qrScan : t.visits.manualEntry}
+                  {visit.accessMethod === "qr"
+                    ? t.visits.qrScan
+                    : visit.accessMethod === "rfid"
+                      ? "RFID"
+                      : t.visits.manualEntry}
                 </span>
               </dd>
             </div>

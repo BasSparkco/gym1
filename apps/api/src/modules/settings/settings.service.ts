@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  DateFormat,
   Language,
   NotificationSenderSettings,
   NotificationSettings,
@@ -10,12 +11,14 @@ import {
 } from '../../data/settings-store';
 
 const VALID_LANGUAGES = new Set<Language>(['en', 'ar', 'he']);
+const VALID_DATE_FORMATS = new Set<DateFormat>(['dd/mm/yyyy', 'mm/dd/yyyy']);
 
 export type UpdateSettingsInput = {
   defaultLanguage?: string;
   enabledLanguages?: string[];
   notificationSettings?: NotificationSettings;
   notificationSenders?: NotificationSenderSettings;
+  dateFormat?: string;
 };
 
 @Injectable()
@@ -35,6 +38,7 @@ export class SettingsService {
         found.notificationSettings ?? defaults.notificationSettings,
       notificationSenders:
         found.notificationSenders ?? defaults.notificationSenders,
+      dateFormat: found.dateFormat ?? defaults.dateFormat,
     };
   }
 
@@ -74,12 +78,18 @@ export class SettingsService {
       ? this.normalizeNotificationSenders(input.notificationSenders)
       : current.notificationSenders;
 
+    const rawDateFormat = input.dateFormat ?? current.dateFormat;
+    const dateFormat = VALID_DATE_FORMATS.has(rawDateFormat as DateFormat)
+      ? (rawDateFormat as DateFormat)
+      : current.dateFormat;
+
     const next: TenantSettingsRecord = {
       tenantId,
       defaultLanguage,
       enabledLanguages: uniqueEnabled,
       notificationSettings,
       notificationSenders,
+      dateFormat,
     };
 
     const store = readSettingsStore();

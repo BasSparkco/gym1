@@ -28,6 +28,11 @@ const navigationItems: NavigationItem[] = [
     roles: ["owner", "manager"],
   },
   {
+    labelKey: "employees",
+    href: "/app/employees",
+    roles: ["owner", "manager"],
+  },
+  {
     labelKey: "membershipPlans",
     href: "/app/membership-plans",
     roles: ["owner", "manager"],

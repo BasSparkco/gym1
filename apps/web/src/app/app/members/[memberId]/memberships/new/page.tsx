@@ -5,6 +5,9 @@ import { listMembershipsForMember, createMembership } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDate } from "@/lib/date-format";
+import DateInput from "@/components/date-input";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -15,11 +18,13 @@ export default async function SellMembershipPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const [member, memberships, plans] = await Promise.all([
+  const [member, memberships, plans, settings] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
     listMembershipPlans(),
+    getSettings(),
   ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const activeMembership = memberships.find((ms) => ms.status === "active");
   const today = new Date().toISOString().slice(0, 10);
@@ -60,7 +65,7 @@ export default async function SellMembershipPage({ params }: Props) {
           <p className="font-medium text-yellow-800">{t.memberships.activeMembershipExists}</p>
           <p className="mt-1 text-yellow-700">
             This member already has an active membership ({activeMembership.plan?.name ?? activeMembership.planId},{" "}
-            ends {activeMembership.endDate}). Selling a new one will be rejected unless the active membership
+            ends {formatDate(activeMembership.endDate, dateFormat)}). Selling a new one will be rejected unless the active membership
             is first expired or cancelled.
           </p>
         </section>
@@ -104,14 +109,7 @@ export default async function SellMembershipPage({ params }: Props) {
               <label htmlFor="startDate" className="text-sm font-medium">
                 {t.memberships.startDate} <span className="text-red-500">*</span>
               </label>
-              <input
-                id="startDate"
-                name="startDate"
-                type="date"
-                defaultValue={today}
-                required
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
+              <DateInput id="startDate" name="startDate" dateFormat={dateFormat} defaultValue={today} required />
             </div>
 
             <div className="grid gap-1.5">
@@ -119,12 +117,7 @@ export default async function SellMembershipPage({ params }: Props) {
                 {t.memberships.endDate}{" "}
                 <span className="text-foreground/40 font-normal">— auto-calculated for duration plans</span>
               </label>
-              <input
-                id="endDate"
-                name="endDate"
-                type="date"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
+              <DateInput id="endDate" name="endDate" dateFormat={dateFormat} />
             </div>
           </div>
 

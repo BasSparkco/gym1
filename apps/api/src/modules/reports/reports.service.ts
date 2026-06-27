@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SessionUser } from '../auth/auth.service';
+import { localDateString } from '../../common/date';
 import { readOperationsStore } from '../../data/operations-store';
 import { MembersService } from '../members/members.service';
 import { MembershipsService } from '../memberships/memberships.service';
@@ -126,7 +127,7 @@ export class ReportsService {
     const today = this.membersService.getReportingDate();
     const memberIds = new Set(
       store.members
-        .filter((m) => m.tenantId === user.tenant.id && m.status === 'active')
+        .filter((m) => m.tenantId === user.tenant.id)
         .map((m) => m.id),
     );
 
@@ -271,7 +272,7 @@ export class ReportsService {
   }
 
   private toDateKey(dateTime: string) {
-    return new Date(dateTime).toISOString().slice(0, 10);
+    return localDateString(new Date(dateTime));
   }
 
   private formatDate(dateKey: string) {

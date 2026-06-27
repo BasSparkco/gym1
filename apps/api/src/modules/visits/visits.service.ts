@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { localDateString } from '../../common/date';
 import {
   MembershipPlanRecord,
   MembershipRecord,
@@ -86,7 +87,7 @@ export class VisitsService {
     }
 
     const store = readOperationsStore();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateString();
 
     const member = store.members.find(
       (m) =>
@@ -96,10 +97,6 @@ export class VisitsService {
 
     if (!member) {
       return { granted: false, reason: 'Member not found.' };
-    }
-
-    if (member.status !== 'active') {
-      return { granted: false, reason: 'Member account is inactive.' };
     }
 
     const membership = store.memberships.find(
@@ -150,7 +147,7 @@ export class VisitsService {
         id: member.id,
         fullName: member.fullName,
         memberNumber: member.memberNumber,
-        status: member.status,
+        status: 'active' as const,
       },
       membership: { ...membership, plan },
       visit,

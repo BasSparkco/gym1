@@ -40,11 +40,12 @@ Current completed work
 * Settings link added to the sidebar navigation, visible to owners only.
 * MVP feature set (Sprints 1-8) is complete: branches, members, membership plans, sales/renewals/freezes/unfreezes, payments, check-in, visits, notifications list, reports, role guards, and pilot-ready e2e coverage. See [status.md](status.md) for the full sprint history.
 * Notification delivery groundwork is in place: a pluggable `NotificationProvider` interface with a console/log stand-in provider, a dispatch service that updates record status/sentAt, owner/manager-only scan and dispatch endpoints, and event-driven notification creation wired into membership sales/renewals and pending payments — all gated by the existing per-event channel settings in Settings -> Notifications. Real SMS/WhatsApp/email backends are not yet connected (see [status.md](status.md) "Notification Delivery — Groundwork").
+* SparkCo messaging is live: email and WhatsApp delivery confirmed end-to-end via `POST /api/v1/messages/send`. SMTP removed — SparkCo handles all delivery.
+* Pilot release gate walkthrough complete: full member lifecycle confirmed end-to-end with real credentials.
 
 Current next focus
 
-* Wire real SMS/WhatsApp/email delivery backends behind the `NotificationProvider` interface and add a scheduled job to run the expiry scan and dispatch automatically.
-* Pilot release gate walkthrough: full member lifecycle end-to-end with real credentials.
+* **Phase 4 — RFID access control** (customer priority for demo): add RFID tag to member profiles, dedicated `POST /access/rfid` endpoint, turnstile grant/deny signal, access log, and member tag assignment UI. Phases 2 and 3 deferred until after the demo and real-data pilot.
 
 ---
 
@@ -218,27 +219,32 @@ Deliverables
 
 Status
 
-* Not Started
+* In Progress (RFID access control — customer demo priority)
 
 Modules
 
 ### Device Integrations
 
-* Face recognition
-* Fingerprint systems
-* RFID access
-* Turnstiles
-* Smart gates
+* RFID access — **In Progress**
+  * `rfidTag` field on member record
+  * `POST /access/rfid` endpoint: lookup by tag, validate membership, return grant/deny, log visit
+  * Turnstile/gate signal in API response (open/deny) for hardware to act on
+  * Member tag assignment UI (create/edit member form)
+  * Access log visible in visits list with `rfid` access method badge
+* Fingerprint systems — Not Started
+* Face recognition — Not Started
+* Turnstiles — hardware wiring (depends on RFID sprint)
+* Smart gates — Not Started
 
 ### Payments
 
-* Regional payment gateways
-* Online payments
+* Regional payment gateways — Not Started
+* Online payments — Not Started
 
 ### API Platform
 
-* Public API
-* Partner integrations
+* Public API — Not Started
+* Partner integrations — Not Started
 
 Deliverables
 

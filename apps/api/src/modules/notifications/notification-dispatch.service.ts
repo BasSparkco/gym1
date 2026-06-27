@@ -17,7 +17,6 @@ import {
 } from '../../data/settings-store';
 import { ConsoleNotificationProvider } from './providers/console-notification.provider';
 import type { NotificationProvider } from './providers/notification-provider.interface';
-import { SmtpNotificationProvider } from './providers/smtp-notification.provider';
 import { SparkcoNotificationProvider } from './providers/sparkco-notification.provider';
 
 export type DispatchSummary = {
@@ -31,7 +30,6 @@ export class NotificationDispatchService {
   constructor(
     private readonly consoleProvider: ConsoleNotificationProvider,
     private readonly sparkcoProvider: SparkcoNotificationProvider,
-    private readonly smtpProvider: SmtpNotificationProvider,
   ) {}
 
   async dispatchNotificationForTenant(
@@ -132,6 +130,7 @@ export class NotificationDispatchService {
       from: notification.channel === 'email' ? senders.emailFrom : undefined,
       subject: notification.subject,
       body: notification.body,
+      sessionId: notification.channel === 'whatsapp' ? member?.homeBranchId : undefined,
     });
 
     return result.status === 'sent'
@@ -140,16 +139,7 @@ export class NotificationDispatchService {
   }
 
   private selectProvider(channel: NotificationChannel): NotificationProvider {
-    if (channel === 'email') {
-      const hasSmtp = !!(
-        process.env.SMTP_HOST &&
-        process.env.SMTP_USER &&
-        process.env.SMTP_PASSWORD
-      );
-      return hasSmtp ? this.smtpProvider : this.consoleProvider;
-    }
-
-    if (channel === 'whatsapp') {
+    if (channel === 'email' || channel === 'whatsapp') {
       return process.env.SPARKCO_API_KEY
         ? this.sparkcoProvider
         : this.consoleProvider;

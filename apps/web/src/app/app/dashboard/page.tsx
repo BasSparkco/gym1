@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getDashboardSummary } from "@/lib/dashboard";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, getLang } from "@/lib/i18n";
+import { formatDateLong } from "@/lib/date-format";
 
 type CardId =
   | "active-memberships"
@@ -11,8 +12,7 @@ type CardId =
 
 export default async function DashboardPage() {
   const session = await requireSession();
-  const t = await getT();
-  const dashboardSummary = await getDashboardSummary();
+  const [t, lang, dashboardSummary] = await Promise.all([getT(), getLang(), getDashboardSummary()]);
 
   const cardLabel: Record<CardId, string> = {
     "active-memberships": t.dashboard.cardActiveMemberships,
@@ -42,14 +42,7 @@ export default async function DashboardPage() {
     "Check in member": "/app/check-in",
   };
 
-  const reportingDate = new Date(
-    `${dashboardSummary.scope.asOfDate}T00:00:00.000Z`,
-  ).toLocaleDateString(undefined, {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+  const reportingDate = formatDateLong(dashboardSummary.scope.asOfDate, lang);
 
   return (
     <div className="grid gap-6">

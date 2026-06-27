@@ -5,6 +5,9 @@ import { listMembershipsForMember, listFreezesForMembership, createFreeze } from
 import { getMembershipPlan } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDate } from "@/lib/date-format";
+import DateInput from "@/components/date-input";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -15,10 +18,12 @@ export default async function FreezeMembershipPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const [member, memberships] = await Promise.all([
+  const [member, memberships, settings] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
+    getSettings(),
   ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const activeMembership = memberships.find((ms) => ms.status === "active") ?? null;
 
@@ -91,7 +96,7 @@ export default async function FreezeMembershipPage({ params }: Props) {
             <div>
               <dt className="text-foreground/55">{t.memberships.period}</dt>
               <dd className="mt-0.5 font-medium">
-                {activeMembership.startDate} → {activeMembership.endDate}
+                {formatDate(activeMembership.startDate, dateFormat)} → {formatDate(activeMembership.endDate, dateFormat)}
               </dd>
             </div>
             <div>
@@ -118,7 +123,7 @@ export default async function FreezeMembershipPage({ params }: Props) {
                 className="flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-2.5 text-sm"
               >
                 <span className="font-medium">
-                  {f.startDate} → {f.endDate}
+                  {formatDate(f.startDate, dateFormat)} → {formatDate(f.endDate, dateFormat)}
                 </span>
                 <span className="text-foreground/50 text-xs">
                   {Math.ceil(
@@ -141,27 +146,14 @@ export default async function FreezeMembershipPage({ params }: Props) {
                 <label htmlFor="startDate" className="text-sm font-medium">
                   {t.memberships.freezeStartDate} <span className="text-red-500">*</span>
                 </label>
-                <input
-                  id="startDate"
-                  name="startDate"
-                  type="date"
-                  defaultValue={today}
-                  required
-                  className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                />
+                <DateInput id="startDate" name="startDate" dateFormat={dateFormat} defaultValue={today} required />
               </div>
 
               <div className="grid gap-1.5">
                 <label htmlFor="endDate" className="text-sm font-medium">
                   {t.memberships.freezeEndDate} <span className="text-red-500">*</span>
                 </label>
-                <input
-                  id="endDate"
-                  name="endDate"
-                  type="date"
-                  required
-                  className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                />
+                <DateInput id="endDate" name="endDate" dateFormat={dateFormat} required />
               </div>
             </div>
 

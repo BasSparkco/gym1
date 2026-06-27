@@ -4,6 +4,8 @@ import { getMember } from "@/lib/members";
 import { listMembershipsForMember, unfreezeMembership } from "@/lib/memberships";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -14,10 +16,12 @@ export default async function UnfreezeMembershipPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const [member, memberships] = await Promise.all([
+  const [member, memberships, settings] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
+    getSettings(),
   ]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const frozenMembership = memberships.find((ms) => ms.status === "frozen") ?? null;
 
@@ -74,7 +78,7 @@ export default async function UnfreezeMembershipPage({ params }: Props) {
               <div>
                 <dt className="text-foreground/55">{t.memberships.period}</dt>
                 <dd className="mt-0.5 font-medium">
-                  {frozenMembership.startDate} → {frozenMembership.endDate}
+                  {formatDate(frozenMembership.startDate, dateFormat)} → {formatDate(frozenMembership.endDate, dateFormat)}
                 </dd>
               </div>
               <div>

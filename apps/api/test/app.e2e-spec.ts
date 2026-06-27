@@ -1,35 +1,43 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, rmSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
+const testDataRoot = join(tmpdir(), `gym-e2e-${process.pid}`);
+
 describe('API (e2e)', () => {
   let app: INestApplication;
-  const apiLocalPath = join(process.cwd(), '.local');
-  const apiDataPath = join(process.cwd(), 'data');
-  const authStorePath = join(apiLocalPath, 'auth-store.json');
-  const operationsStorePath = join(apiLocalPath, 'operations-store.json');
-  const operationsSeedPath = join(apiDataPath, 'operations-seed.json');
 
   function getHttpServer() {
     return app.getHttpServer() as unknown as App;
   }
 
   beforeEach(async () => {
-    if (existsSync(authStorePath)) {
-      rmSync(authStorePath);
+    // Redirect all store I/O to an isolated temp directory so tests never
+    // touch the live .local/ data on the host machine.
+    process.env.API_DATA_ROOT = testDataRoot;
+
+    const localDir = join(testDataRoot, '.local');
+    const dataDir = join(testDataRoot, 'data');
+
+    if (existsSync(join(localDir, 'auth-store.json'))) {
+      rmSync(join(localDir, 'auth-store.json'));
     }
 
-    if (existsSync(operationsStorePath)) {
-      rmSync(operationsStorePath);
+    if (existsSync(join(localDir, 'operations-store.json'))) {
+      rmSync(join(localDir, 'operations-store.json'));
     }
 
-    if (existsSync(operationsSeedPath)) {
-      rmSync(operationsSeedPath);
+    if (existsSync(join(dataDir, 'operations-seed.json'))) {
+      rmSync(join(dataDir, 'operations-seed.json'));
     }
+
+    mkdirSync(localDir, { recursive: true });
+    mkdirSync(dataDir, { recursive: true });
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -38,6 +46,13 @@ describe('API (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
     await app.init();
+  });
+
+  afterAll(() => {
+    if (existsSync(testDataRoot)) {
+      rmSync(testDataRoot, { recursive: true, force: true });
+    }
+    delete process.env.API_DATA_ROOT;
   });
 
   it('/api (GET)', () => {
@@ -106,7 +121,7 @@ describe('API (e2e)', () => {
         name: 'Spark Gym',
       },
       branch: {
-        id: 'branch-ramallah-main',
+        id: 'Platinum Fitness',
         name: 'Ramallah Main Branch',
       },
     });
@@ -143,7 +158,7 @@ describe('API (e2e)', () => {
 
     expect(dashboardSummaryBody.scope).toMatchObject({
       tenantId: 'tenant-spark-gym',
-      branchId: 'branch-ramallah-main',
+      branchId: 'Platinum Fitness',
       role: 'front-desk',
     });
     expect(dashboardSummaryBody.cards).toEqual(
@@ -154,11 +169,11 @@ describe('API (e2e)', () => {
         }),
         expect.objectContaining({
           label: "Today's check-ins",
-          value: '3',
+          value: '0',
         }),
         expect.objectContaining({
           label: 'Payments today',
-          value: '$215',
+          value: '$0',
         }),
       ]),
     );
@@ -198,7 +213,7 @@ describe('API (e2e)', () => {
 
     expect(createdMemberBody.member).toMatchObject({
       fullName: 'Rami Haddad',
-      homeBranchId: 'branch-ramallah-main',
+      homeBranchId: 'Platinum Fitness',
     });
 
     const createMembershipResponse = await request(getHttpServer())
@@ -225,12 +240,14 @@ describe('API (e2e)', () => {
       createdMemberBody.member.id,
     );
 
+    const now = new Date().toISOString();
+
     await request(getHttpServer())
       .post('/api/visits')
       .set('Cookie', sessionCookies)
       .send({
         memberId: createdMemberBody.member.id,
-        checkInTime: '2026-06-05T14:30:00.000Z',
+        checkInTime: now,
         accessMethod: 'manual',
       })
       .expect(201);
@@ -242,7 +259,7 @@ describe('API (e2e)', () => {
         memberId: createdMemberBody.member.id,
         membershipId: createdMembershipBody.membership.id,
         amount: 130,
-        paymentDate: '2026-06-05T14:45:00.000Z',
+        paymentDate: now,
         status: 'paid',
         paymentMethod: 'cash',
       })
@@ -287,11 +304,11 @@ describe('API (e2e)', () => {
         }),
         expect.objectContaining({
           label: "Today's check-ins",
-          value: '4',
+          value: '1',
         }),
         expect.objectContaining({
           label: 'Payments today',
-          value: '$345',
+          value: '$130',
         }),
       ]),
     );
@@ -487,7 +504,7 @@ describe('API (e2e)', () => {
         name: 'Branch Manager',
         role: 'manager',
         password: 'manager123',
-        branchId: 'branch-ramallah-main',
+        branchId: 'Platinum Fitness',
         branchName: 'Ramallah Main Branch',
       })
       .expect(201);
@@ -558,7 +575,7 @@ describe('API (e2e)', () => {
         name: 'Duplicate Owner',
         role: 'owner',
         password: 'owner123',
-        branchId: 'branch-ramallah-main',
+        branchId: 'Platinum Fitness',
         branchName: 'Ramallah Main Branch',
       })
       .expect(400);
@@ -1430,6 +1447,72 @@ describe('API (e2e)', () => {
       .post(`/api/memberships/${membershipId}/unfreeze`)
       .set('Cookie', sessionCookies)
       .expect(400);
+  });
+
+  it('BAS-IP access: grants entry for a member with an assigned RFID tag and active membership', async () => {
+    process.env.DEVICE_TOKEN = 'test-device-token';
+
+    const signInResponse = await request(getHttpServer())
+      .post('/api/auth/sign-in')
+      .send({ identifier: 'owner@sparkgym.local', password: 'owner123' })
+      .expect(200);
+    const sessionCookies = signInResponse.get('Set-Cookie');
+
+    // Create a member and assign an RFID tag
+    const memberResponse = await request(getHttpServer())
+      .post('/api/members')
+      .set('Cookie', sessionCookies)
+      .send({ fullName: 'RFID Tester', rfidTag: 'AABBCCDD' })
+      .expect(201);
+    const memberId = (memberResponse.body as { member: { id: string } }).member.id;
+
+    // Sell an active membership
+    const plansResponse = await request(getHttpServer())
+      .get('/api/memberships/plans')
+      .set('Cookie', sessionCookies)
+      .expect(200);
+    const planId = (plansResponse.body as { plans: { id: string }[] }).plans[0].id;
+
+    const today = new Date().toISOString().slice(0, 10);
+    await request(getHttpServer())
+      .post('/api/memberships')
+      .set('Cookie', sessionCookies)
+      .send({ memberId, planId, startDate: today })
+      .expect(201);
+
+    // BAS-IP device POSTs with real payload format → granted
+    const grantedResponse = await request(getHttpServer())
+      .post('/api/access/bas-ip?branchId=Platinum Fitness&token=test-device-token')
+      .send({ identifier_number: 'AABBCCDD', identifier_type: 'card' })
+      .expect(200);
+
+    expect(grantedResponse.body).toMatchObject({
+      handled: true,
+      access: { granted: true, lock_number: 1 },
+    });
+  });
+
+  it('BAS-IP access: denies entry for an unknown card', async () => {
+    process.env.DEVICE_TOKEN = 'test-device-token';
+
+    const deniedResponse = await request(getHttpServer())
+      .post('/api/access/bas-ip?branchId=Platinum Fitness&token=test-device-token')
+      .send({ identifier_number: 'UNKNOWN00', identifier_type: 'card' })
+      .expect(200);
+
+    expect(deniedResponse.body).toMatchObject({
+      handled: true,
+      access: { granted: false },
+    });
+  });
+
+  it('BAS-IP access: rejects requests with an invalid token', async () => {
+    process.env.DEVICE_TOKEN = 'test-device-token';
+
+    await request(getHttpServer())
+      .post('/api/access/bas-ip?branchId=Platinum Fitness&token=wrong-token')
+      .send({ identifier_number: 'AABBCCDD', identifier_type: 'card' })
+      .expect(401);
   });
 
   afterEach(async () => {

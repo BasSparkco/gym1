@@ -2,11 +2,12 @@
   "reportingDate": "2026-06-05",
   "branches": [
     {
-      "id": "branch-ramallah-main",
+      "id": "Platinum Fitness",
       "tenantId": "tenant-spark-gym",
-      "name": "Ramallah Main Branch",
-      "address": "Al-Irsal St, Ramallah",
-      "phone": "+970-2-296-0000",
+      "name": "Platinum Fitness",
+      "address": "Al-Jareda St, Jerusalem",
+      "phone": "+972-2-626-0000",
+      "countryCode": "IL",
       "status": "active"
     },
     {
@@ -15,6 +16,7 @@
       "name": "Nablus North Branch",
       "address": "Rafidia St, Nablus",
       "phone": "+970-9-238-0000",
+      "countryCode": "PS",
       "status": "active"
     },
     {
@@ -28,7 +30,7 @@
     {
       "id": "member-001",
       "tenantId": "tenant-spark-gym",
-      "homeBranchId": "branch-ramallah-main",
+      "homeBranchId": "Platinum Fitness",
       "memberNumber": "MEM-0001",
       "fullName": "Lina Ahmad",
       "status": "active"
@@ -36,7 +38,7 @@
     {
       "id": "member-002",
       "tenantId": "tenant-spark-gym",
-      "homeBranchId": "branch-ramallah-main",
+      "homeBranchId": "Platinum Fitness",
       "memberNumber": "MEM-0002",
       "fullName": "Omar Khalil",
       "status": "active"
@@ -44,7 +46,7 @@
     {
       "id": "member-003",
       "tenantId": "tenant-spark-gym",
-      "homeBranchId": "branch-ramallah-main",
+      "homeBranchId": "Platinum Fitness",
       "memberNumber": "MEM-0003",
       "fullName": "Maya Saleh",
       "status": "active"
@@ -52,7 +54,7 @@
     {
       "id": "member-004",
       "tenantId": "tenant-spark-gym",
-      "homeBranchId": "branch-ramallah-main",
+      "homeBranchId": "Platinum Fitness",
       "memberNumber": "MEM-0004",
       "fullName": "Tariq Nasser",
       "status": "inactive"
@@ -176,7 +178,7 @@
     {
       "id": "visit-001",
       "memberId": "member-001",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "checkInTime": "2026-06-05T08:05:00.000Z",
       "checkOutTime": "2026-06-05T09:45:00.000Z",
       "accessMethod": "manual"
@@ -184,7 +186,7 @@
     {
       "id": "visit-002",
       "memberId": "member-002",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "checkInTime": "2026-06-05T09:15:00.000Z",
       "checkOutTime": "2026-06-05T10:50:00.000Z",
       "accessMethod": "qr"
@@ -192,7 +194,7 @@
     {
       "id": "visit-003",
       "memberId": "member-003",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "checkInTime": "2026-06-05T18:20:00.000Z",
       "checkOutTime": null,
       "accessMethod": "manual"
@@ -208,7 +210,7 @@
     {
       "id": "visit-005",
       "memberId": "member-001",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "checkInTime": "2026-06-04T17:10:00.000Z",
       "checkOutTime": "2026-06-04T18:55:00.000Z",
       "accessMethod": "manual"
@@ -216,7 +218,7 @@
     {
       "id": "visit-006",
       "memberId": "member-006",
-      "branchId": "branch-other-gym-main",
+      "branchId": "Platinum Fitness",
       "checkInTime": "2026-06-05T11:00:00.000Z",
       "checkOutTime": null,
       "accessMethod": "qr"
@@ -226,7 +228,7 @@
     {
       "id": "payment-001",
       "tenantId": "tenant-spark-gym",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "memberId": "member-001",
       "membershipId": "membership-001",
       "amount": 120,
@@ -237,7 +239,7 @@
     {
       "id": "payment-002",
       "tenantId": "tenant-spark-gym",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "memberId": "member-002",
       "membershipId": "membership-002",
       "amount": 95,
@@ -248,7 +250,7 @@
     {
       "id": "payment-003",
       "tenantId": "tenant-spark-gym",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "memberId": "member-003",
       "membershipId": "membership-003",
       "amount": 75,
@@ -259,7 +261,7 @@
     {
       "id": "payment-004",
       "tenantId": "tenant-spark-gym",
-      "branchId": "branch-nablus-north",
+      "branchId": "Platinum Fitness",
       "memberId": "member-005",
       "membershipId": "membership-005",
       "amount": 140,
@@ -281,7 +283,7 @@
     {
       "id": "payment-006",
       "tenantId": "tenant-spark-gym",
-      "branchId": "branch-ramallah-main",
+      "branchId": "Platinum Fitness",
       "memberId": "member-003",
       "membershipId": "membership-003",
       "amount": 90,

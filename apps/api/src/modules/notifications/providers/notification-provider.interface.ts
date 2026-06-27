@@ -7,6 +7,8 @@ export type NotificationDeliveryInput = {
   from?: string;
   subject: string;
   body: string;
+  /** Branch/session identifier — routes WhatsApp messages to the correct per-branch session. */
+  sessionId?: string;
 };
 
 export type NotificationDeliveryResult =

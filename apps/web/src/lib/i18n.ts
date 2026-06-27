@@ -8,6 +8,7 @@ export type Dict = {
     dashboard: string;
     branches: string;
     usersRoles: string;
+    employees: string;
     membershipPlans: string;
     members: string;
     checkIn: string;
@@ -104,6 +105,19 @@ export type Dict = {
     phone: string;
     email: string;
     dateOfBirth: string;
+    sex: string;
+    male: string;
+    female: string;
+    idNumber: string;
+    address: string;
+    joinDate: string;
+    height: string;
+    weight: string;
+    registeredEmployee: string;
+    photo: string;
+    uploadPhoto: string;
+    takePhoto: string;
+    changePhoto: string;
     homeBranch: string;
     emergencyContact: string;
     medicalNotes: string;
@@ -120,6 +134,9 @@ export type Dict = {
     qrCode: string;
     qrCodeDescription: string;
     printQrCode: string;
+    sendQrWhatsApp: string;
+    qrSentSuccess: string;
+    qrSentFailed: string;
   };
   plans: {
     title: string;
@@ -212,6 +229,9 @@ export type Dict = {
     accessGranted: string;
     accessDenied: string;
     expires: string;
+    openGate: string;
+    gateOpened: string;
+    gateOpenFailed: string;
   };
   visits: {
     title: string;
@@ -235,6 +255,9 @@ export type Dict = {
     filterWeek: string;
     filterMonth: string;
     filterAll: string;
+    filterPresenceAll: string;
+    filterInside: string;
+    filterCheckedOut: string;
   };
   branches: {
     title: string;
@@ -281,6 +304,43 @@ export type Dict = {
     owner: string;
     manager: string;
     frontDesk: string;
+  };
+  employees: {
+    title: string;
+    allEmployees: string;
+    newEmployee: string;
+    newStaffEmployee: string;
+    noEmployees: string;
+    createEmployee: string;
+    employeeNumber: string;
+    fullName: string;
+    andBranch: string;
+    branch: string;
+    status: string;
+    active: string;
+    inactive: string;
+    deactivate: string;
+    reactivate: string;
+    employeeDetails: string;
+    employeeId: string;
+    personalInfo: string;
+    employmentInfo: string;
+    systemAccess: string;
+    idNumber: string;
+    phone: string;
+    gender: string;
+    male: string;
+    female: string;
+    dateOfBirth: string;
+    job: string;
+    salary: string;
+    workType: string;
+    fullTime: string;
+    partTime: string;
+    trainee: string;
+    startDate: string;
+    endDate: string;
+    isUser: string;
   };
   notifications: {
     title: string;
@@ -358,6 +418,48 @@ export type Dict = {
     sendersSectionDescription: string;
     senderEmailFrom: string;
     senderEmailFromHelp: string;
+    display: string;
+    displayTitle: string;
+    displayDescription: string;
+    dateFormat: string;
+    dateFormatHelp: string;
+    dateFormatDDMMYYYY: string;
+    dateFormatMMDDYYYY: string;
+    saveDisplaySettings: string;
+    whatsapp: string;
+    whatsappTitle: string;
+    whatsappDescription: string;
+    whatsappConnectButton: string;
+    whatsappConnecting: string;
+    whatsappConnected: string;
+    whatsappDisconnect: string;
+    whatsappDisconnectConfirm: string;
+    whatsappScanInstruction: string;
+    whatsappStarting: string;
+    whatsappNotConfigured: string;
+    gates: string;
+    gatesTitle: string;
+    gatesDescription: string;
+    gatesEmpty: string;
+    gateAddButton: string;
+    gateName: string;
+    gateGenderRestriction: string;
+    gateGenderMale: string;
+    gateGenderFemale: string;
+    gateGenderNone: string;
+    gateDeviceUrl: string;
+    gateDeviceUrlHelp: string;
+    gateDeviceUsername: string;
+    gateDevicePassword: string;
+    gateDevicePasswordHelp: string;
+    gateLockNumber: string;
+    gateEnabled: string;
+    gateCreate: string;
+    gateUpdate: string;
+    gateDelete: string;
+    gateDeleteConfirm: string;
+    gateDeviceConfigured: string;
+    gateDeviceNotConfigured: string;
   };
 };
 
@@ -366,6 +468,7 @@ const en: Dict = {
     dashboard: "Dashboard",
     branches: "Branches",
     usersRoles: "Users & Roles",
+    employees: "Employees",
     membershipPlans: "Membership Plans",
     members: "Members",
     checkIn: "Check-In",
@@ -462,6 +565,19 @@ const en: Dict = {
     phone: "Phone",
     email: "Email",
     dateOfBirth: "Date of birth",
+    sex: "Sex",
+    male: "Male",
+    female: "Female",
+    idNumber: "ID Number",
+    address: "Address",
+    joinDate: "Join date",
+    height: "Height (cm)",
+    weight: "Weight (kg)",
+    registeredEmployee: "Registered by",
+    photo: "Photo",
+    uploadPhoto: "Upload photo",
+    takePhoto: "Take photo",
+    changePhoto: "Change photo",
     homeBranch: "Home branch",
     emergencyContact: "Emergency contact",
     medicalNotes: "Medical notes",
@@ -476,8 +592,11 @@ const en: Dict = {
     statusLabel: "Status",
     showQrCode: "Show QR code",
     qrCode: "Member QR code",
-    qrCodeDescription: "Scan this code at the check-in terminal to log a visit.",
+    qrCodeDescription: "Show this QR code at the gym entrance to open the gate.",
     printQrCode: "Print",
+    sendQrWhatsApp: "Send via WhatsApp",
+    qrSentSuccess: "QR code sent via WhatsApp!",
+    qrSentFailed: "Failed to send QR code.",
   },
   plans: {
     title: "Membership plans",
@@ -570,6 +689,9 @@ const en: Dict = {
     accessGranted: "Access Granted",
     accessDenied: "Access Denied",
     expires: "expires",
+    openGate: "Open Gate",
+    gateOpened: "Gate opened",
+    gateOpenFailed: "Failed to open gate",
   },
   visits: {
     title: "Visits",
@@ -593,6 +715,9 @@ const en: Dict = {
     filterWeek: "Last 7 days",
     filterMonth: "Last 30 days",
     filterAll: "All",
+    filterPresenceAll: "All",
+    filterInside: "Inside now",
+    filterCheckedOut: "Checked out",
   },
   branches: {
     title: "Branches",
@@ -639,6 +764,43 @@ const en: Dict = {
     owner: "Owner",
     manager: "Manager",
     frontDesk: "Front Desk",
+  },
+  employees: {
+    title: "Employees",
+    allEmployees: "All employees",
+    newEmployee: "New employee",
+    newStaffEmployee: "New staff employee",
+    noEmployees: "No employees found.",
+    createEmployee: "Create employee",
+    employeeNumber: "Employee no.",
+    fullName: "Full name",
+    andBranch: "and branch are required. An employee number will be assigned automatically.",
+    branch: "Branch",
+    status: "Status",
+    active: "Active",
+    inactive: "Inactive",
+    deactivate: "Deactivate",
+    reactivate: "Reactivate",
+    employeeDetails: "Employee details",
+    employeeId: "Employee ID",
+    personalInfo: "Personal information",
+    employmentInfo: "Employment information",
+    systemAccess: "System access",
+    idNumber: "ID number",
+    phone: "Mobile number",
+    gender: "Gender",
+    male: "Male",
+    female: "Female",
+    dateOfBirth: "Date of birth",
+    job: "Job title",
+    salary: "Salary",
+    workType: "Work type",
+    fullTime: "Full time",
+    partTime: "Part time",
+    trainee: "Trainee",
+    startDate: "Start date",
+    endDate: "End date",
+    isUser: "Has system user account",
   },
   notifications: {
     title: "Notifications",
@@ -716,6 +878,48 @@ const en: Dict = {
     sendersSectionDescription: "The email address your members will see in the \"from\" field when they receive a notification.",
     senderEmailFrom: "Email sender address",
     senderEmailFromHelp: "Email address members will see in the \"from\" field, e.g. notices@yourgym.com.",
+    display: "Display",
+    displayTitle: "Display settings",
+    displayDescription: "Control how dates and other values are displayed across the application.",
+    dateFormat: "Date format",
+    dateFormatHelp: "Choose how dates are displayed throughout the application.",
+    dateFormatDDMMYYYY: "DD/MM/YYYY (e.g. 24/06/2026)",
+    dateFormatMMDDYYYY: "MM/DD/YYYY (e.g. 06/24/2026)",
+    saveDisplaySettings: "Save display settings",
+    whatsapp: "WhatsApp",
+    whatsappTitle: "WhatsApp connection",
+    whatsappDescription: "Connect your gym's WhatsApp number so that member notifications are sent from your own number.",
+    whatsappConnectButton: "Connect WhatsApp",
+    whatsappConnecting: "Starting session…",
+    whatsappConnected: "Connected",
+    whatsappDisconnect: "Disconnect",
+    whatsappDisconnectConfirm: "Disconnect WhatsApp? Notifications will fall back to the platform number.",
+    whatsappScanInstruction: "Open WhatsApp on your phone → Linked Devices → Link a device → scan this QR code.",
+    whatsappStarting: "Starting WhatsApp session — QR will appear shortly…",
+    whatsappNotConfigured: "SparkCo API key is not configured on this server.",
+    gates: "Smart Gates",
+    gatesTitle: "Smart Gates",
+    gatesDescription: "Configure the electronic gates installed at this branch. Each gate connects to a BAS-IP device and can be restricted to a specific gender.",
+    gatesEmpty: "No gates configured yet.",
+    gateAddButton: "Add Gate",
+    gateName: "Gate Name",
+    gateGenderRestriction: "Gender Restriction",
+    gateGenderMale: "Men's Gate (male only)",
+    gateGenderFemale: "Women's Gate (female only)",
+    gateGenderNone: "No restriction",
+    gateDeviceUrl: "Device IP / URL",
+    gateDeviceUrlHelp: "Local network address of the BAS-IP device, e.g. http://192.168.1.178",
+    gateDeviceUsername: "Device Username",
+    gateDevicePassword: "Device Password",
+    gateDevicePasswordHelp: "Leave blank to keep the existing password.",
+    gateLockNumber: "Lock Number",
+    gateEnabled: "Enabled",
+    gateCreate: "Create Gate",
+    gateUpdate: "Save Changes",
+    gateDelete: "Delete Gate",
+    gateDeleteConfirm: "Delete this gate? This cannot be undone.",
+    gateDeviceConfigured: "Device configured",
+    gateDeviceNotConfigured: "No device configured",
   },
 };
 
@@ -724,6 +928,7 @@ const ar: Dict = {
     dashboard: "لوحة التحكم",
     branches: "الفروع",
     usersRoles: "المستخدمون والأدوار",
+    employees: "الموظفون",
     membershipPlans: "خطط الاشتراك",
     members: "الأعضاء",
     checkIn: "تسجيل الدخول",
@@ -820,6 +1025,19 @@ const ar: Dict = {
     phone: "الهاتف",
     email: "البريد الإلكتروني",
     dateOfBirth: "تاريخ الميلاد",
+    sex: "الجنس",
+    male: "ذكر",
+    female: "أنثى",
+    idNumber: "رقم الهوية",
+    address: "العنوان",
+    joinDate: "تاريخ الانتساب",
+    height: "الطول (سم)",
+    weight: "الوزن (كغم)",
+    registeredEmployee: "سجّله الموظف",
+    photo: "الصورة",
+    uploadPhoto: "رفع صورة",
+    takePhoto: "التقاط صورة",
+    changePhoto: "تغيير الصورة",
     homeBranch: "الفرع الرئيسي",
     emergencyContact: "جهة الاتصال في الطوارئ",
     medicalNotes: "ملاحظات طبية",
@@ -834,8 +1052,11 @@ const ar: Dict = {
     statusLabel: "الحالة",
     showQrCode: "عرض رمز QR",
     qrCode: "رمز QR للعضو",
-    qrCodeDescription: "امسح هذا الرمز في نقطة تسجيل الدخول لتسجيل زيارة.",
+    qrCodeDescription: "اعرض رمز QR هذا عند مدخل الصالة لفتح البوابة.",
     printQrCode: "طباعة",
+    sendQrWhatsApp: "إرسال عبر واتساب",
+    qrSentSuccess: "تم إرسال رمز QR عبر واتساب!",
+    qrSentFailed: "فشل إرسال رمز QR.",
   },
   plans: {
     title: "خطط الاشتراك",
@@ -928,6 +1149,9 @@ const ar: Dict = {
     accessGranted: "تم منح الوصول",
     accessDenied: "تم رفض الوصول",
     expires: "ينتهي",
+    openGate: "فتح البوابة",
+    gateOpened: "تم فتح البوابة",
+    gateOpenFailed: "فشل فتح البوابة",
   },
   visits: {
     title: "الزيارات",
@@ -951,6 +1175,9 @@ const ar: Dict = {
     filterWeek: "آخر 7 أيام",
     filterMonth: "آخر 30 يومًا",
     filterAll: "الكل",
+    filterPresenceAll: "الكل",
+    filterInside: "داخل الآن",
+    filterCheckedOut: "غادر",
   },
   branches: {
     title: "الفروع",
@@ -997,6 +1224,43 @@ const ar: Dict = {
     owner: "المالك",
     manager: "المدير",
     frontDesk: "الاستقبال",
+  },
+  employees: {
+    title: "الموظفون",
+    allEmployees: "جميع الموظفين",
+    newEmployee: "موظف جديد",
+    newStaffEmployee: "موظف جديد",
+    noEmployees: "لم يتم العثور على موظفين.",
+    createEmployee: "إضافة موظف",
+    employeeNumber: "رقم الموظف",
+    fullName: "الاسم الكامل",
+    andBranch: "والفرع مطلوبان. سيتم تعيين رقم الموظف تلقائياً.",
+    branch: "الفرع",
+    status: "الحالة",
+    active: "نشط",
+    inactive: "غير نشط",
+    deactivate: "تعطيل",
+    reactivate: "تفعيل",
+    employeeDetails: "بيانات الموظف",
+    employeeId: "معرف الموظف",
+    personalInfo: "المعلومات الشخصية",
+    employmentInfo: "معلومات التوظيف",
+    systemAccess: "صلاحيات النظام",
+    idNumber: "رقم الهوية",
+    phone: "رقم الجوال",
+    gender: "الجنس",
+    male: "ذكر",
+    female: "أنثى",
+    dateOfBirth: "تاريخ الميلاد",
+    job: "المسمى الوظيفي",
+    salary: "الراتب",
+    workType: "نوع العمل",
+    fullTime: "دوام كامل",
+    partTime: "دوام جزئي",
+    trainee: "متدرب",
+    startDate: "تاريخ بدء العمل",
+    endDate: "تاريخ انتهاء العمل",
+    isUser: "لديه حساب مستخدم في النظام",
   },
   notifications: {
     title: "الإشعارات",
@@ -1074,6 +1338,48 @@ const ar: Dict = {
     sendersSectionDescription: "عنوان البريد الإلكتروني الذي سيظهر للأعضاء في خانة \"من\" عند استلام الإشعار.",
     senderEmailFrom: "عنوان البريد الإلكتروني للمرسل",
     senderEmailFromHelp: "عنوان البريد الإلكتروني الذي سيظهر للأعضاء في خانة \"من\"، مثل notices@yourgym.com.",
+    display: "العرض",
+    displayTitle: "إعدادات العرض",
+    displayDescription: "تحكم في طريقة عرض التواريخ والقيم الأخرى في التطبيق.",
+    dateFormat: "صيغة التاريخ",
+    dateFormatHelp: "اختر كيف تظهر التواريخ في جميع أنحاء التطبيق.",
+    dateFormatDDMMYYYY: "يوم/شهر/سنة (مثال: 24/06/2026)",
+    dateFormatMMDDYYYY: "شهر/يوم/سنة (مثال: 06/24/2026)",
+    saveDisplaySettings: "حفظ إعدادات العرض",
+    whatsapp: "واتساب",
+    whatsappTitle: "ربط واتساب",
+    whatsappDescription: "اربط رقم واتساب الصالة حتى تُرسل إشعارات الأعضاء من رقمك الخاص.",
+    whatsappConnectButton: "ربط واتساب",
+    whatsappConnecting: "جارٍ بدء الجلسة…",
+    whatsappConnected: "متصل",
+    whatsappDisconnect: "قطع الاتصال",
+    whatsappDisconnectConfirm: "هل تريد قطع اتصال واتساب؟ ستُرسل الإشعارات من رقم المنصة.",
+    whatsappScanInstruction: "افتح واتساب على هاتفك ← الأجهزة المرتبطة ← ربط جهاز ← امسح رمز QR.",
+    whatsappStarting: "جارٍ بدء جلسة واتساب — سيظهر رمز QR قريباً…",
+    whatsappNotConfigured: "مفتاح SparkCo API غير مُعدّ على هذا الخادم.",
+    gates: "البوابات الذكية",
+    gatesTitle: "البوابات الذكية",
+    gatesDescription: "إعداد البوابات الإلكترونية المثبتة في هذا الفرع. كل بوابة تتصل بجهاز BAS-IP ويمكن تخصيصها لجنس معين.",
+    gatesEmpty: "لا توجد بوابات مضافة بعد.",
+    gateAddButton: "إضافة بوابة",
+    gateName: "اسم البوابة",
+    gateGenderRestriction: "تقييد الجنس",
+    gateGenderMale: "بوابة الرجال (ذكور فقط)",
+    gateGenderFemale: "بوابة النساء (إناث فقط)",
+    gateGenderNone: "بدون تقييد",
+    gateDeviceUrl: "IP الجهاز / الرابط",
+    gateDeviceUrlHelp: "عنوان الشبكة المحلية لجهاز BAS-IP، مثل http://192.168.1.178",
+    gateDeviceUsername: "اسم مستخدم الجهاز",
+    gateDevicePassword: "كلمة مرور الجهاز",
+    gateDevicePasswordHelp: "اتركها فارغة للإبقاء على كلمة المرور الحالية.",
+    gateLockNumber: "رقم القفل",
+    gateEnabled: "مفعّلة",
+    gateCreate: "إنشاء بوابة",
+    gateUpdate: "حفظ التغييرات",
+    gateDelete: "حذف البوابة",
+    gateDeleteConfirm: "حذف هذه البوابة؟ لا يمكن التراجع عن هذا الإجراء.",
+    gateDeviceConfigured: "الجهاز مضبوط",
+    gateDeviceNotConfigured: "لا يوجد جهاز مضبوط",
   },
 };
 
@@ -1082,6 +1388,7 @@ const he: Dict = {
     dashboard: "לוח בקרה",
     branches: "סניפים",
     usersRoles: "משתמשים ותפקידים",
+    employees: "עובדים",
     membershipPlans: "תוכניות מנוי",
     members: "חברים",
     checkIn: "כניסה",
@@ -1178,6 +1485,19 @@ const he: Dict = {
     phone: "טלפון",
     email: "דוא\"ל",
     dateOfBirth: "תאריך לידה",
+    sex: "מין",
+    male: "זכר",
+    female: "נקבה",
+    idNumber: "מספר תעודת זהות",
+    address: "כתובת",
+    joinDate: "תאריך הצטרפות",
+    height: "גובה (ס\"מ)",
+    weight: "משקל (ק\"ג)",
+    registeredEmployee: "נרשם על ידי",
+    photo: "תמונה",
+    uploadPhoto: "העלה תמונה",
+    takePhoto: "צלם תמונה",
+    changePhoto: "שנה תמונה",
     homeBranch: "סניף בית",
     emergencyContact: "איש קשר לחירום",
     medicalNotes: "הערות רפואיות",
@@ -1192,8 +1512,11 @@ const he: Dict = {
     statusLabel: "סטטוס",
     showQrCode: "הצג קוד QR",
     qrCode: "קוד QR של חבר",
-    qrCodeDescription: "סרוק קוד זה בדלפק הכניסה לרישום ביקור.",
+    qrCodeDescription: "הצג קוד QR זה בכניסה לחדר הכושר לפתיחת השער.",
     printQrCode: "הדפס",
+    sendQrWhatsApp: "שלח ב-WhatsApp",
+    qrSentSuccess: "קוד QR נשלח ב-WhatsApp!",
+    qrSentFailed: "שליחת קוד QR נכשלה.",
   },
   plans: {
     title: "תוכניות מנוי",
@@ -1286,6 +1609,9 @@ const he: Dict = {
     accessGranted: "גישה אושרה",
     accessDenied: "גישה נדחתה",
     expires: "פג תוקף",
+    openGate: "פתח שער",
+    gateOpened: "השער נפתח",
+    gateOpenFailed: "פתיחת השער נכשלה",
   },
   visits: {
     title: "ביקורים",
@@ -1309,6 +1635,9 @@ const he: Dict = {
     filterWeek: "7 ימים אחרונים",
     filterMonth: "30 ימים אחרונים",
     filterAll: "הכל",
+    filterPresenceAll: "הכל",
+    filterInside: "בפנים כעת",
+    filterCheckedOut: "יצא",
   },
   branches: {
     title: "סניפים",
@@ -1355,6 +1684,43 @@ const he: Dict = {
     owner: "בעלים",
     manager: "מנהל",
     frontDesk: "קבלה",
+  },
+  employees: {
+    title: "עובדים",
+    allEmployees: "כל העובדים",
+    newEmployee: "עובד חדש",
+    newStaffEmployee: "עובד צוות חדש",
+    noEmployees: "לא נמצאו עובדים.",
+    createEmployee: "צור עובד",
+    employeeNumber: "מספר עובד",
+    fullName: "שם מלא",
+    andBranch: "וסניף נדרשים. מספר עובד יוקצה אוטומטית.",
+    branch: "סניף",
+    status: "סטטוס",
+    active: "פעיל",
+    inactive: "לא פעיל",
+    deactivate: "השבת",
+    reactivate: "הפעל מחדש",
+    employeeDetails: "פרטי עובד",
+    employeeId: "מזהה עובד",
+    personalInfo: "מידע אישי",
+    employmentInfo: "מידע על העסקה",
+    systemAccess: "גישה למערכת",
+    idNumber: "מספר תעודת זהות",
+    phone: "מספר נייד",
+    gender: "מין",
+    male: "זכר",
+    female: "נקבה",
+    dateOfBirth: "תאריך לידה",
+    job: "תפקיד",
+    salary: "שכר",
+    workType: "סוג משרה",
+    fullTime: "משרה מלאה",
+    partTime: "משרה חלקית",
+    trainee: "מתמחה",
+    startDate: "תאריך תחילת עבודה",
+    endDate: "תאריך סיום עבודה",
+    isUser: "בעל חשבון משתמש במערכת",
   },
   notifications: {
     title: "התראות",
@@ -1432,6 +1798,48 @@ const he: Dict = {
     sendersSectionDescription: "כתובת הדוא\"ל שהחברים יראו בשדה \"מאת\" כשמתקבלת התראה.",
     senderEmailFrom: "כתובת דוא\"ל של השולח",
     senderEmailFromHelp: "כתובת הדוא\"ל שהחברים יראו בשדה \"מאת\", למשל notices@yourgym.com.",
+    display: "תצוגה",
+    displayTitle: "הגדרות תצוגה",
+    displayDescription: "שלוט בצורה שבה תאריכים וערכים אחרים מוצגים ביישום.",
+    dateFormat: "פורמט תאריך",
+    dateFormatHelp: "בחר כיצד מוצגים תאריכים בכל רחבי היישום.",
+    dateFormatDDMMYYYY: "יום/חודש/שנה (לדוגמה: 24/06/2026)",
+    dateFormatMMDDYYYY: "חודש/יום/שנה (לדוגמה: 06/24/2026)",
+    saveDisplaySettings: "שמור הגדרות תצוגה",
+    whatsapp: "WhatsApp",
+    whatsappTitle: "חיבור WhatsApp",
+    whatsappDescription: "חבר את מספר ה-WhatsApp של המכון כדי שהתראות לחברים יישלחו מהמספר שלך.",
+    whatsappConnectButton: "חבר WhatsApp",
+    whatsappConnecting: "מפעיל סשן…",
+    whatsappConnected: "מחובר",
+    whatsappDisconnect: "נתק",
+    whatsappDisconnectConfirm: "לנתק WhatsApp? ההתראות יישלחו ממספר הפלטפורמה.",
+    whatsappScanInstruction: "פתח WhatsApp בטלפון ← מכשירים מקושרים ← קשר מכשיר ← סרוק את קוד ה-QR.",
+    whatsappStarting: "מפעיל סשן WhatsApp — קוד QR יופיע בקרוב…",
+    whatsappNotConfigured: "מפתח SparkCo API לא מוגדר בשרת.",
+    gates: "שערים חכמים",
+    gatesTitle: "שערים חכמים",
+    gatesDescription: "הגדר את השערים האלקטרוניים המותקנים בסניף זה. כל שער מתחבר למכשיר BAS-IP וניתן להגבילו לפי מגדר.",
+    gatesEmpty: "אין שערים מוגדרים עדיין.",
+    gateAddButton: "הוסף שער",
+    gateName: "שם השער",
+    gateGenderRestriction: "הגבלת מגדר",
+    gateGenderMale: "שער גברים (גברים בלבד)",
+    gateGenderFemale: "שער נשים (נשים בלבד)",
+    gateGenderNone: "ללא הגבלה",
+    gateDeviceUrl: "IP המכשיר / כתובת URL",
+    gateDeviceUrlHelp: "כתובת הרשת המקומית של מכשיר BAS-IP, לדוגמה http://192.168.1.178",
+    gateDeviceUsername: "שם משתמש של המכשיר",
+    gateDevicePassword: "סיסמת המכשיר",
+    gateDevicePasswordHelp: "השאר ריק כדי לשמור על הסיסמה הקיימת.",
+    gateLockNumber: "מספר מנעול",
+    gateEnabled: "פעיל",
+    gateCreate: "צור שער",
+    gateUpdate: "שמור שינויים",
+    gateDelete: "מחק שער",
+    gateDeleteConfirm: "למחוק שער זה? לא ניתן לבטל פעולה זו.",
+    gateDeviceConfigured: "מכשיר מוגדר",
+    gateDeviceNotConfigured: "אין מכשיר מוגדר",
   },
 };
 

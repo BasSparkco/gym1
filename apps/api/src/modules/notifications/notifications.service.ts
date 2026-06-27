@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { localDateString } from '../../common/date';
 import {
   NotificationChannel,
   NotificationEvent,
@@ -113,7 +114,7 @@ export class NotificationsService {
   async scanForExpiryNotifications(tenantId: string): Promise<ScanSummary> {
     const store = readOperationsStore();
     const settings = this.getNotificationSettingsForTenant(tenantId);
-    const today = store.reportingDate;
+    const today = localDateString();
     const tenantMembers = new Map(
       store.members
         .filter((member) => member.tenantId === tenantId)

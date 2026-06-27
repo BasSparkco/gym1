@@ -40,12 +40,15 @@ export type NotificationSenderSettings = {
   emailFrom?: string;
 };
 
+export type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy';
+
 export type TenantSettingsRecord = {
   tenantId: string;
   defaultLanguage: Language;
   enabledLanguages: Language[];
   notificationSettings: NotificationSettings;
   notificationSenders: NotificationSenderSettings;
+  dateFormat: DateFormat;
 };
 
 type SettingsStoreData = {
@@ -82,6 +85,7 @@ const defaultSettings: SettingsStoreData = {
       enabledLanguages: ['en', 'ar', 'he'],
       notificationSettings: defaultNotificationSettings,
       notificationSenders: defaultNotificationSenders,
+      dateFormat: 'dd/mm/yyyy',
     },
   ],
 };
@@ -106,6 +110,7 @@ export function getDefaultTenantSettings(
     enabledLanguages: ['en', 'ar', 'he'],
     notificationSettings: defaultNotificationSettings,
     notificationSenders: defaultNotificationSenders,
+    dateFormat: 'dd/mm/yyyy' as DateFormat,
   };
 }
 

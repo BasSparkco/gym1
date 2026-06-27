@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { COUNTRIES } from "@/lib/countries";
 import Link from "next/link";
+import WhatsAppCard from "./WhatsAppCard";
 
 type Props = {
   params: Promise<{ branchId: string }>;
@@ -86,6 +87,10 @@ export default async function BranchDetailPage({ params }: Props) {
           </dl>
         </article>
 
+        <WhatsAppCard branchId={branch.id} canManage={canManage} />
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
         <article className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
             System

@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
       .filter(
         (m) =>
           m.fullName.toLowerCase().includes(q) ||
-          m.memberNumber.toLowerCase().includes(q),
+          m.memberNumber.toLowerCase().includes(q) ||
+          (m.phone && m.phone.replace(/\s+/g, "").includes(q.replace(/\s+/g, ""))) ||
+          (m.idNumber && m.idNumber.toLowerCase().includes(q)),
       )
       .slice(0, 8)
       .map(({ id, fullName, memberNumber, status }) => ({

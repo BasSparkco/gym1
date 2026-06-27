@@ -1,0 +1,16 @@
+node_modules/
+apps/*/node_modules/
+apps/*/.next/
+apps/*/dist/
+apps/*/.local/
+apps/*/coverage/
+apps/*/apps/
+*.tsbuildinfo
+apps/*/*.tsbuildinfo
+
+.git/
+.DS_Store
+*.log
+coverage/
+deploy.md
+docs/

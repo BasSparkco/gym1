@@ -2,6 +2,8 @@ import { getNotification } from "@/lib/notifications";
 import { getMember } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
+import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 
 type Props = { params: Promise<{ notificationId: string }> };
@@ -29,7 +31,8 @@ export default async function NotificationDetailPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const notif = await getNotification(notificationId);
+  const [notif, settings] = await Promise.all([getNotification(notificationId), getSettings()]);
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   let member = null;
   try {
@@ -38,17 +41,8 @@ export default async function NotificationDetailPage({ params }: Props) {
     // member may be out of scope
   }
 
-  const createdAt = new Date(notif.createdAt).toLocaleString("en-US", {
-    dateStyle: "long",
-    timeStyle: "medium",
-  });
-
-  const sentAt = notif.sentAt
-    ? new Date(notif.sentAt).toLocaleString("en-US", {
-        dateStyle: "long",
-        timeStyle: "medium",
-      })
-    : null;
+  const createdAt = formatDateTime(notif.createdAt, dateFormat);
+  const sentAt = notif.sentAt ? formatDateTime(notif.sentAt, dateFormat) : null;
 
   return (
     <div className="grid gap-6">

@@ -38,6 +38,10 @@ export class SparkcoNotificationProvider implements NotificationProvider {
       payload.subject = input.subject;
     }
 
+    if (input.channel === 'whatsapp' && input.sessionId) {
+      payload.sessionId = input.sessionId;
+    }
+
     try {
       const response = await fetch(`${baseUrl}/messages/send`, {
         method: 'POST',
