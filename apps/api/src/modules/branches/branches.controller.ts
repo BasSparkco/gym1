@@ -38,32 +38,38 @@ export class BranchesController {
   ) {}
 
   @Get()
-  listBranches(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listBranches(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      branches: this.branchesService.listBranchesForTenant(
+      branches: await this.branchesService.listBranchesForTenant(
         session.user.tenant.id,
       ),
     };
   }
 
   @Post()
-  createBranch(@Req() request: Request, @Body() body: CreateBranchRequestBody) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async createBranch(
+    @Req() request: Request,
+    @Body() body: CreateBranchRequestBody,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return {
-      branch: this.branchesService.createBranch(session.user.tenant.id, body),
+      branch: await this.branchesService.createBranch(
+        session.user.tenant.id,
+        body,
+      ),
     };
   }
 
   @Get(':branchId')
-  getBranch(@Req() request: Request, @Param('branchId') branchId: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getBranch(@Req() request: Request, @Param('branchId') branchId: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      branch: this.branchesService.getBranchForTenant(
+      branch: await this.branchesService.getBranchForTenant(
         session.user.tenant.id,
         branchId,
       ),
@@ -71,22 +77,22 @@ export class BranchesController {
   }
 
   @Patch(':branchId')
-  updateBranch(
+  async updateBranch(
     @Req() request: Request,
     @Param('branchId') branchId: string,
     @Body() body: UpdateBranchRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
-    const branch = this.branchesService.updateBranch(
+    const branch = await this.branchesService.updateBranch(
       session.user.tenant.id,
       branchId,
       body,
     );
 
     if (body.name !== undefined) {
-      this.authService.syncBranchNameForUsers(
+      await this.authService.syncBranchNameForUsers(
         session.user.tenant.id,
         branchId,
         branch.name,
@@ -97,20 +103,23 @@ export class BranchesController {
   }
 
   @Post('switch')
-  switchBranch(@Req() request: Request, @Body() body: { branchId?: string }) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async switchBranch(
+    @Req() request: Request,
+    @Body() body: { branchId?: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner']);
 
     if (!body.branchId) {
       throw new BadRequestException('branchId is required.');
     }
 
-    const branch = this.branchesService.getBranchForTenant(
+    const branch = await this.branchesService.getBranchForTenant(
       session.user.tenant.id,
       body.branchId,
     );
 
-    const user = this.authService.switchBranchForUser(
+    const user = await this.authService.switchBranchForUser(
       session.user.tenant.id,
       session.user.id,
       branch.id,
@@ -120,9 +129,9 @@ export class BranchesController {
     return { user };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

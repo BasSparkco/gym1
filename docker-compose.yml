@@ -1,4 +1,58 @@
+# Don't use it on current production servers, as it will overwrite existing data. Use it only for local development or testing purposes.
 services:
+  # ── Postgres ─────────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gym
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gym_dev_password}
+      POSTGRES_DB: gym
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gym -d gym"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    expose:
+      - "5432"
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-gym_dev_redis_password}"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-gym_dev_redis_password}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    expose:
+      - "6379"
+
+  # ── MinIO (member photo storage) ──────────────────────────────────────────────
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-gym_dev_minio_user}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-gym_dev_minio_password}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    expose:
+      - "9000"
+    ports:
+      - "9001:9001"   # console access, dev only
+
   # ── NestJS API ───────────────────────────────────────────────────────────────
   api:
     build:
@@ -9,8 +63,22 @@ services:
     environment:
       PORT: "3002"
       FRONTEND_ORIGIN: "https://${DOMAIN}"
+      DATABASE_URL: "postgresql://gym:${POSTGRES_PASSWORD:-gym_dev_password}@db:5432/gym?schema=public"
+      REDIS_URL: "redis://:${REDIS_PASSWORD:-gym_dev_redis_password}@redis:6379"
+      MINIO_ENDPOINT: "minio"
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-gym_dev_minio_user}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-gym_dev_minio_password}
     volumes:
       - api-data:/app/.local
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     expose:
       - "3002"
 
@@ -58,6 +126,9 @@ services:
     entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done"
 
 volumes:
-  api-data:       # persistent operations / auth / settings store
+  api-data:       # persistent upload storage (member profile pictures)
+  postgres-data:  # Postgres data directory
+  redis-data:     # Redis AOF persistence (auth sessions)
+  minio-data:     # MinIO object storage (member photos)
   certbot-www:    # ACME webroot (shared with nginx for renewals)
   certbot-certs:  # Let's Encrypt certificates

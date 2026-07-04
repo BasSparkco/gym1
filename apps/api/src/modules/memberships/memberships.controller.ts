@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { requireRole } from '../../common/require-role';
+import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { MembershipsService } from './memberships.service';
 
@@ -56,40 +57,43 @@ export class MembershipsController {
   constructor(
     private readonly authService: AuthService,
     private readonly membershipsService: MembershipsService,
+    private readonly dataScopeService: DataScopeService,
   ) {}
 
   @Get()
-  listMemberships(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listMemberships(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     return {
-      memberships: this.membershipsService.listMembershipsForTenant(
+      memberships: await this.membershipsService.listMembershipsForTenant(
         session.user.tenant.id,
+        branchId,
       ),
     };
   }
 
   @Get('plans')
-  listMembershipPlans(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listMembershipPlans(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      plans: this.membershipsService.listMembershipPlansForTenant(
+      plans: await this.membershipsService.listMembershipPlansForTenant(
         session.user.tenant.id,
       ),
     };
   }
 
   @Post('plans')
-  createMembershipPlan(
+  async createMembershipPlan(
     @Req() request: Request,
     @Body() body: CreateMembershipPlanRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return {
-      plan: this.membershipsService.createMembershipPlan(
+      plan: await this.membershipsService.createMembershipPlan(
         session.user.tenant.id,
         body,
       ),
@@ -97,11 +101,11 @@ export class MembershipsController {
   }
 
   @Get('plans/:planId')
-  getMembershipPlan(@Req() request: Request, @Param('planId') planId: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getMembershipPlan(@Req() request: Request, @Param('planId') planId: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      plan: this.membershipsService.getMembershipPlanForTenant(
+      plan: await this.membershipsService.getMembershipPlanForTenant(
         session.user.tenant.id,
         planId,
       ),
@@ -109,16 +113,16 @@ export class MembershipsController {
   }
 
   @Patch('plans/:planId')
-  updateMembershipPlan(
+  async updateMembershipPlan(
     @Req() request: Request,
     @Param('planId') planId: string,
     @Body() body: UpdateMembershipPlanRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return {
-      plan: this.membershipsService.updateMembershipPlan(
+      plan: await this.membershipsService.updateMembershipPlan(
         session.user.tenant.id,
         planId,
         body,
@@ -127,14 +131,14 @@ export class MembershipsController {
   }
 
   @Get('member/:memberId')
-  listMembershipsForMember(
+  async listMembershipsForMember(
     @Req() request: Request,
     @Param('memberId') memberId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      memberships: this.membershipsService.listMembershipsForMember(
+      memberships: await this.membershipsService.listMembershipsForMember(
         session.user.tenant.id,
         memberId,
       ),
@@ -146,7 +150,7 @@ export class MembershipsController {
     @Req() request: Request,
     @Body() body: CreateMembershipRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
       membership: await this.membershipsService.createMembership(
@@ -162,7 +166,7 @@ export class MembershipsController {
     @Param('membershipId') membershipId: string,
     @Body() body: { planId?: string; startDate?: string; finalPrice?: number },
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
       membership: await this.membershipsService.renewMembership(
@@ -174,14 +178,14 @@ export class MembershipsController {
   }
 
   @Get(':membershipId/freezes')
-  listFreezesForMembership(
+  async listFreezesForMembership(
     @Req() request: Request,
     @Param('membershipId') membershipId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      freezes: this.membershipsService.listFreezesForMembership(
+      freezes: await this.membershipsService.listFreezesForMembership(
         session.user.tenant.id,
         membershipId,
       ),
@@ -189,12 +193,12 @@ export class MembershipsController {
   }
 
   @Post(':membershipId/freeze')
-  createFreeze(
+  async createFreeze(
     @Req() request: Request,
     @Param('membershipId') membershipId: string,
     @Body() body: { startDate?: string; endDate?: string },
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return this.membershipsService.createFreeze(
       session.user.tenant.id,
@@ -204,14 +208,14 @@ export class MembershipsController {
   }
 
   @Post(':membershipId/unfreeze')
-  unfreezeM(
+  async unfreezeM(
     @Req() request: Request,
     @Param('membershipId') membershipId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      membership: this.membershipsService.unfreezeM(
+      membership: await this.membershipsService.unfreezeM(
         session.user.tenant.id,
         membershipId,
       ),
@@ -219,14 +223,14 @@ export class MembershipsController {
   }
 
   @Get(':membershipId')
-  getMembership(
+  async getMembership(
     @Req() request: Request,
     @Param('membershipId') membershipId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      membership: this.membershipsService.getMembershipForTenant(
+      membership: await this.membershipsService.getMembershipForTenant(
         session.user.tenant.id,
         membershipId,
       ),
@@ -234,15 +238,15 @@ export class MembershipsController {
   }
 
   @Patch(':membershipId')
-  updateMembership(
+  async updateMembership(
     @Req() request: Request,
     @Param('membershipId') membershipId: string,
     @Body() body: UpdateMembershipRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      membership: this.membershipsService.updateMembership(
+      membership: await this.membershipsService.updateMembership(
         session.user.tenant.id,
         membershipId,
         body,
@@ -250,9 +254,9 @@ export class MembershipsController {
     };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

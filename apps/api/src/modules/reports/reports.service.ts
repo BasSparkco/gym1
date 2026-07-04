@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { SessionUser } from '../auth/auth.service';
-import { localDateString } from '../../common/date';
-import { readOperationsStore } from '../../data/operations-store';
+import { localDateString, toDateOnlyString } from '../../common/date';
+import { toNumber } from '../../common/decimal';
+import { DataScopeService } from '../../common/data-scope.service';
 import { MembersService } from '../members/members.service';
 import { MembershipsService } from '../memberships/memberships.service';
 import { PaymentsService } from '../payments/payments.service';
 import { VisitsService } from '../visits/visits.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 type DashboardCard = {
   id:
@@ -38,19 +40,26 @@ const quickActionsByRole: Record<SessionUser['role'], string[]> = {
 @Injectable()
 export class ReportsService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly membersService: MembersService,
     private readonly membershipsService: MembershipsService,
     private readonly paymentsService: PaymentsService,
     private readonly visitsService: VisitsService,
+    private readonly dataScopeService: DataScopeService,
   ) {}
 
-  getDashboardSummary(user: SessionUser) {
+  async getDashboardSummary(user: SessionUser) {
     const reportDate = this.membersService.getReportingDate();
     const reportDateEnd = this.addDays(reportDate, 7);
+    const branchId = await this.dataScopeService.resolveBranchId(user);
 
-    // Active memberships: tenant-wide, status-only (matches members page logic)
+    // Active memberships: tenant-wide by default, narrowed to the owner's
+    // active branch when they've opted into that view (matches members page logic)
     const allTenantMemberships =
-      this.membershipsService.listMembershipsForTenant(user.tenant.id);
+      await this.membershipsService.listMembershipsForTenant(
+        user.tenant.id,
+        branchId,
+      );
     const activeMemberships = allTenantMemberships.filter(
       (m) => m.status === 'active',
     );
@@ -59,17 +68,17 @@ export class ReportsService {
     });
 
     // Check-ins and payments are branch-scoped (branch-level operations)
-    const visitsToday = this.visitsService
-      .listVisitsForScope(user.tenant.id, user.branch.id)
-      .filter((visit) => this.toDateKey(visit.checkInTime) === reportDate);
+    const visitsToday = (
+      await this.visitsService.listVisitsForScope(user.tenant.id, branchId)
+    ).filter((visit) => this.toDateKey(visit.checkInTime) === reportDate);
 
-    const paidPaymentsToday = this.paymentsService
-      .listPaymentsForScope(user.tenant.id, user.branch.id)
-      .filter(
-        (payment) =>
-          payment.status === 'paid' &&
-          this.toDateKey(payment.paymentDate) === reportDate,
-      );
+    const paidPaymentsToday = (
+      await this.paymentsService.listPaymentsForScope(user.tenant.id, branchId)
+    ).filter(
+      (payment) =>
+        payment.status === 'paid' &&
+        this.toDateKey(payment.paymentDate) === reportDate,
+    );
 
     const paymentTotal = paidPaymentsToday.reduce(
       (sum, payment) => sum + payment.amount,
@@ -96,14 +105,18 @@ export class ReportsService {
         label: "Today's check-ins",
         value: String(visitsToday.length),
         tone: 'bg-white',
-        helperText: `${visitsToday.length} visits logged at ${user.branch.name} today.`,
+        helperText: branchId
+          ? `${visitsToday.length} visits logged at ${user.branch.name} today.`
+          : `${visitsToday.length} visits logged across all branches today.`,
       },
       {
         id: 'payments-logged',
         label: 'Payments today',
         value: this.formatCurrency(paymentTotal),
         tone: 'bg-surface-muted',
-        helperText: `${paidPaymentsToday.length} paid transactions at ${user.branch.name}.`,
+        helperText: branchId
+          ? `${paidPaymentsToday.length} paid transactions at ${user.branch.name}.`
+          : `${paidPaymentsToday.length} paid transactions across all branches.`,
       },
     ];
 
@@ -117,146 +130,138 @@ export class ReportsService {
         branchName: user.branch.name,
         role: user.role,
         asOfDate: reportDate,
+        allBranches: !branchId,
       },
       generatedAt: new Date().toISOString(),
     };
   }
 
-  getActiveMembershipsReport(user: SessionUser) {
-    const store = readOperationsStore();
+  async getActiveMembershipsReport(user: SessionUser) {
     const today = this.membersService.getReportingDate();
-    const memberIds = new Set(
-      store.members
-        .filter((m) => m.tenantId === user.tenant.id)
-        .map((m) => m.id),
-    );
+    const todayDate = new Date(today);
+    const branchId = await this.dataScopeService.resolveBranchId(user);
 
-    const rows = store.memberships
-      .filter(
-        (ms) =>
-          memberIds.has(ms.memberId) &&
-          ms.status === 'active' &&
-          ms.startDate <= today &&
-          ms.endDate >= today,
-      )
-      .map((ms) => {
-        const member = store.members.find((m) => m.id === ms.memberId);
-        const plan = store.membershipPlans.find((p) => p.id === ms.planId);
-        return {
-          membershipId: ms.id,
-          memberId: ms.memberId,
-          memberName: member?.fullName ?? null,
-          memberNumber: member?.memberNumber ?? null,
-          planName: plan?.name ?? null,
-          startDate: ms.startDate,
-          endDate: ms.endDate,
-          finalPrice: ms.finalPrice,
-          status: ms.status,
-        };
-      })
-      .sort((a, b) => a.endDate.localeCompare(b.endDate));
+    const memberships = await this.prisma.membership.findMany({
+      where: {
+        member: {
+          tenantId: user.tenant.id,
+          ...(branchId ? { homeBranchId: branchId } : {}),
+        },
+        status: 'active',
+        startDate: { lte: todayDate },
+        endDate: { gte: todayDate },
+      },
+      include: { member: true, plan: true },
+      orderBy: { endDate: 'asc' },
+    });
+
+    const rows = memberships.map((ms) => ({
+      membershipId: ms.id,
+      memberId: ms.memberId,
+      memberName: ms.member?.fullName ?? null,
+      memberNumber: ms.member?.memberNumber ?? null,
+      planName: ms.plan?.name ?? null,
+      startDate: toDateOnlyString(ms.startDate),
+      endDate: toDateOnlyString(ms.endDate),
+      finalPrice: toNumber(ms.finalPrice),
+      status: ms.status,
+    }));
 
     return { rows, total: rows.length, asOfDate: today };
   }
 
-  getExpiredMembershipsReport(user: SessionUser) {
-    const store = readOperationsStore();
+  async getExpiredMembershipsReport(user: SessionUser) {
     const today = this.membersService.getReportingDate();
-    const memberIds = new Set(
-      store.members
-        .filter((m) => m.tenantId === user.tenant.id)
-        .map((m) => m.id),
-    );
+    const todayDate = new Date(today);
+    const branchId = await this.dataScopeService.resolveBranchId(user);
 
-    const rows = store.memberships
-      .filter(
-        (ms) =>
-          memberIds.has(ms.memberId) &&
-          (ms.status === 'expired' || ms.endDate < today),
-      )
-      .map((ms) => {
-        const member = store.members.find((m) => m.id === ms.memberId);
-        const plan = store.membershipPlans.find((p) => p.id === ms.planId);
-        return {
-          membershipId: ms.id,
-          memberId: ms.memberId,
-          memberName: member?.fullName ?? null,
-          memberNumber: member?.memberNumber ?? null,
-          planName: plan?.name ?? null,
-          startDate: ms.startDate,
-          endDate: ms.endDate,
-          finalPrice: ms.finalPrice,
-          status: ms.status,
-        };
-      })
-      .sort((a, b) => b.endDate.localeCompare(a.endDate));
+    const memberships = await this.prisma.membership.findMany({
+      where: {
+        member: {
+          tenantId: user.tenant.id,
+          ...(branchId ? { homeBranchId: branchId } : {}),
+        },
+        OR: [{ status: 'expired' }, { endDate: { lt: todayDate } }],
+      },
+      include: { member: true, plan: true },
+      orderBy: { endDate: 'desc' },
+    });
+
+    const rows = memberships.map((ms) => ({
+      membershipId: ms.id,
+      memberId: ms.memberId,
+      memberName: ms.member?.fullName ?? null,
+      memberNumber: ms.member?.memberNumber ?? null,
+      planName: ms.plan?.name ?? null,
+      startDate: toDateOnlyString(ms.startDate),
+      endDate: toDateOnlyString(ms.endDate),
+      finalPrice: toNumber(ms.finalPrice),
+      status: ms.status,
+    }));
 
     return { rows, total: rows.length, asOfDate: today };
   }
 
-  getVisitsReport(user: SessionUser, dateFrom?: string, dateTo?: string) {
-    const store = readOperationsStore();
+  async getVisitsReport(user: SessionUser, dateFrom?: string, dateTo?: string) {
     const today = this.membersService.getReportingDate();
     const from = dateFrom ?? today;
     const to = dateTo ?? today;
-    const memberIds = new Set(
-      store.members
-        .filter((m) => m.tenantId === user.tenant.id)
-        .map((m) => m.id),
-    );
+    const branchId = await this.dataScopeService.resolveBranchId(user);
 
-    const rows = store.visits
-      .filter((v) => {
-        if (!memberIds.has(v.memberId)) return false;
-        if (v.branchId !== user.branch.id) return false;
-        const dateKey = v.checkInTime.slice(0, 10);
-        return dateKey >= from && dateKey <= to;
-      })
-      .map((v) => {
-        const member = store.members.find((m) => m.id === v.memberId);
-        return {
-          visitId: v.id,
-          memberId: v.memberId,
-          memberName: member?.fullName ?? null,
-          memberNumber: member?.memberNumber ?? null,
-          branchId: v.branchId,
-          checkInTime: v.checkInTime,
-          accessMethod: v.accessMethod,
-        };
-      })
-      .sort((a, b) => b.checkInTime.localeCompare(a.checkInTime));
+    const visits = await this.prisma.visit.findMany({
+      where: {
+        member: { tenantId: user.tenant.id },
+        ...(branchId ? { branchId } : {}),
+        checkInTime: this.utcDayRange(from, to),
+      },
+      include: { member: true },
+      orderBy: { checkInTime: 'desc' },
+    });
+
+    const rows = visits.map((v) => ({
+      visitId: v.id,
+      memberId: v.memberId,
+      memberName: v.member?.fullName ?? null,
+      memberNumber: v.member?.memberNumber ?? null,
+      branchId: v.branchId,
+      checkInTime: v.checkInTime.toISOString(),
+      accessMethod: v.accessMethod,
+    }));
 
     return { rows, total: rows.length, dateFrom: from, dateTo: to };
   }
 
-  getPaymentsReport(user: SessionUser, dateFrom?: string, dateTo?: string) {
-    const store = readOperationsStore();
+  async getPaymentsReport(
+    user: SessionUser,
+    dateFrom?: string,
+    dateTo?: string,
+  ) {
     const today = this.membersService.getReportingDate();
     const from = dateFrom ?? today;
     const to = dateTo ?? today;
+    const branchId = await this.dataScopeService.resolveBranchId(user);
 
-    const rows = store.payments
-      .filter((p) => {
-        if (p.tenantId !== user.tenant.id) return false;
-        if (p.branchId !== user.branch.id) return false;
-        const dateKey = p.paymentDate.slice(0, 10);
-        return dateKey >= from && dateKey <= to;
-      })
-      .map((p) => {
-        const member = store.members.find((m) => m.id === p.memberId);
-        return {
-          paymentId: p.id,
-          memberId: p.memberId,
-          memberName: member?.fullName ?? null,
-          memberNumber: member?.memberNumber ?? null,
-          membershipId: p.membershipId,
-          amount: p.amount,
-          paymentDate: p.paymentDate,
-          status: p.status,
-          paymentMethod: p.paymentMethod,
-        };
-      })
-      .sort((a, b) => b.paymentDate.localeCompare(a.paymentDate));
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        tenantId: user.tenant.id,
+        ...(branchId ? { branchId } : {}),
+        paymentDate: this.utcDayRange(from, to),
+      },
+      include: { member: true },
+      orderBy: { paymentDate: 'desc' },
+    });
+
+    const rows = payments.map((p) => ({
+      paymentId: p.id,
+      memberId: p.memberId,
+      memberName: p.member?.fullName ?? null,
+      memberNumber: p.member?.memberNumber ?? null,
+      membershipId: p.membershipId,
+      amount: toNumber(p.amount),
+      paymentDate: p.paymentDate.toISOString(),
+      status: p.status,
+      paymentMethod: p.paymentMethod,
+    }));
 
     const totalPaid = rows
       .filter((r) => r.status === 'paid')
@@ -265,13 +270,22 @@ export class ReportsService {
     return { rows, total: rows.length, totalPaid, dateFrom: from, dateTo: to };
   }
 
+  // Inclusive [from, to] range of "YYYY-MM-DD" strings, expressed as a UTC
+  // timestamp range — matches the original's `checkInTime.slice(0, 10)`
+  // string-prefix comparison against date-only cutoffs.
+  private utcDayRange(from: string, to: string): { gte: Date; lt: Date } {
+    const gte = new Date(`${from}T00:00:00.000Z`);
+    const lt = new Date(new Date(`${to}T00:00:00.000Z`).getTime() + 24 * 60 * 60 * 1000);
+    return { gte, lt };
+  }
+
   private addDays(dateKey: string, days: number) {
     const date = new Date(`${dateKey}T00:00:00.000Z`);
     date.setUTCDate(date.getUTCDate() + days);
     return date.toISOString().slice(0, 10);
   }
 
-  private toDateKey(dateTime: string) {
+  private toDateKey(dateTime: Date | string) {
     return localDateString(new Date(dateTime));
   }
 

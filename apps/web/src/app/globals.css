@@ -78,6 +78,7 @@
 .date-input-wrapper .react-date-picker__wrapper {
   display: flex;
   align-items: center;
+  direction: ltr;
   border: 1px solid var(--line) !important;
   border-radius: 1rem !important;
   background: white !important;
@@ -96,6 +97,8 @@
   flex: 1;
   min-width: 0;
   padding: 0;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .date-input-wrapper .react-date-picker__inputGroup__input,
@@ -107,6 +110,11 @@
   padding: 0;
   border: none !important;
   outline: none !important;
+}
+
+.date-input-wrapper .react-date-picker__inputGroup__input--hasLeadingZero {
+  margin-left: -0.54em;
+  padding-left: calc(1px + 0.54em);
 }
 
 .date-input-wrapper .react-date-picker__inputGroup__input::placeholder {

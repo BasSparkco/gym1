@@ -21,6 +21,8 @@ type UpdateSettingsRequestBody = {
   notificationSettings?: NotificationSettings;
   notificationSenders?: NotificationSenderSettings;
   dateFormat?: string;
+  checkOutTrackingEnabled?: boolean;
+  ownerDataScope?: string;
 };
 
 @Controller('settings')
@@ -31,35 +33,39 @@ export class SettingsController {
   ) {}
 
   @Get()
-  getSettings(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getSettings(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      settings: this.settingsService.getSettingsForTenant(
+      settings: await this.settingsService.getSettingsForTenant(
         session.user.tenant.id,
       ),
     };
   }
 
   @Patch()
-  updateSettings(
+  async updateSettings(
     @Req() request: Request,
     @Body() body: UpdateSettingsRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
+    if (body.ownerDataScope !== undefined) {
+      requireRole(session.user, ['owner']);
+    }
+
     return {
-      settings: this.settingsService.updateSettingsForTenant(
+      settings: await this.settingsService.updateSettingsForTenant(
         session.user.tenant.id,
         body,
       ),
     };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

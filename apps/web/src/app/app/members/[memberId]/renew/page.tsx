@@ -6,9 +6,9 @@ import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
-import DateInput from "@/components/date-input";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import RenewFormFields from "./renew-form-fields";
 
 type Props = { params: Promise<{ memberId: string }> };
 
@@ -119,63 +119,22 @@ export default async function RenewMembershipPage({ params }: Props) {
 
           <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
             <form action={handleRenew} className="grid gap-5">
-              <div className="grid gap-1.5">
-                <label htmlFor="planId" className="text-sm font-medium">
-                  {t.memberships.plan}{" "}
-                  <span className="text-foreground/40 font-normal">
-                    — leave unchanged to renew with the same plan
-                  </span>
-                </label>
-                {plans.length === 0 ? (
-                  <p className="rounded-2xl border border-line bg-white px-4 py-3 text-sm text-foreground/50">
-                    {t.memberships.noPlansAvailable}
-                  </p>
-                ) : (
-                  <select
-                    id="planId"
-                    name="planId"
-                    defaultValue={currentMembership.planId}
-                    className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  >
-                    {plans.map((plan) => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.name} — ${plan.price}
-                        {plan.planType === "duration"
-                          ? ` · ${plan.durationDays}d`
-                          : ` · ${plan.sessionCount} sessions`}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div className="grid gap-1.5 sm:grid-cols-2">
-                <div className="grid gap-1.5">
-                  <label htmlFor="startDate" className="text-sm font-medium">
-                    {t.memberships.startDate}{" "}
-                    <span className="text-foreground/40 font-normal">
-                      — defaults to day after current end
-                    </span>
-                  </label>
-                  <DateInput id="startDate" name="startDate" dateFormat={dateFormat} defaultValue={defaultStartDate} />
-                </div>
-
-                <div className="grid gap-1.5">
-                  <label htmlFor="finalPrice" className="text-sm font-medium">
-                    {t.memberships.finalPrice}{" "}
-                    <span className="text-foreground/40 font-normal">— leave blank for plan default</span>
-                  </label>
-                  <input
-                    id="finalPrice"
-                    name="finalPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder={`e.g. ${currentMembership.finalPrice}`}
-                    className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  />
-                </div>
-              </div>
+              <RenewFormFields
+                plans={plans}
+                initialPlanId={currentMembership.planId}
+                initialPrice={
+                  plans.find((plan) => plan.id === currentMembership.planId)?.price ??
+                  currentMembership.finalPrice
+                }
+                dateFormat={dateFormat}
+                defaultStartDate={defaultStartDate}
+                labels={{
+                  plan: t.memberships.plan,
+                  startDate: t.memberships.startDate,
+                  finalPrice: t.memberships.finalPrice,
+                  noPlansAvailable: t.memberships.noPlansAvailable,
+                }}
+              />
 
               <div className="flex gap-3 pt-2">
                 <button

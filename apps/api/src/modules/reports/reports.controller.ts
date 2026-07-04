@@ -17,40 +17,40 @@ export class ReportsController {
   ) {}
 
   @Get('dashboard-summary')
-  getDashboardSummary(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getDashboardSummary(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     return this.reportsService.getDashboardSummary(session.user);
   }
 
   @Get('active-memberships')
-  getActiveMemberships(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getActiveMemberships(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     return this.reportsService.getActiveMembershipsReport(session.user);
   }
 
   @Get('expired-memberships')
-  getExpiredMemberships(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getExpiredMemberships(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     return this.reportsService.getExpiredMembershipsReport(session.user);
   }
 
   @Get('visits')
-  getVisits(
+  async getVisits(
     @Req() request: Request,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     return this.reportsService.getVisitsReport(session.user, dateFrom, dateTo);
   }
 
   @Get('payments')
-  getPayments(
+  async getPayments(
     @Req() request: Request,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     return this.reportsService.getPaymentsReport(
       session.user,
       dateFrom,
@@ -58,9 +58,9 @@ export class ReportsController {
     );
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

@@ -1,0 +1,378 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ──────────────────────────────────────────────────────────────────
+
+enum BranchStatus {
+  active
+  inactive
+}
+
+enum EmployeeStatus {
+  active
+  inactive
+}
+
+enum Sex {
+  male
+  female
+}
+
+enum WorkType {
+  fullTime
+  partTime
+  trainee
+}
+
+enum MemberStatus {
+  active
+  inactive
+}
+
+enum PlanType {
+  duration
+  session
+}
+
+enum MembershipStatus {
+  draft
+  active
+  frozen
+  expired
+  cancelled
+}
+
+enum AccessMethod {
+  manual
+  qr
+  rfid
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+  cancelled
+}
+
+enum PaymentMethod {
+  cash
+  card
+  transfer
+}
+
+enum NotificationChannel {
+  sms
+  whatsapp
+  email
+}
+
+enum NotificationEvent {
+  membershipExpiring
+  membershipExpired
+  paymentPending
+  membershipActivated
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+}
+
+enum UserRole {
+  owner
+  manager
+  frontDesk
+}
+
+// ── Tenant ───────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id
+  name      String
+  createdAt DateTime @default(now())
+
+  branches        Branch[]
+  employees       Employee[]
+  gates           Gate[]
+  members         Member[]
+  membershipPlans MembershipPlan[]
+  payments        Payment[]
+  notifications   Notification[]
+  settings        TenantSettings?
+  users           User[]
+}
+
+// ── Branches / Employees / Gates ─────────────────────────────────────────────
+
+model Branch {
+  id          String       @id
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  name        String
+  address     String?
+  phone       String?
+  countryCode String?
+  status      BranchStatus @default(active)
+
+  employees     Employee[]
+  gates         Gate[]
+  visits        Visit[]
+  membersAtHome Member[]   @relation("MemberHomeBranch")
+  payments      Payment[]
+
+  @@index([tenantId])
+}
+
+model Employee {
+  id             String         @id
+  tenantId       String
+  tenant         Tenant         @relation(fields: [tenantId], references: [id])
+  branchId       String
+  branch         Branch         @relation(fields: [branchId], references: [id])
+  employeeNumber String
+  fullName       String
+  status         EmployeeStatus @default(active)
+  idNumber       String?
+  phone          String?
+  sex            Sex?
+  dateOfBirth    DateTime?      @db.Date
+  job            String?
+  salary         Decimal?       @db.Decimal(10, 2)
+  workType       WorkType?
+  startDate      DateTime?      @db.Date
+  endDate        DateTime?      @db.Date
+  isUser         Boolean        @default(false)
+
+  gates             EmployeeGate[]
+  registeredMembers Member[]      @relation("MemberRegisteredEmployee")
+
+  @@unique([tenantId, employeeNumber])
+  @@index([branchId])
+}
+
+model Gate {
+  id                String @id
+  tenantId          String
+  tenant            Tenant @relation(fields: [tenantId], references: [id])
+  branchId          String
+  branch            Branch @relation(fields: [branchId], references: [id])
+  name              String
+  genderRestriction Sex?
+  deviceUrl         String
+  deviceUsername    String
+  devicePassword    String
+  lockNumber        Int
+  enabled           Boolean @default(true)
+
+  employees EmployeeGate[]
+  visits    Visit[]
+
+  @@index([branchId])
+}
+
+model EmployeeGate {
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  gateId     String
+  gate       Gate     @relation(fields: [gateId], references: [id], onDelete: Cascade)
+
+  @@id([employeeId, gateId])
+}
+
+// ── Members / Memberships ────────────────────────────────────────────────────
+
+model Member {
+  id                    String        @id
+  tenantId              String
+  tenant                Tenant        @relation(fields: [tenantId], references: [id])
+  homeBranchId          String
+  homeBranch            Branch        @relation("MemberHomeBranch", fields: [homeBranchId], references: [id])
+  memberNumber          String
+  fullName              String
+  status                MemberStatus?
+  phone                 String?
+  email                 String?
+  dateOfBirth           DateTime?     @db.Date
+  sex                   Sex?
+  idNumber              String?
+  address               String?
+  joinDate              DateTime?     @db.Date
+  height                Float?
+  weight                Float?
+  registeredEmployeeId  String?
+  registeredEmployee    Employee?     @relation("MemberRegisteredEmployee", fields: [registeredEmployeeId], references: [id], onDelete: SetNull)
+  pictureUrl            String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  medicalNotes          String?
+  rfidTag               String?
+
+  memberships   Membership[]
+  visits        Visit[]
+  payments      Payment[]
+  notifications Notification[]
+
+  @@unique([tenantId, memberNumber])
+  @@unique([tenantId, rfidTag])
+  @@index([homeBranchId])
+}
+
+model MembershipPlan {
+  id               String   @id
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  name             String
+  planType         PlanType @default(duration)
+  durationDays     Int?
+  sessionCount     Int?
+  price            Decimal  @db.Decimal(10, 2)
+  allowAllBranches Boolean  @default(true)
+  freezeAllowed    Boolean  @default(false)
+  freezeMaxDays    Int?
+
+  memberships Membership[]
+
+  @@index([tenantId])
+}
+
+model Membership {
+  id                   String           @id
+  memberId             String
+  member               Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  planId               String
+  plan                 MembershipPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  startDate            DateTime         @db.Date
+  endDate              DateTime         @db.Date
+  status               MembershipStatus
+  finalPrice           Decimal          @db.Decimal(10, 2)
+  previousMembershipId String?          @unique
+  previousMembership   Membership?      @relation("MembershipRenewalChain", fields: [previousMembershipId], references: [id], onDelete: SetNull)
+  renewedInto          Membership?      @relation("MembershipRenewalChain")
+
+  freezes  Freeze[]
+  payments Payment[]
+
+  @@index([memberId])
+  @@index([planId])
+  @@index([status, endDate])
+}
+
+model Freeze {
+  id           String     @id
+  membershipId String
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  startDate    DateTime   @db.Date
+  endDate      DateTime   @db.Date
+  createdAt    DateTime   @default(now())
+
+  @@index([membershipId])
+}
+
+// ── Visits / Payments / Notifications ────────────────────────────────────────
+
+model Visit {
+  id           String       @id
+  memberId     String
+  member       Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  branchId     String
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  checkInTime  DateTime
+  checkOutTime DateTime?
+  accessMethod AccessMethod
+  gateId       String?
+  gate         Gate?        @relation(fields: [gateId], references: [id], onDelete: SetNull)
+
+  @@index([memberId])
+  @@index([branchId, checkInTime])
+  @@index([memberId, branchId, checkOutTime])
+}
+
+model Payment {
+  id            String        @id
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  branchId      String
+  branch        Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  memberId      String
+  member        Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  membershipId  String
+  membership    Membership    @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentDate   DateTime
+  status        PaymentStatus
+  paymentMethod PaymentMethod
+
+  @@index([tenantId, branchId])
+  @@index([memberId])
+  @@index([status, paymentDate])
+}
+
+model Notification {
+  id           String              @id
+  tenantId     String
+  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  memberId     String
+  member       Member              @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  channel      NotificationChannel
+  event        NotificationEvent?
+  relatedId    String?
+  subject      String
+  body         String              @db.Text
+  status       NotificationStatus
+  sentAt       DateTime?
+  failedReason String?             @db.Text
+  createdAt    DateTime            @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([memberId])
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+
+model TenantSettings {
+  tenantId                String   @id
+  tenant                  Tenant   @relation(fields: [tenantId], references: [id])
+  defaultLanguage         String   @default("en")
+  enabledLanguages        String[] @default(["en", "ar", "he"])
+  notificationSettings    Json
+  notificationSenders     Json     @default("{}")
+  dateFormat              String   @default("dd/mm/yyyy")
+  checkOutTrackingEnabled Boolean  @default(true)
+  ownerDataScope          String   @default("all")
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  email        String
+  username     String
+  name         String
+  role         UserRole
+  passwordHash String
+  branchId     String
+  branchName   String
+
+  @@unique([tenantId, email])
+  @@unique([tenantId, username])
+}
+
+// Session records now live in Redis (see src/redis/), not Postgres — see
+// AuthService. Keyed as "session:<token>", value JSON { userId, createdAt,
+// expiresAt }, with a native Redis TTL replacing this table's expiresAt
+// filtering and removing the need for a cleanup job.

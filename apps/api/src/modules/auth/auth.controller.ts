@@ -22,7 +22,7 @@ export class AuthController {
 
   @Post('sign-in')
   @HttpCode(200)
-  signIn(
+  async signIn(
     @Body() body: SignInRequestBody,
     @Res({ passthrough: true }) response: Response,
   ) {
@@ -33,7 +33,7 @@ export class AuthController {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    const session = this.authService.signIn({ identifier, password });
+    const session = await this.authService.signIn({ identifier, password });
 
     if (!session) {
       throw new UnauthorizedException('Invalid credentials.');
@@ -53,8 +53,8 @@ export class AuthController {
   }
 
   @Get('current-session')
-  getCurrentSession(@Req() request: Request) {
-    const session = this.authService.getCurrentSessionFromCookieHeader(
+  async getCurrentSession(@Req() request: Request) {
+    const session = await this.authService.getCurrentSessionFromCookieHeader(
       request.headers.cookie,
     );
 
@@ -69,15 +69,15 @@ export class AuthController {
 
   @Post('sign-out')
   @HttpCode(204)
-  signOut(
+  async signOut(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const session = this.authService.getCurrentSessionFromCookieHeader(
+    const session = await this.authService.getCurrentSessionFromCookieHeader(
       request.headers.cookie,
     );
 
-    this.authService.clearSession(session?.token);
+    await this.authService.clearSession(session?.token);
     response.clearCookie(this.authService.getSessionCookieName(), {
       httpOnly: true,
       sameSite: 'lax',

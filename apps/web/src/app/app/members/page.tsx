@@ -129,11 +129,11 @@ export default async function MembersPage({
   }
 
   const tabs = [
-    { key: undefined, label: "All" },
-    { key: "active", label: "Active membership" },
-    { key: "frozen", label: "Frozen" },
-    { key: "expiring", label: "Expiring soon" },
-    { key: "none", label: "No membership" },
+    { key: undefined, label: t.members.filterAll },
+    { key: "active", label: t.members.filterActiveMembership },
+    { key: "frozen", label: t.members.filterFrozen },
+    { key: "expiring", label: t.members.filterExpiringSoon },
+    { key: "none", label: t.members.filterNoMembership },
   ] as const;
 
   const tabColors: Record<string, string> = {
@@ -167,13 +167,13 @@ export default async function MembersPage({
       <section className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-[1.5rem] border border-line bg-surface px-5 py-4">
           <p className="text-3xl font-semibold">{allMembers.length}</p>
-          <p className="mt-1 text-sm text-foreground/60">Total members</p>
+          <p className="mt-1 text-sm text-foreground/60">{t.members.totalMembers}</p>
         </div>
         <div className="rounded-[1.5rem] border border-line bg-surface px-5 py-4">
           <p className="text-3xl font-semibold text-green-600">
             {activeMembershipCount}
           </p>
-          <p className="mt-1 text-sm text-foreground/60">Active memberships</p>
+          <p className="mt-1 text-sm text-foreground/60">{t.members.activeMemberships}</p>
         </div>
         <div className="rounded-[1.5rem] border border-line bg-surface px-5 py-4">
           <p
@@ -181,7 +181,7 @@ export default async function MembersPage({
           >
             {expiringSoonCount}
           </p>
-          <p className="mt-1 text-sm text-foreground/60">Expiring in 30 days</p>
+          <p className="mt-1 text-sm text-foreground/60">{t.members.expiringIn30Days}</p>
         </div>
       </section>
 
@@ -209,8 +209,11 @@ export default async function MembersPage({
 
       {/* Result count */}
       <p className="text-sm text-foreground/60">
-        {members.length} member{members.length !== 1 ? "s" : ""}
-        {msFilter || q ? " matching filters" : " total"}
+        {members.length}{" "}
+        {members.length !== 1
+          ? t.members.memberCountPlural
+          : t.members.memberCountSingular}{" "}
+        {msFilter || q ? t.members.matchingFilters : t.members.total}
       </p>
 
       {/* Members list */}

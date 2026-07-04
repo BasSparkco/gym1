@@ -1,17 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { readOperationsStore } from '../../data/operations-store';
+import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from './notifications.service';
 
 @Injectable()
 export class NotificationsSchedulerService {
   private readonly logger = new Logger(NotificationsSchedulerService.name);
 
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_7AM)
   async runDailyNotificationCycle(): Promise<void> {
-    for (const tenantId of this.listTenantIds()) {
+    for (const tenantId of await this.listTenantIds()) {
       try {
         const result =
           await this.notificationsService.scanForExpiryNotifications(tenantId);
@@ -28,8 +31,8 @@ export class NotificationsSchedulerService {
     }
   }
 
-  private listTenantIds(): string[] {
-    const store = readOperationsStore();
-    return [...new Set(store.members.map((member) => member.tenantId))];
+  private async listTenantIds(): Promise<string[]> {
+    const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
+    return tenants.map((t) => t.id);
   }
 }

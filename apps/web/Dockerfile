@@ -5,8 +5,13 @@ WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
 
 # Install deps
+# apps/api/prisma is copied here too (ahead of the rest of the source) because
+# `pnpm install` triggers api's `postinstall` (`prisma generate`) across the
+# workspace, which needs schema.prisma to already be present — same reason
+# apps/api/Dockerfile copies it early.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
+COPY apps/api/prisma apps/api/prisma
 COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile
 

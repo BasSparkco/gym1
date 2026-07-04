@@ -39,28 +39,16 @@ export default async function GatesSettingsPage() {
           {t.branches.title}
         </Link>
         <Link
-          href="/app/settings/language"
+          href="/app/settings/options"
           className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
         >
-          {t.settings.language}
-        </Link>
-        <Link
-          href="/app/settings/display"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.settings.display}
+          {t.settings.options}
         </Link>
         <Link
           href="/app/settings/notifications"
           className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
         >
           {t.nav.notifications}
-        </Link>
-        <Link
-          href="/app/settings/whatsapp"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.settings.whatsapp}
         </Link>
         <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white">
           {t.settings.gates}

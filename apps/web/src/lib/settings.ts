@@ -57,6 +57,8 @@ export type NotificationSenderSettings = {
 
 export const defaultNotificationSenders: NotificationSenderSettings = {};
 
+export type OwnerDataScope = "all" | "activeBranch";
+
 export type TenantSettings = {
   tenantId: string;
   defaultLanguage: Language;
@@ -64,6 +66,8 @@ export type TenantSettings = {
   notificationSettings: NotificationSettings;
   notificationSenders: NotificationSenderSettings;
   dateFormat: DateFormat;
+  checkOutTrackingEnabled: boolean;
+  ownerDataScope: OwnerDataScope;
 };
 
 export const LANGUAGE_LABELS: Record<Language, string> = {
@@ -112,6 +116,8 @@ export async function updateSettings(data: {
   notificationSettings?: NotificationSettings;
   notificationSenders?: NotificationSenderSettings;
   dateFormat?: DateFormat;
+  checkOutTrackingEnabled?: boolean;
+  ownerDataScope?: OwnerDataScope;
 }): Promise<TenantSettings> {
   const response = await authedFetch("/settings", {
     method: "PATCH",

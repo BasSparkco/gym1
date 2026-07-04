@@ -4,11 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import {
-  GateRecord,
-  readOperationsStore,
-  writeOperationsStore,
-} from '../../data/operations-store';
+import { PrismaService } from '../../prisma/prisma.service';
 
 export type CreateGateInput = {
   branchId: string;
@@ -25,111 +21,95 @@ export type UpdateGateInput = Partial<CreateGateInput>;
 
 @Injectable()
 export class GatesService {
-  listGates(tenantId: string, branchId?: string): GateRecord[] {
-    const store = readOperationsStore();
-    return store.gates.filter(
-      (g) =>
-        g.tenantId === tenantId && (branchId == null || g.branchId === branchId),
-    );
+  constructor(private readonly prisma: PrismaService) {}
+
+  listGates(tenantId: string, branchId?: string) {
+    return this.prisma.gate.findMany({
+      where: { tenantId, ...(branchId != null && { branchId }) },
+    });
   }
 
-  getGate(tenantId: string, gateId: string): GateRecord | null {
-    const store = readOperationsStore();
-    return (
-      store.gates.find((g) => g.id === gateId && g.tenantId === tenantId) ??
-      null
-    );
+  async getGate(tenantId: string, gateId: string) {
+    return this.prisma.gate.findFirst({ where: { id: gateId, tenantId } });
   }
 
-  createGate(tenantId: string, input: CreateGateInput): GateRecord {
-    const store = readOperationsStore();
-
-    const branch = store.branches.find(
-      (b) => b.id === input.branchId && b.tenantId === tenantId,
-    );
+  async createGate(tenantId: string, input: CreateGateInput) {
+    const branch = await this.prisma.branch.findFirst({
+      where: { id: input.branchId, tenantId },
+    });
     if (!branch) {
       throw new BadRequestException('Branch not found.');
     }
 
-    const gate: GateRecord = {
-      id: `gate-${randomUUID()}`,
-      tenantId,
-      branchId: input.branchId,
-      name: input.name.trim(),
-      genderRestriction: input.genderRestriction,
-      deviceUrl: input.deviceUrl.trim().replace(/\/$/, ''),
-      deviceUsername: input.deviceUsername.trim(),
-      devicePassword: input.devicePassword,
-      lockNumber: input.lockNumber ?? 1,
-      enabled: input.enabled ?? true,
-    };
-
-    store.gates.push(gate);
-    writeOperationsStore(store);
-    return gate;
+    return this.prisma.gate.create({
+      data: {
+        id: `gate-${randomUUID()}`,
+        tenantId,
+        branchId: input.branchId,
+        name: input.name.trim(),
+        genderRestriction: input.genderRestriction,
+        deviceUrl: input.deviceUrl.trim().replace(/\/$/, ''),
+        deviceUsername: input.deviceUsername.trim(),
+        devicePassword: input.devicePassword,
+        lockNumber: input.lockNumber ?? 1,
+        enabled: input.enabled ?? true,
+      },
+    });
   }
 
-  updateGate(
-    tenantId: string,
-    gateId: string,
-    input: UpdateGateInput,
-  ): GateRecord {
-    const store = readOperationsStore();
-    const idx = store.gates.findIndex(
-      (g) => g.id === gateId && g.tenantId === tenantId,
-    );
-    if (idx === -1) throw new NotFoundException('Gate not found.');
+  async updateGate(tenantId: string, gateId: string, input: UpdateGateInput) {
+    const current = await this.prisma.gate.findFirst({
+      where: { id: gateId, tenantId },
+    });
+    if (!current) throw new NotFoundException('Gate not found.');
 
     if (input.branchId != null) {
-      const branch = store.branches.find(
-        (b) => b.id === input.branchId && b.tenantId === tenantId,
-      );
+      const branch = await this.prisma.branch.findFirst({
+        where: { id: input.branchId, tenantId },
+      });
       if (!branch) throw new BadRequestException('Branch not found.');
     }
 
-    const current = store.gates[idx];
-    const updated: GateRecord = {
-      ...current,
-      ...(input.branchId != null && { branchId: input.branchId }),
-      ...(input.name != null && { name: input.name.trim() }),
-      ...(input.genderRestriction !== undefined && {
-        genderRestriction: input.genderRestriction,
-      }),
-      ...(input.deviceUrl != null && {
-        deviceUrl: input.deviceUrl.trim().replace(/\/$/, ''),
-      }),
-      ...(input.deviceUsername != null && {
-        deviceUsername: input.deviceUsername.trim(),
-      }),
-      ...(input.devicePassword != null && {
-        devicePassword: input.devicePassword,
-      }),
-      ...(input.lockNumber != null && { lockNumber: input.lockNumber }),
-      ...(input.enabled != null && { enabled: input.enabled }),
-    };
-
-    store.gates[idx] = updated;
-    writeOperationsStore(store);
-    return updated;
+    return this.prisma.gate.update({
+      where: { id: gateId },
+      data: {
+        ...(input.branchId != null && { branchId: input.branchId }),
+        ...(input.name != null && { name: input.name.trim() }),
+        ...(input.genderRestriction !== undefined && {
+          genderRestriction: input.genderRestriction,
+        }),
+        ...(input.deviceUrl != null && {
+          deviceUrl: input.deviceUrl.trim().replace(/\/$/, ''),
+        }),
+        ...(input.deviceUsername != null && {
+          deviceUsername: input.deviceUsername.trim(),
+        }),
+        ...(input.devicePassword != null && {
+          devicePassword: input.devicePassword,
+        }),
+        ...(input.lockNumber != null && { lockNumber: input.lockNumber }),
+        ...(input.enabled != null && { enabled: input.enabled }),
+      },
+    });
   }
 
-  deleteGate(tenantId: string, gateId: string): void {
-    const store = readOperationsStore();
-    const idx = store.gates.findIndex(
-      (g) => g.id === gateId && g.tenantId === tenantId,
-    );
-    if (idx === -1) throw new NotFoundException('Gate not found.');
-    store.gates.splice(idx, 1);
-    writeOperationsStore(store);
+  async deleteGate(tenantId: string, gateId: string): Promise<void> {
+    const current = await this.prisma.gate.findFirst({
+      where: { id: gateId, tenantId },
+    });
+    if (!current) throw new NotFoundException('Gate not found.');
+
+    await this.prisma.gate.delete({ where: { id: gateId } });
   }
 
   /** Returns gates matching the member's gender (or gates with no restriction). */
-  gatesForMember(
+  async gatesForMember(
     tenantId: string,
     branchId: string,
     memberSex?: 'male' | 'female',
-  ): GateRecord[] {
-    return this.listGates(tenantId, branchId).filter(
+  ) {
+    const gates = await this.listGates(tenantId, branchId);
+    return gates.filter(
       (g) =>
         g.enabled &&
         (g.genderRestriction === null || g.genderRestriction === memberSex),

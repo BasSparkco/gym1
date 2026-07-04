@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { VisitsService } from './visits.service';
 
@@ -29,26 +30,28 @@ export class VisitsController {
   constructor(
     private readonly authService: AuthService,
     private readonly visitsService: VisitsService,
+    private readonly dataScopeService: DataScopeService,
   ) {}
 
   @Get()
-  listVisits(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listVisits(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     return {
-      visits: this.visitsService.listVisitsForScope(
+      visits: await this.visitsService.listVisitsForScope(
         session.user.tenant.id,
-        session.user.branch.id,
+        branchId,
       ),
     };
   }
 
   @Post()
-  createVisit(@Req() request: Request, @Body() body: CreateVisitRequestBody) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async createVisit(@Req() request: Request, @Body() body: CreateVisitRequestBody) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      visit: this.visitsService.createVisit(
+      visit: await this.visitsService.createVisit(
         session.user.tenant.id,
         session.user.branch.id,
         body,
@@ -58,8 +61,8 @@ export class VisitsController {
 
   @Post('check-in')
   @HttpCode(200)
-  checkIn(@Req() request: Request, @Body() body: CheckInRequestBody) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async checkIn(@Req() request: Request, @Body() body: CheckInRequestBody) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return this.visitsService.checkIn(
       session.user.tenant.id,
@@ -70,11 +73,11 @@ export class VisitsController {
 
   @Post(':visitId/check-out')
   @HttpCode(200)
-  checkOut(@Req() request: Request, @Param('visitId') visitId: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async checkOut(@Req() request: Request, @Param('visitId') visitId: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      visit: this.visitsService.checkOut(
+      visit: await this.visitsService.checkOut(
         session.user.tenant.id,
         session.user.branch.id,
         visitId,
@@ -83,21 +86,22 @@ export class VisitsController {
   }
 
   @Get(':visitId')
-  getVisit(@Req() request: Request, @Param('visitId') visitId: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getVisit(@Req() request: Request, @Param('visitId') visitId: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     return {
-      visit: this.visitsService.getVisitForScope(
+      visit: await this.visitsService.getVisitForScope(
         session.user.tenant.id,
-        session.user.branch.id,
+        branchId,
         visitId,
       ),
     };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

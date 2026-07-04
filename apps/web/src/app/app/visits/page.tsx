@@ -55,14 +55,15 @@ export default async function VisitsPage(props: {
       ? (rawPeriod as Period)
       : "week";
 
-  const rawPresence = searchParams.presence;
-  const presence: Presence =
-    typeof rawPresence === "string" && (PRESENCES as string[]).includes(rawPresence)
-      ? (rawPresence as Presence)
-      : "all";
-
   const [visits, members, settings] = await Promise.all([listVisits(), listMembers(), getSettings()]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
+  const checkOutEnabled = settings.checkOutTrackingEnabled;
+
+  const rawPresence = searchParams.presence;
+  const presence: Presence =
+    checkOutEnabled && typeof rawPresence === "string" && (PRESENCES as string[]).includes(rawPresence)
+      ? (rawPresence as Presence)
+      : "all";
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
 
@@ -133,6 +134,7 @@ export default async function VisitsPage(props: {
       </nav>
 
       {/* Presence filter */}
+      {checkOutEnabled && (
       <nav className="flex gap-2 flex-wrap">
         {PRESENCES.map((pr) => {
           const isActive = pr === presence;
@@ -163,6 +165,7 @@ export default async function VisitsPage(props: {
           );
         })}
       </nav>
+      )}
 
       <section className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
         {allSorted.length === 0 ? (
@@ -197,6 +200,7 @@ export default async function VisitsPage(props: {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-foreground/60">
+                    {checkOutEnabled && (
                     <span
                       className={[
                         "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -209,6 +213,7 @@ export default async function VisitsPage(props: {
                         ? t.visits.inside
                         : t.visits.checkedOut}
                     </span>
+                    )}
                     <span
                       className={[
                         "rounded-full px-2 py-0.5 text-xs font-medium",

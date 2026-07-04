@@ -1,43 +1,40 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { existsSync, rmSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { PrismaPg } from '@prisma/adapter-pg';
+import Redis from 'ioredis';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import { PrismaClient } from '../src/generated/prisma/client';
+import { resetPrismaTestData } from './prisma-test-utils';
 
+// Member photo uploads now go through MinIO, not this directory. This still
+// isolates the .local/ paths some not-yet-Prisma-converted code reads via
+// API_DATA_ROOT (e.g. operations-store.ts) from the real .local/ directory on
+// the host machine — nothing else reads/writes here.
 const testDataRoot = join(tmpdir(), `gym-e2e-${process.pid}`);
 
 describe('API (e2e)', () => {
   let app: INestApplication;
+  const testPrisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  });
+  // process.env.REDIS_URL is pointed at an isolated DB index by
+  // jest-e2e-setup.ts's globalSetup before this file's imports even run.
+  const testRedis = new Redis(process.env.REDIS_URL!);
 
   function getHttpServer() {
     return app.getHttpServer() as unknown as App;
   }
 
   beforeEach(async () => {
-    // Redirect all store I/O to an isolated temp directory so tests never
-    // touch the live .local/ data on the host machine.
     process.env.API_DATA_ROOT = testDataRoot;
+    mkdirSync(testDataRoot, { recursive: true });
 
-    const localDir = join(testDataRoot, '.local');
-    const dataDir = join(testDataRoot, 'data');
-
-    if (existsSync(join(localDir, 'auth-store.json'))) {
-      rmSync(join(localDir, 'auth-store.json'));
-    }
-
-    if (existsSync(join(localDir, 'operations-store.json'))) {
-      rmSync(join(localDir, 'operations-store.json'));
-    }
-
-    if (existsSync(join(dataDir, 'operations-seed.json'))) {
-      rmSync(join(dataDir, 'operations-seed.json'));
-    }
-
-    mkdirSync(localDir, { recursive: true });
-    mkdirSync(dataDir, { recursive: true });
+    await resetPrismaTestData(testPrisma, testRedis);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -48,11 +45,20 @@ describe('API (e2e)', () => {
     await app.init();
   });
 
-  afterAll(() => {
+  afterEach(async () => {
+    // Each beforeEach boots a fresh NestJS app (its own PrismaService
+    // connection) without this, prior apps stayed alive and could race the
+    // next test's TRUNCATE with in-flight Postgres work.
+    await app.close();
+  });
+
+  afterAll(async () => {
     if (existsSync(testDataRoot)) {
       rmSync(testDataRoot, { recursive: true, force: true });
     }
     delete process.env.API_DATA_ROOT;
+    await testPrisma.$disconnect();
+    testRedis.disconnect();
   });
 
   it('/api (GET)', () => {
@@ -393,6 +399,48 @@ describe('API (e2e)', () => {
       memberNumber: createdMemberBody.member.memberNumber,
       status: 'inactive',
     });
+  });
+
+  it('uploads a member photo to MinIO and serves it through the proxied route, requiring auth', async () => {
+    const signInResponse = await request(getHttpServer())
+      .post('/api/auth/sign-in')
+      .send({
+        identifier: 'frontdesk@sparkgym.local',
+        password: 'frontdesk123',
+      })
+      .expect(200);
+
+    const sessionCookies = signInResponse.get('Set-Cookie');
+
+    const createMemberResponse = await request(getHttpServer())
+      .post('/api/members')
+      .set('Cookie', sessionCookies)
+      .send({ fullName: 'Photo Test Member' })
+      .expect(201);
+
+    const memberId = (createMemberResponse.body as { member: { id: string } })
+      .member.id;
+
+    const uploadResponse = await request(getHttpServer())
+      .post(`/api/members/${memberId}/photo`)
+      .set('Cookie', sessionCookies)
+      .attach('picture', Buffer.from('fake-jpeg-bytes'), 'photo.jpg')
+      .expect(201);
+
+    const pictureUrl = (
+      uploadResponse.body as { member: { pictureUrl: string } }
+    ).member.pictureUrl;
+
+    expect(pictureUrl).toMatch(/^\/api\/uploads\/members\/photo-.+\.jpg$/);
+
+    const fetchResponse = await request(getHttpServer())
+      .get(pictureUrl)
+      .set('Cookie', sessionCookies)
+      .expect(200);
+
+    expect(fetchResponse.text).toBe('fake-jpeg-bytes');
+
+    await request(getHttpServer()).get(pictureUrl).expect(401);
   });
 
   it('lists, creates, retrieves, and updates branches', async () => {
@@ -1513,9 +1561,5 @@ describe('API (e2e)', () => {
       .post('/api/access/bas-ip?branchId=Platinum Fitness&token=wrong-token')
       .send({ identifier_number: 'AABBCCDD', identifier_type: 'card' })
       .expect(401);
-  });
-
-  afterEach(async () => {
-    await app.close();
   });
 });

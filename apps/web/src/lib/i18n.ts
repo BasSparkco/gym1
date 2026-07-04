@@ -137,6 +137,18 @@ export type Dict = {
     sendQrWhatsApp: string;
     qrSentSuccess: string;
     qrSentFailed: string;
+    filterAll: string;
+    filterActiveMembership: string;
+    filterFrozen: string;
+    filterExpiringSoon: string;
+    filterNoMembership: string;
+    totalMembers: string;
+    activeMemberships: string;
+    expiringIn30Days: string;
+    memberCountSingular: string;
+    memberCountPlural: string;
+    matchingFilters: string;
+    total: string;
   };
   plans: {
     title: string;
@@ -426,6 +438,18 @@ export type Dict = {
     dateFormatDDMMYYYY: string;
     dateFormatMMDDYYYY: string;
     saveDisplaySettings: string;
+    options: string;
+    optionsTitle: string;
+    optionsDescription: string;
+    checkInOutSectionTitle: string;
+    checkOutToggleLabel: string;
+    checkOutToggleHelp: string;
+    dataVisibilityTitle: string;
+    dataVisibilityHelp: string;
+    dataVisibilityAllBranches: string;
+    dataVisibilityAllBranchesHelp: string;
+    dataVisibilityActiveBranch: string;
+    dataVisibilityActiveBranchHelp: string;
     whatsapp: string;
     whatsappTitle: string;
     whatsappDescription: string;
@@ -597,6 +621,18 @@ const en: Dict = {
     sendQrWhatsApp: "Send via WhatsApp",
     qrSentSuccess: "QR code sent via WhatsApp!",
     qrSentFailed: "Failed to send QR code.",
+    filterAll: "All",
+    filterActiveMembership: "Active membership",
+    filterFrozen: "Frozen",
+    filterExpiringSoon: "Expiring soon",
+    filterNoMembership: "No membership",
+    totalMembers: "Total members",
+    activeMemberships: "Active memberships",
+    expiringIn30Days: "Expiring in 30 days",
+    memberCountSingular: "member",
+    memberCountPlural: "members",
+    matchingFilters: "matching filters",
+    total: "total",
   },
   plans: {
     title: "Membership plans",
@@ -886,6 +922,18 @@ const en: Dict = {
     dateFormatDDMMYYYY: "DD/MM/YYYY (e.g. 24/06/2026)",
     dateFormatMMDDYYYY: "MM/DD/YYYY (e.g. 06/24/2026)",
     saveDisplaySettings: "Save display settings",
+    options: "Options",
+    optionsTitle: "General preferences",
+    optionsDescription: "Language, display, and check-in/out behavior for your gym.",
+    checkInOutSectionTitle: "Check-in / Check-out",
+    checkOutToggleLabel: "Enable member check-out registration",
+    checkOutToggleHelp: "When off, members only scan in at the gate — the visits list won't track or show check-out times.",
+    dataVisibilityTitle: "Data visibility",
+    dataVisibilityHelp: "As the owner, choose whether members, employees, users, visits, payments, and reports show every branch or only the branch you're currently switched into.",
+    dataVisibilityAllBranches: "All branches",
+    dataVisibilityAllBranchesHelp: "See members, employees, users, and reports from every branch in your gym.",
+    dataVisibilityActiveBranch: "Active branch only",
+    dataVisibilityActiveBranchHelp: "See only the branch you're currently switched into (change it under Branches).",
     whatsapp: "WhatsApp",
     whatsappTitle: "WhatsApp connection",
     whatsappDescription: "Connect your gym's WhatsApp number so that member notifications are sent from your own number.",
@@ -1057,6 +1105,18 @@ const ar: Dict = {
     sendQrWhatsApp: "إرسال عبر واتساب",
     qrSentSuccess: "تم إرسال رمز QR عبر واتساب!",
     qrSentFailed: "فشل إرسال رمز QR.",
+    filterAll: "الكل",
+    filterActiveMembership: "عضوية نشطة",
+    filterFrozen: "مجمّدة",
+    filterExpiringSoon: "تنتهي قريبًا",
+    filterNoMembership: "بدون عضوية",
+    totalMembers: "إجمالي الأعضاء",
+    activeMemberships: "العضويات النشطة",
+    expiringIn30Days: "تنتهي خلال 30 يومًا",
+    memberCountSingular: "عضو",
+    memberCountPlural: "أعضاء",
+    matchingFilters: "مطابقين للفلاتر",
+    total: "الإجمالي",
   },
   plans: {
     title: "خطط الاشتراك",
@@ -1346,6 +1406,18 @@ const ar: Dict = {
     dateFormatDDMMYYYY: "يوم/شهر/سنة (مثال: 24/06/2026)",
     dateFormatMMDDYYYY: "شهر/يوم/سنة (مثال: 06/24/2026)",
     saveDisplaySettings: "حفظ إعدادات العرض",
+    options: "الخيارات",
+    optionsTitle: "التفضيلات العامة",
+    optionsDescription: "اللغة والعرض وسلوك تسجيل الدخول/الخروج لصالتك الرياضية.",
+    checkInOutSectionTitle: "تسجيل الدخول / الخروج",
+    checkOutToggleLabel: "تفعيل تسجيل خروج الأعضاء",
+    checkOutToggleHelp: "عند التعطيل، يقوم الأعضاء بمسح الدخول فقط عند البوابة — ولن تعرض قائمة الزيارات أوقات الخروج أو تتتبعها.",
+    dataVisibilityTitle: "رؤية البيانات",
+    dataVisibilityHelp: "بصفتك المالك، اختر ما إذا كانت صفحات الأعضاء والموظفين والمستخدمين والزيارات والمدفوعات والتقارير تعرض جميع الفروع أو الفرع النشط فقط.",
+    dataVisibilityAllBranches: "جميع الفروع",
+    dataVisibilityAllBranchesHelp: "اعرض الأعضاء والموظفين والمستخدمين والتقارير من جميع فروع صالتك.",
+    dataVisibilityActiveBranch: "الفرع النشط فقط",
+    dataVisibilityActiveBranchHelp: "اعرض فقط الفرع الذي أنت متصل به حاليًا (يمكن تغييره من صفحة الفروع).",
     whatsapp: "واتساب",
     whatsappTitle: "ربط واتساب",
     whatsappDescription: "اربط رقم واتساب الصالة حتى تُرسل إشعارات الأعضاء من رقمك الخاص.",
@@ -1517,6 +1589,18 @@ const he: Dict = {
     sendQrWhatsApp: "שלח ב-WhatsApp",
     qrSentSuccess: "קוד QR נשלח ב-WhatsApp!",
     qrSentFailed: "שליחת קוד QR נכשלה.",
+    filterAll: "הכל",
+    filterActiveMembership: "מנוי פעיל",
+    filterFrozen: "מוקפא",
+    filterExpiringSoon: "מסתיים בקרוב",
+    filterNoMembership: "ללא מנוי",
+    totalMembers: "סה\"כ חברים",
+    activeMemberships: "מנויים פעילים",
+    expiringIn30Days: "מסתיימים תוך 30 יום",
+    memberCountSingular: "חבר",
+    memberCountPlural: "חברים",
+    matchingFilters: "תואמים לסינון",
+    total: "סה\"כ",
   },
   plans: {
     title: "תוכניות מנוי",
@@ -1806,6 +1890,18 @@ const he: Dict = {
     dateFormatDDMMYYYY: "יום/חודש/שנה (לדוגמה: 24/06/2026)",
     dateFormatMMDDYYYY: "חודש/יום/שנה (לדוגמה: 06/24/2026)",
     saveDisplaySettings: "שמור הגדרות תצוגה",
+    options: "אפשרויות",
+    optionsTitle: "העדפות כלליות",
+    optionsDescription: "שפה, תצוגה והתנהגות כניסה/יציאה עבור המכון שלך.",
+    checkInOutSectionTitle: "כניסה / יציאה",
+    checkOutToggleLabel: "הפעל רישום יציאת חברים",
+    checkOutToggleHelp: "כשזה כבוי, חברים רק סורקים כניסה בשער — רשימת הביקורים לא תעקוב או תציג זמני יציאה.",
+    dataVisibilityTitle: "נראות נתונים",
+    dataVisibilityHelp: "כבעלים, בחר האם עמודי החברים, העובדים, המשתמשים, הביקורים, התשלומים והדוחות יציגו את כל הסניפים או רק את הסניף הפעיל שלך.",
+    dataVisibilityAllBranches: "כל הסניפים",
+    dataVisibilityAllBranchesHelp: "הצג חברים, עובדים, משתמשים ודוחות מכל סניפי המכון שלך.",
+    dataVisibilityActiveBranch: "הסניף הפעיל בלבד",
+    dataVisibilityActiveBranchHelp: "הצג רק את הסניף שאתה מחובר אליו כרגע (ניתן לשנות תחת סניפים).",
     whatsapp: "WhatsApp",
     whatsappTitle: "חיבור WhatsApp",
     whatsappDescription: "חבר את מספר ה-WhatsApp של המכון כדי שהתראות לחברים יישלחו מהמספר שלך.",

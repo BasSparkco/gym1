@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  OnModuleInit,
 } from '@nestjs/common';
 import {
   randomBytes,
@@ -10,21 +9,12 @@ import {
   scryptSync,
   timingSafeEqual,
 } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../../redis/redis.service';
+import { UserRole as DbUserRole } from '../../generated/prisma/enums';
 
 const SESSION_COOKIE_NAME = 'spark_gym_session';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
-
-function getAuthPaths() {
-  const root = process.env.API_DATA_ROOT ?? join(__dirname, '..', '..', '..');
-  return {
-    seedPath: join(root, 'data', 'auth-seed.json'),
-    storePath: join(root, '.local', 'auth-store.json'),
-    dataDir: join(root, 'data'),
-    localDir: join(root, '.local'),
-  };
-}
 
 export type SessionUser = {
   id: string;
@@ -40,17 +30,6 @@ export type SessionUser = {
     id: string;
     name: string;
   };
-};
-
-type StoredUser = SessionUser & {
-  passwordHash: string;
-};
-
-type SessionRecord = {
-  token: string;
-  userId: string;
-  createdAt: number;
-  expiresAt: number;
 };
 
 type CurrentSession = {
@@ -82,16 +61,22 @@ export type UpdateUserInput = {
   password?: string;
 };
 
-type AuthStore = {
-  users: StoredUser[];
-  sessions: SessionRecord[];
+// Prisma enum values can't contain hyphens, so 'front-desk' is stored as
+// 'frontDesk' — mapped at this service's boundary so nothing else in the app
+// (controllers, the frontend contract) needs to know about it.
+const ROLE_TO_DB: Record<SessionUser['role'], DbUserRole> = {
+  owner: 'owner',
+  manager: 'manager',
+  'front-desk': 'frontDesk',
 };
 
-type AuthSeed = {
-  users: StoredUser[];
+const ROLE_FROM_DB: Record<DbUserRole, SessionUser['role']> = {
+  owner: 'owner',
+  manager: 'manager',
+  frontDesk: 'front-desk',
 };
 
-const defaultAuthSeed: AuthSeed = {
+export const defaultAuthSeed = {
   users: [
     {
       id: 'user-owner-001',
@@ -100,7 +85,7 @@ const defaultAuthSeed: AuthSeed = {
       passwordHash:
         'scrypt:7dd174123a6767616d8bbbd028f4c5f1:04fef104953bb3c1df97d712e62e9f00ea9a5bdfc74de175d84ab87b427d941c6f367d26e445851f6a7c1172450b9a770da0470d6e06a478f52c711f10aa314f',
       name: 'Spark Gym Owner',
-      role: 'owner',
+      role: 'owner' as const,
       tenant: {
         id: 'tenant-spark-gym',
         name: 'Spark Gym',
@@ -117,7 +102,7 @@ const defaultAuthSeed: AuthSeed = {
       passwordHash:
         'scrypt:006e979410fbccb0600f59871608d011:192ceb1ce366f13d6a46c0ae49243f53e53bbf49b0d60eb6fef528967d7c23fc0b6d2fe0c8d4a07781c5e59751136d09f95c57272b8426ee7131e9b914422543',
       name: 'Front Desk User',
-      role: 'front-desk',
+      role: 'front-desk' as const,
       tenant: {
         id: 'tenant-spark-gym',
         name: 'Spark Gym',
@@ -130,38 +115,44 @@ const defaultAuthSeed: AuthSeed = {
   ],
 };
 
-@Injectable()
-export class AuthService implements OnModuleInit {
-  private store: AuthStore = {
-    users: defaultAuthSeed.users,
-    sessions: [],
-  };
+type StoredSession = {
+  userId: string;
+  createdAt: number;
+  expiresAt: number;
+};
 
-  onModuleInit() {
-    this.store = this.readStore();
-    this.pruneExpiredSessions();
-  }
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   getSessionCookieName() {
     return SESSION_COOKIE_NAME;
   }
 
-  getCurrentSessionFromCookieHeader(cookieHeader: string | undefined) {
+  async getCurrentSessionFromCookieHeader(
+    cookieHeader: string | undefined,
+  ): Promise<CurrentSession | null> {
     return this.getCurrentSession(
       this.readSessionCookie(cookieHeader, this.getSessionCookieName()),
     );
   }
 
-  signIn(input: SignInInput) {
-    this.pruneExpiredSessions();
-
+  async signIn(input: SignInInput) {
     const normalizedIdentifier = input.identifier.trim().toLowerCase();
-    const user = this.store.users.find((candidate) => {
-      return (
-        candidate.email.toLowerCase() === normalizedIdentifier ||
-        candidate.username.toLowerCase() === normalizedIdentifier
-      );
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        OR: [
+          { email: { equals: normalizedIdentifier, mode: 'insensitive' } },
+          { username: { equals: normalizedIdentifier, mode: 'insensitive' } },
+        ],
+      },
+      include: { tenant: true },
     });
+    const user = users[0];
 
     if (!user || !this.passwordMatches(user.passwordHash, input.password)) {
       return null;
@@ -170,15 +161,15 @@ export class AuthService implements OnModuleInit {
     const sessionUser = this.toSessionUser(user);
     const token = randomUUID();
     const now = Date.now();
-    const sessionRecord: SessionRecord = {
-      token,
-      userId: sessionUser.id,
-      createdAt: now,
-      expiresAt: now + SESSION_DURATION_MS,
-    };
+    const expiresAt = now + SESSION_DURATION_MS;
 
-    this.store.sessions.push(sessionRecord);
-    this.writeStore();
+    const stored: StoredSession = { userId: user.id, createdAt: now, expiresAt };
+    await this.redis.set(
+      this.sessionKey(token),
+      JSON.stringify(stored),
+      'EX',
+      Math.floor(SESSION_DURATION_MS / 1000),
+    );
 
     return {
       token,
@@ -186,69 +177,72 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  getCurrentSession(token: string | undefined): CurrentSession | null {
+  async getCurrentSession(
+    token: string | undefined,
+  ): Promise<CurrentSession | null> {
     if (!token) {
       return null;
     }
 
-    this.pruneExpiredSessions();
-
-    const session = this.store.sessions.find(
-      (candidate) => candidate.token === token,
-    );
-
-    if (!session) {
+    // Redis's own TTL already means an expired session simply isn't there
+    // anymore — no manual expiresAt filtering needed.
+    const raw = await this.redis.get(this.sessionKey(token));
+    if (!raw) {
       return null;
     }
 
-    const user = this.store.users.find(
-      (candidate) => candidate.id === session.userId,
-    );
+    const stored = JSON.parse(raw) as StoredSession;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: stored.userId },
+      include: { tenant: true },
+    });
 
     if (!user) {
-      this.store.sessions = this.store.sessions.filter(
-        (candidate) => candidate.token !== token,
-      );
-      this.writeStore();
+      // User was deleted after the session was issued — treat as invalid.
+      await this.redis.del(this.sessionKey(token));
       return null;
     }
 
     return {
-      token: session.token,
+      token,
       user: this.toSessionUser(user),
-      createdAt: session.createdAt,
-      expiresAt: session.expiresAt,
+      createdAt: stored.createdAt,
+      expiresAt: stored.expiresAt,
     };
   }
 
-  clearSession(token: string | undefined) {
+  async clearSession(token: string | undefined) {
     if (!token) {
       return;
     }
 
-    const nextSessions = this.store.sessions.filter(
-      (candidate) => candidate.token !== token,
-    );
-
-    if (nextSessions.length === this.store.sessions.length) {
-      return;
-    }
-
-    this.store.sessions = nextSessions;
-    this.writeStore();
+    await this.redis.del(this.sessionKey(token));
   }
 
-  listUsersForTenant(tenantId: string): SessionUser[] {
-    return this.store.users
-      .filter((user) => user.tenant.id === tenantId)
-      .map((user) => this.toSessionUser(user));
+  private sessionKey(token: string): string {
+    return `session:${token}`;
   }
 
-  getUserForTenant(tenantId: string, userId: string): SessionUser {
-    const user = this.store.users.find(
-      (candidate) =>
-        candidate.id === userId && candidate.tenant.id === tenantId,
-    );
+  async listUsersForTenant(
+    tenantId: string,
+    branchId?: string,
+  ): Promise<SessionUser[]> {
+    const users = await this.prisma.user.findMany({
+      where: { tenantId, ...(branchId ? { branchId } : {}) },
+      include: { tenant: true },
+    });
+    return users.map((user) => this.toSessionUser(user));
+  }
+
+  async getUserForTenant(
+    tenantId: string,
+    userId: string,
+  ): Promise<SessionUser> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+      include: { tenant: true },
+    });
 
     if (!user) {
       throw new NotFoundException('User not found.');
@@ -257,11 +251,11 @@ export class AuthService implements OnModuleInit {
     return this.toSessionUser(user);
   }
 
-  createUser(
+  async createUser(
     tenantId: string,
     tenantName: string,
     input: CreateUserInput,
-  ): SessionUser {
+  ): Promise<SessionUser> {
     const email = input.email.trim().toLowerCase();
 
     if (!email || !email.includes('@')) {
@@ -276,108 +270,116 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Password must be at least 6 characters.');
     }
 
-    const existingUser = this.store.users.find(
-      (candidate) => candidate.email.toLowerCase() === email,
-    );
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email },
+    });
 
     if (existingUser) {
       throw new BadRequestException('A user with this email already exists.');
     }
 
     const username = email.split('@')[0];
-    const newUser: StoredUser = {
-      id: `user-${randomUUID()}`,
-      email,
-      username,
-      name: input.name.trim(),
-      role: input.role,
-      passwordHash: this.hashPassword(input.password),
-      tenant: { id: tenantId, name: tenantName },
-      branch: { id: input.branchId, name: input.branchName },
-    };
 
-    this.store.users.push(newUser);
-    this.writeStore();
+    const newUser = await this.prisma.user.create({
+      data: {
+        id: `user-${randomUUID()}`,
+        tenantId,
+        email,
+        username,
+        name: input.name.trim(),
+        role: ROLE_TO_DB[input.role],
+        passwordHash: this.hashPassword(input.password),
+        branchId: input.branchId,
+        branchName: input.branchName,
+      },
+      include: { tenant: true },
+    });
 
     return this.toSessionUser(newUser);
   }
 
-  syncBranchNameForUsers(
+  async syncBranchNameForUsers(
     tenantId: string,
     branchId: string,
     newName: string,
-  ): void {
-    let changed = false;
-    for (const user of this.store.users) {
-      if (user.tenant.id === tenantId && user.branch.id === branchId) {
-        user.branch = { id: branchId, name: newName };
-        changed = true;
-      }
-    }
-    if (changed) this.writeStore();
+  ): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { tenantId, branchId },
+      data: { branchName: newName },
+    });
   }
 
-  switchBranchForUser(
+  async switchBranchForUser(
     tenantId: string,
     userId: string,
     branchId: string,
     branchName: string,
-  ): SessionUser {
-    const idx = this.store.users.findIndex(
-      (u) => u.id === userId && u.tenant.id === tenantId,
-    );
-    if (idx === -1) throw new NotFoundException('User not found.');
-    this.store.users[idx] = {
-      ...this.store.users[idx],
-      branch: { id: branchId, name: branchName },
-    };
-    this.writeStore();
-    return this.toSessionUser(this.store.users[idx]);
+  ): Promise<SessionUser> {
+    const existing = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+    if (!existing) throw new NotFoundException('User not found.');
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { branchId, branchName },
+      include: { tenant: true },
+    });
+
+    return this.toSessionUser(updated);
   }
 
-  updateUser(
+  async updateUser(
     tenantId: string,
     userId: string,
     input: UpdateUserInput,
-  ): SessionUser {
-    const idx = this.store.users.findIndex(
-      (candidate) =>
-        candidate.id === userId && candidate.tenant.id === tenantId,
-    );
+  ): Promise<SessionUser> {
+    const existing = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
 
-    if (idx === -1) {
+    if (!existing) {
       throw new NotFoundException('User not found.');
     }
 
-    const current = this.store.users[idx];
-    const next: StoredUser = {
-      ...current,
-      name: input.name?.trim() ?? current.name,
-      role: input.role ?? current.role,
-      branch: {
-        id: input.branchId ?? current.branch.id,
-        name: input.branchName ?? current.branch.name,
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(input.name !== undefined && { name: input.name.trim() }),
+        ...(input.role !== undefined && { role: ROLE_TO_DB[input.role] }),
+        ...(input.branchId !== undefined && { branchId: input.branchId }),
+        ...(input.branchName !== undefined && {
+          branchName: input.branchName,
+        }),
+        ...(input.password !== undefined && {
+          passwordHash: this.hashPassword(input.password),
+        }),
       },
-      passwordHash: input.password
-        ? this.hashPassword(input.password)
-        : current.passwordHash,
-    };
+      include: { tenant: true },
+    });
 
-    this.store.users[idx] = next;
-    this.writeStore();
-
-    return this.toSessionUser(next);
+    return this.toSessionUser(updated);
   }
 
-  private toSessionUser(user: StoredUser): SessionUser {
+  private toSessionUser(user: {
+    id: string;
+    email: string;
+    username: string;
+    name: string;
+    role: DbUserRole;
+    tenantId: string;
+    tenant: { name: string };
+    branchId: string;
+    branchName: string;
+  }): SessionUser {
     return {
       id: user.id,
       email: user.email,
       username: user.username,
       name: user.name,
-      role: user.role,
-      tenant: user.tenant,
-      branch: user.branch,
+      role: ROLE_FROM_DB[user.role],
+      tenant: { id: user.tenantId, name: user.tenant.name },
+      branch: { id: user.branchId, name: user.branchName },
     };
   }
 
@@ -402,82 +404,6 @@ export class AuthService implements OnModuleInit {
     }
 
     return timingSafeEqual(expectedBuffer, receivedBuffer);
-  }
-
-  private pruneExpiredSessions() {
-    const now = Date.now();
-    const nextSessions = this.store.sessions.filter(
-      (session) => session.expiresAt > now,
-    );
-
-    if (nextSessions.length === this.store.sessions.length) {
-      return;
-    }
-
-    this.store.sessions = nextSessions;
-    this.writeStore();
-  }
-
-  private readStore() {
-    this.ensureStoreFile();
-
-    const { storePath } = getAuthPaths();
-    const rawStore = readFileSync(storePath, 'utf8');
-    const parsedStore = JSON.parse(rawStore) as AuthStore;
-
-    return {
-      users: parsedStore.users,
-      sessions: parsedStore.sessions ?? [],
-    };
-  }
-
-  private writeStore() {
-    this.ensureStoreFile();
-    const { storePath } = getAuthPaths();
-    writeFileSync(storePath, JSON.stringify(this.store, null, 2) + '\n');
-  }
-
-  private ensureStoreFile() {
-    const { localDir, storePath } = getAuthPaths();
-
-    if (!existsSync(localDir)) {
-      mkdirSync(localDir, { recursive: true });
-    }
-
-    this.ensureSeedFile();
-
-    if (!existsSync(storePath)) {
-      const { seedPath } = getAuthPaths();
-      const rawSeed = readFileSync(seedPath, 'utf8');
-      const parsedSeed = JSON.parse(rawSeed) as AuthSeed;
-
-      writeFileSync(
-        storePath,
-        JSON.stringify(
-          {
-            users: parsedSeed.users,
-            sessions: [],
-          },
-          null,
-          2,
-        ) + '\n',
-      );
-    }
-  }
-
-  private ensureSeedFile() {
-    const { dataDir, seedPath } = getAuthPaths();
-
-    if (!existsSync(dataDir)) {
-      mkdirSync(dataDir, { recursive: true });
-    }
-
-    if (!existsSync(seedPath)) {
-      writeFileSync(
-        seedPath,
-        JSON.stringify(defaultAuthSeed, null, 2) + '\n',
-      );
-    }
   }
 
   private readSessionCookie(cookieHeader: string | undefined, name: string) {

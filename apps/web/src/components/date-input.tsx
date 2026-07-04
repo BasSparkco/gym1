@@ -14,13 +14,14 @@ interface DateInputProps {
   dateFormat: DateFormat;
   required?: boolean;
   id?: string;
+  onChange?: (value: string) => void;
 }
 
 function toYMD(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-export default function DateInput({ name, defaultValue, dateFormat, required, id }: DateInputProps) {
+export default function DateInput({ name, defaultValue, dateFormat, required, id, onChange }: DateInputProps) {
   const initial: PickerValue = defaultValue ? new Date(defaultValue + "T12:00:00") : null;
   const [value, setValue] = useState<PickerValue>(initial);
 
@@ -32,7 +33,10 @@ export default function DateInput({ name, defaultValue, dateFormat, required, id
     <div className="date-input-wrapper">
       <DatePicker
         id={id}
-        onChange={(v) => setValue(v as PickerValue)}
+        onChange={(v) => {
+          setValue(v as PickerValue);
+          onChange?.(v ? toYMD(v as Date) : "");
+        }}
         value={value}
         format={format}
         required={required}

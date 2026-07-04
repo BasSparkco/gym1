@@ -4,12 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import {
-  PaymentRecord,
-  readOperationsStore,
-  writeOperationsStore,
-} from '../../data/operations-store';
+import { toNumber } from '../../common/decimal';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Payment, PaymentMethod, PaymentStatus } from '../../generated/prisma/client';
 
 type CreatePaymentInput = {
   branchId?: string;
@@ -17,50 +15,53 @@ type CreatePaymentInput = {
   membershipId?: string;
   amount?: number;
   paymentDate?: string;
-  status?: PaymentRecord['status'];
-  paymentMethod?: PaymentRecord['paymentMethod'];
+  status?: PaymentStatus;
+  paymentMethod?: PaymentMethod;
 };
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
-  listPaymentsForMember(tenantId: string, memberId: string) {
-    const store = readOperationsStore();
-    const member = store.members.find(
-      (candidate) =>
-        candidate.id === memberId && candidate.tenantId === tenantId,
-    );
+  async listPaymentsForMember(tenantId: string, memberId: string) {
+    const member = await this.prisma.member.findFirst({
+      where: { id: memberId, tenantId },
+    });
 
     if (!member) {
       throw new NotFoundException('Member not found.');
     }
 
-    return store.payments.filter(
-      (payment) =>
-        payment.memberId === memberId && payment.tenantId === tenantId,
-    );
+    const payments = await this.prisma.payment.findMany({
+      where: { memberId, tenantId },
+    });
+    return payments.map((p) => this.serialize(p));
   }
 
-  getPaymentForScope(tenantId: string, branchId: string, paymentId: string) {
-    const payment = readOperationsStore().payments.find(
-      (candidate) =>
-        candidate.id === paymentId &&
-        candidate.tenantId === tenantId &&
-        candidate.branchId === branchId,
-    );
+  async getPaymentForScope(
+    tenantId: string,
+    branchId: string | undefined,
+    paymentId: string,
+  ) {
+    const payment = await this.prisma.payment.findFirst({
+      where: { id: paymentId, tenantId, ...(branchId ? { branchId } : {}) },
+    });
 
     if (!payment) {
       throw new NotFoundException('Payment not found.');
     }
 
-    return payment;
+    return this.serialize(payment);
   }
 
-  listPaymentsForScope(tenantId: string, branchId: string) {
-    return readOperationsStore().payments.filter((payment) => {
-      return payment.tenantId === tenantId && payment.branchId === branchId;
+  async listPaymentsForScope(tenantId: string, branchId: string | undefined) {
+    const payments = await this.prisma.payment.findMany({
+      where: { tenantId, ...(branchId ? { branchId } : {}) },
     });
+    return payments.map((p) => this.serialize(p));
   }
 
   async createPayment(tenantId: string, branchId: string, input: CreatePaymentInput) {
@@ -76,19 +77,16 @@ export class PaymentsService {
       );
     }
 
-    const store = readOperationsStore();
     const targetBranchId = input.branchId ?? branchId;
-    const branch = store.branches.find((candidate) => {
-      return candidate.id === targetBranchId && candidate.tenantId === tenantId;
+
+    const branch = await this.prisma.branch.findFirst({
+      where: { id: targetBranchId, tenantId },
     });
-    const member = store.members.find((candidate) => {
-      return candidate.id === input.memberId && candidate.tenantId === tenantId;
+    const member = await this.prisma.member.findFirst({
+      where: { id: input.memberId, tenantId },
     });
-    const membership = store.memberships.find((candidate) => {
-      return (
-        candidate.id === input.membershipId &&
-        candidate.memberId === input.memberId
-      );
+    const membership = await this.prisma.membership.findFirst({
+      where: { id: input.membershipId, memberId: input.memberId },
     });
 
     if (!branch) {
@@ -103,34 +101,42 @@ export class PaymentsService {
       throw new BadRequestException('Membership is invalid for this member.');
     }
 
-    const payment: PaymentRecord = {
-      id: `payment-${randomUUID()}`,
-      tenantId,
-      branchId: targetBranchId,
-      memberId: input.memberId,
-      membershipId: input.membershipId,
-      amount: input.amount,
-      paymentDate: input.paymentDate,
-      status: input.status ?? 'pending',
-      paymentMethod: input.paymentMethod ?? 'cash',
-    };
+    const status = input.status ?? 'pending';
 
-    store.payments.push(payment);
-    writeOperationsStore(store);
+    const payment = await this.prisma.payment.create({
+      data: {
+        id: `payment-${randomUUID()}`,
+        tenantId,
+        branchId: targetBranchId,
+        memberId: input.memberId,
+        membershipId: input.membershipId,
+        amount: input.amount,
+        paymentDate: new Date(input.paymentDate),
+        status,
+        paymentMethod: input.paymentMethod ?? 'cash',
+      },
+    });
 
-    if (payment.status === 'pending') {
+    if (status === 'pending') {
       await this.notificationsService.createNotificationsForEvent(
         tenantId,
         'paymentPending',
         payment.memberId,
         {
           subject: 'Payment reminder',
-          body: `You have a pending payment of ${payment.amount} due on ${payment.paymentDate}. Please settle your balance at the front desk.`,
+          body: `You have a pending payment of ${payment.amount} due on ${input.paymentDate}. Please settle your balance at the front desk.`,
           relatedId: payment.id,
         },
       );
     }
 
-    return payment;
+    return this.serialize(payment);
+  }
+
+  // Postgres Decimal columns come back from Prisma as Decimal objects; the
+  // API contract (and the web app, which calls `.toLocaleString()` on
+  // amount) expects a plain number, same as the old JSON store.
+  private serialize(payment: Payment) {
+    return { ...payment, amount: toNumber(payment.amount) };
   }
 }

@@ -16,9 +16,15 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { UsersModule } from './modules/users/users.module';
 import { VisitsModule } from './modules/visits/visits.module';
+import { MinioModule } from './minio/minio.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
+    PrismaModule,
+    RedisModule,
+    MinioModule,
     ScheduleModule.forRoot(),
     AuthModule,
     TenancyModule,

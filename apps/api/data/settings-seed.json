@@ -2,12 +2,10 @@
   "tenants": [
     {
       "tenantId": "tenant-spark-gym",
-      "defaultLanguage": "en",
-      "enabledLanguages": [
-        "en",
-        "ar",
-        "he"
-      ],
+      "defaultLanguage": "ar",
+      "enabledLanguages": ["ar", "en"],
+      "dateFormat": "dd/mm/yyyy",
+      "checkOutTrackingEnabled": true,
       "notificationSettings": {
         "membershipExpiring": {
           "enabled": true,
@@ -22,7 +20,7 @@
           "enabled": true,
           "channels": {
             "sms": true,
-            "whatsapp": false,
+            "whatsapp": true,
             "email": false
           }
         },
@@ -38,7 +36,7 @@
           "enabled": true,
           "channels": {
             "sms": false,
-            "whatsapp": false,
+            "whatsapp": true,
             "email": true
           }
         }

@@ -4,14 +4,16 @@ import {
   Language,
   NotificationSenderSettings,
   NotificationSettings,
+  OwnerDataScope,
   TenantSettingsRecord,
   getDefaultTenantSettings,
-  readSettingsStore,
-  writeSettingsStore,
 } from '../../data/settings-store';
+import { Prisma } from '../../generated/prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 
 const VALID_LANGUAGES = new Set<Language>(['en', 'ar', 'he']);
 const VALID_DATE_FORMATS = new Set<DateFormat>(['dd/mm/yyyy', 'mm/dd/yyyy']);
+const VALID_OWNER_DATA_SCOPES = new Set<OwnerDataScope>(['all', 'activeBranch']);
 
 export type UpdateSettingsInput = {
   defaultLanguage?: string;
@@ -19,13 +21,20 @@ export type UpdateSettingsInput = {
   notificationSettings?: NotificationSettings;
   notificationSenders?: NotificationSenderSettings;
   dateFormat?: string;
+  checkOutTrackingEnabled?: boolean;
+  ownerDataScope?: string;
 };
 
 @Injectable()
 export class SettingsService {
-  getSettingsForTenant(tenantId: string): TenantSettingsRecord {
-    const store = readSettingsStore();
-    const found = store.tenants.find((record) => record.tenantId === tenantId);
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getSettingsForTenant(
+    tenantId: string,
+  ): Promise<TenantSettingsRecord> {
+    const found = await this.prisma.tenantSettings.findUnique({
+      where: { tenantId },
+    });
     const defaults = getDefaultTenantSettings(tenantId);
 
     if (!found) {
@@ -33,20 +42,28 @@ export class SettingsService {
     }
 
     return {
-      ...found,
+      tenantId: found.tenantId,
+      defaultLanguage: found.defaultLanguage as Language,
+      enabledLanguages: found.enabledLanguages as Language[],
       notificationSettings:
-        found.notificationSettings ?? defaults.notificationSettings,
+        (found.notificationSettings as unknown as NotificationSettings) ??
+        defaults.notificationSettings,
       notificationSenders:
-        found.notificationSenders ?? defaults.notificationSenders,
-      dateFormat: found.dateFormat ?? defaults.dateFormat,
+        (found.notificationSenders as unknown as NotificationSenderSettings) ??
+        defaults.notificationSenders,
+      dateFormat: (found.dateFormat as DateFormat) ?? defaults.dateFormat,
+      checkOutTrackingEnabled:
+        found.checkOutTrackingEnabled ?? defaults.checkOutTrackingEnabled,
+      ownerDataScope:
+        (found.ownerDataScope as OwnerDataScope) ?? defaults.ownerDataScope,
     };
   }
 
-  updateSettingsForTenant(
+  async updateSettingsForTenant(
     tenantId: string,
     input: UpdateSettingsInput,
-  ): TenantSettingsRecord {
-    const current = this.getSettingsForTenant(tenantId);
+  ): Promise<TenantSettingsRecord> {
+    const current = await this.getSettingsForTenant(tenantId);
 
     const defaultLanguage = (input.defaultLanguage ??
       current.defaultLanguage) as Language;
@@ -83,6 +100,16 @@ export class SettingsService {
       ? (rawDateFormat as DateFormat)
       : current.dateFormat;
 
+    const checkOutTrackingEnabled =
+      input.checkOutTrackingEnabled ?? current.checkOutTrackingEnabled;
+
+    const rawOwnerDataScope = input.ownerDataScope ?? current.ownerDataScope;
+    const ownerDataScope = VALID_OWNER_DATA_SCOPES.has(
+      rawOwnerDataScope as OwnerDataScope,
+    )
+      ? (rawOwnerDataScope as OwnerDataScope)
+      : current.ownerDataScope;
+
     const next: TenantSettingsRecord = {
       tenantId,
       defaultLanguage,
@@ -90,20 +117,32 @@ export class SettingsService {
       notificationSettings,
       notificationSenders,
       dateFormat,
+      checkOutTrackingEnabled,
+      ownerDataScope,
     };
 
-    const store = readSettingsStore();
-    const idx = store.tenants.findIndex(
-      (record) => record.tenantId === tenantId,
-    );
-
-    if (idx === -1) {
-      store.tenants.push(next);
-    } else {
-      store.tenants[idx] = next;
-    }
-
-    writeSettingsStore(store);
+    await this.prisma.tenantSettings.upsert({
+      where: { tenantId },
+      create: {
+        tenantId,
+        defaultLanguage,
+        enabledLanguages,
+        notificationSettings: notificationSettings as Prisma.InputJsonValue,
+        notificationSenders: notificationSenders as Prisma.InputJsonValue,
+        dateFormat,
+        checkOutTrackingEnabled,
+        ownerDataScope,
+      },
+      update: {
+        defaultLanguage,
+        enabledLanguages,
+        notificationSettings: notificationSettings as Prisma.InputJsonValue,
+        notificationSenders: notificationSenders as Prisma.InputJsonValue,
+        dateFormat,
+        checkOutTrackingEnabled,
+        ownerDataScope,
+      },
+    });
 
     return next;
   }

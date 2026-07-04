@@ -35,11 +35,11 @@ export class GatesController {
   ) {}
 
   @Get()
-  listGates(@Req() req: Request, @Query('branchId') branchId?: string) {
-    const session = this.getRequiredSession(req.headers.cookie);
+  async listGates(@Req() req: Request, @Query('branchId') branchId?: string) {
+    const session = await this.getRequiredSession(req.headers.cookie);
     requireRole(session.user, ['owner', 'manager', 'front-desk']);
 
-    const gates = this.gatesService.listGates(
+    const gates = await this.gatesService.listGates(
       session.user.tenant.id,
       branchId,
     );
@@ -47,8 +47,8 @@ export class GatesController {
   }
 
   @Post()
-  createGate(@Req() req: Request, @Body() body: CreateGateBody) {
-    const session = this.getRequiredSession(req.headers.cookie);
+  async createGate(@Req() req: Request, @Body() body: CreateGateBody) {
+    const session = await this.getRequiredSession(req.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     const input: CreateGateInput = {
@@ -61,17 +61,20 @@ export class GatesController {
       lockNumber: body.lockNumber,
       enabled: body.enabled,
     };
-    const gate = this.gatesService.createGate(session.user.tenant.id, input);
+    const gate = await this.gatesService.createGate(
+      session.user.tenant.id,
+      input,
+    );
     return { gate: this.sanitize(gate) };
   }
 
   @Patch(':gateId')
-  updateGate(
+  async updateGate(
     @Req() req: Request,
     @Param('gateId') gateId: string,
     @Body() body: CreateGateBody,
   ) {
-    const session = this.getRequiredSession(req.headers.cookie);
+    const session = await this.getRequiredSession(req.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     const input: UpdateGateInput = {};
@@ -85,7 +88,7 @@ export class GatesController {
     if (body.lockNumber != null) input.lockNumber = body.lockNumber;
     if (body.enabled != null) input.enabled = body.enabled;
 
-    const gate = this.gatesService.updateGate(
+    const gate = await this.gatesService.updateGate(
       session.user.tenant.id,
       gateId,
       input,
@@ -95,24 +98,24 @@ export class GatesController {
 
   @Delete(':gateId')
   @HttpCode(200)
-  deleteGate(@Req() req: Request, @Param('gateId') gateId: string) {
-    const session = this.getRequiredSession(req.headers.cookie);
+  async deleteGate(@Req() req: Request, @Param('gateId') gateId: string) {
+    const session = await this.getRequiredSession(req.headers.cookie);
     requireRole(session.user, ['owner']);
 
-    this.gatesService.deleteGate(session.user.tenant.id, gateId);
+    await this.gatesService.deleteGate(session.user.tenant.id, gateId);
     return { deleted: true };
   }
 
   // -------------------------------------------------------------------------
 
-  private getRequiredSession(cookie: string | undefined) {
-    const session = this.authService.getCurrentSessionFromCookieHeader(cookie);
+  private async getRequiredSession(cookie: string | undefined) {
+    const session = await this.authService.getCurrentSessionFromCookieHeader(cookie);
     if (!session) throw new UnauthorizedException('Authentication required.');
     return session;
   }
 
   /** Password is write-only; URL and username are returned so the edit form can pre-fill them. */
-  private sanitize(gate: ReturnType<GatesService['getGate']>) {
+  private sanitize(gate: Awaited<ReturnType<GatesService['getGate']>>) {
     if (!gate) return null;
     const { devicePassword, ...safe } = gate;
     return {

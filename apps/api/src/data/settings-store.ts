@@ -42,6 +42,10 @@ export type NotificationSenderSettings = {
 
 export type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy';
 
+/** What the owner sees across list/report pages: every branch in the
+ * tenant, or only the branch they're currently switched into. */
+export type OwnerDataScope = 'all' | 'activeBranch';
+
 export type TenantSettingsRecord = {
   tenantId: string;
   defaultLanguage: Language;
@@ -49,6 +53,8 @@ export type TenantSettingsRecord = {
   notificationSettings: NotificationSettings;
   notificationSenders: NotificationSenderSettings;
   dateFormat: DateFormat;
+  checkOutTrackingEnabled: boolean;
+  ownerDataScope: OwnerDataScope;
 };
 
 type SettingsStoreData = {
@@ -86,6 +92,8 @@ const defaultSettings: SettingsStoreData = {
       notificationSettings: defaultNotificationSettings,
       notificationSenders: defaultNotificationSenders,
       dateFormat: 'dd/mm/yyyy',
+      checkOutTrackingEnabled: true,
+      ownerDataScope: 'all',
     },
   ],
 };
@@ -111,6 +119,8 @@ export function getDefaultTenantSettings(
     notificationSettings: defaultNotificationSettings,
     notificationSenders: defaultNotificationSenders,
     dateFormat: 'dd/mm/yyyy' as DateFormat,
+    checkOutTrackingEnabled: true,
+    ownerDataScope: 'all',
   };
 }
 

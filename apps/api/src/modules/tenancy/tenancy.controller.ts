@@ -13,32 +13,32 @@ export class TenancyController {
 
   // Per-branch WhatsApp endpoints
   @Put('whatsapp/branches/:branchId')
-  connectBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
-    requireRole(this.session(req), ['owner']);
+  async connectBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
+    requireRole(await this.session(req), ['owner']);
     return this.tenancy.connectBranchWhatsApp(branchId);
   }
 
   @Get('whatsapp/branches/:branchId/qr')
-  getBranchQr(@Req() req: Request, @Param('branchId') branchId: string) {
-    requireRole(this.session(req), ['owner', 'manager']);
+  async getBranchQr(@Req() req: Request, @Param('branchId') branchId: string) {
+    requireRole(await this.session(req), ['owner', 'manager']);
     return this.tenancy.getBranchWhatsAppQr(branchId);
   }
 
   @Post('whatsapp/branches/:branchId/verify')
   @HttpCode(200)
-  verifyBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
-    requireRole(this.session(req), ['owner', 'manager']);
+  async verifyBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
+    requireRole(await this.session(req), ['owner', 'manager']);
     return this.tenancy.verifyBranchWhatsApp(branchId);
   }
 
   @Delete('whatsapp/branches/:branchId')
-  disconnectBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
-    requireRole(this.session(req), ['owner']);
+  async disconnectBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
+    requireRole(await this.session(req), ['owner']);
     return this.tenancy.disconnectBranchWhatsApp(branchId);
   }
 
-  private session(req: Request) {
-    const s = this.auth.getCurrentSessionFromCookieHeader(req.headers.cookie);
+  private async session(req: Request) {
+    const s = await this.auth.getCurrentSessionFromCookieHeader(req.headers.cookie);
     if (!s) throw new UnauthorizedException('Authentication required.');
     return s.user;
   }

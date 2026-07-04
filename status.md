@@ -5,6 +5,55 @@ Add the newest update at the top so the latest status is always visible first.
 
 ---
 
+## 2026-07-03 (Redis for Auth Sessions + MinIO for Member Photos)
+
+Completed
+
+* **Redis replaces Postgres for auth sessions.** New `RedisModule`/`RedisService` (`apps/api/src/redis/`, `ioredis`-based, mirrors `PrismaService`'s shape as a `@Global()` singleton). `AuthService` rewritten to store sessions in Redis as `session:<token>` → JSON `{userId, createdAt, expiresAt}` with a native Redis TTL (`EX`) instead of a Postgres `expiresAt` filter — removes the need for any scheduled cleanup job. The `Session` Prisma model and table were dropped (migration `20260703162247_drop_session_table`).
+* **MinIO replaces local disk for member photos.** New `MinioModule`/`MinioService` (`apps/api/src/minio/`, official `minio` client, auto-creates its bucket on boot). `members.controller.ts`'s `uploadMemberPhoto` now calls `putObject` instead of writing to `.local/uploads/members`. New `MemberPhotosController` (`GET /api/uploads/members/:filename`) proxies photo reads out of MinIO at the exact same public URL members always used — zero frontend changes — and now requires a valid session (the old Express static-file serving had no auth check at all).
+* **`main.ts` simplified** — removed `useStaticAssets`/`.local/uploads` bootstrap entirely now that nothing serves from local disk; switched back from `NestExpressApplication` to the plain Nest factory since nothing else needed Express-specific APIs.
+* **Both `docker-compose.yml` and `docker-compose.prod.yml`** gained healthchecked `redis` and `minio` services (prod: `internal` network only, never `traefik-public` — MinIO is only ever reached through the API's proxy route). `REDIS_URL`/`MINIO_*` env vars added to the `api` service and to both `.env.example` files.
+* **Test infra updated** for both: `resetPrismaTestData` now also `flushdb()`s a dedicated Redis DB index (`/1`) alongside its Postgres `TRUNCATE`; `jest-e2e-setup.ts` points `REDIS_URL`/`MINIO_*` at the same local dev containers used by `pnpm start:dev`, using a distinct MinIO test bucket (`member-photos-test`) so test uploads never mix with real dev photos. Added a new e2e test: upload a member photo → fetch it through the proxied route with a session (200, correct bytes) → fetch without one (401).
+* **Found and fixed a latent, unrelated Docker bug while doing a full-stack build verification**: `apps/web/Dockerfile` runs a workspace-wide `pnpm install` (which triggers `apps/api`'s `prisma generate` postinstall) but never copied `apps/api/prisma` first — unlike `apps/api/Dockerfile`, which does this deliberately. This has been silently broken since the Postgres migration below (the live `web` container hadn't been rebuilt since before that migration, so nothing had hit it yet); fixed by copying `apps/api/prisma` early, same as the API Dockerfile already does.
+* **Verified via disposable, non-production containers** (project name `gym-verify`, torn down after each check — the live `gym` project was never touched): a full multi-stage `docker build` for both `api` and `web`; a 5-service boot (`db`+`redis`+`minio`+`api`+`web`) all healthy with a clean Nest boot log; a live sign-in → current-session → sign-out cycle confirmed against real Redis (checked key creation/TTL/deletion directly via `redis-cli`); a live member-photo upload → fetch-with-auth (200) → fetch-without-auth (401) cycle confirmed against real MinIO (checked the object landed in the bucket via `mc ls`). Unit suite (5/5) and e2e suite (30/32, same 2 pre-existing date-drift failures as before this work — see the Postgres migration entry below) both pass.
+* **ROADMAP.md updated**: one line added to "Current completed work" and one to Phase 1 → Core Platform's module list.
+
+Next
+
+* **Production cutover for Redis + MinIO** — not yet done; deliberately deferred until requested. Should follow the same backup-first, verify-at-every-step discipline as the Postgres cutover below (bring up `redis`/`minio` alongside the still-running old containers, verify health, then cut over `api`).
+* Phase 4 cleanup from the Postgres migration (deleting `operations-store.ts`/`settings-store.ts`/JSON seed files) is still waiting on its burn-in period — unrelated to this session's Redis/MinIO work, just a reminder it's still open.
+
+Notes
+
+* The 2 pre-existing e2e failures (`dashboard summary` counts, one member's computed `status`) are date-drift, unrelated to any of this session's work — confirmed present identically before and after both the Postgres migration and this Redis/MinIO change.
+* A third e2e test (`membershipActivated` notification dispatch) is flaky under the full suite only (passes in isolation) because it makes a real network call to the SparkCo API — pre-existing, unrelated, not something this session introduced or fixed.
+
+---
+
+## 2026-07-03 (Postgres + Prisma Migration — Persistence Layer, incl. Production Cutover)
+
+Completed
+
+* **Replaced the flat-JSON persistence layer with PostgreSQL via Prisma**, with real foreign keys — triggered by a code-review question about why `Member.homeBranchId`/`registeredEmployeeId` were plain strings instead of FKs (answer: there was no database at all; everything lived in `operations-store.ts`/`settings-store.ts`/an inline auth store, read and written as whole JSON files).
+* **Schema**: all 15 models (Tenant, Branch, Employee, EmployeeGate, Gate, Member, MembershipPlan, Membership, Freeze, Visit, Payment, Notification, TenantSettings, User, Session), enums, indexes, and FKs in `apps/api/prisma/schema.prisma`; initial migration `20260703074526_init` (15 tables, 27 FKs).
+* **Module-by-module cutover** (lowest-risk first: settings → branches/employees/gates → auth → members → memberships/visits/access → payments/notifications → reports) — every feature service now talks to `PrismaService` directly (no repository/DAO layer). The `auth` conversion cascaded into making session lookups async everywhere, which touched ~50 call sites across 14 controllers (mechanical `async`/`await`, no logic changes). Two module-dependency cascades forced phases 3d–3g to land as one continuous pass rather than separately reviewable steps, since a half-converted intermediate state broke record creation immediately (not just showed stale data).
+* **One-time data migration script** (`apps/api/src/scripts/migrate-json-to-postgres.ts`) reads the live `.local/*.json` files, inserts everything in FK order, and hard-fails on any row-count mismatch. Idempotency-guarded (`--force` required to re-run against non-empty data).
+* **Production cutover executed** (2026-07-03 ~15:25 UTC) against the live `gym.sparkco.vip` deployment: backed up the `gym_api-data` volume first, built the new image without touching running containers, brought up `db` alongside the still-running old `api`/`web`, ran the migration as a one-off container against the real production `.local` data (all 12 row-count checks passed — 15 members, 17 memberships, 30 visits, 23 notifications, etc. — confirming this was real accumulated production data, not seed fixtures), spot-checked the imported data via `psql`, then cut over `api` (brief restart; `web` untouched). Verified through the actual public domain, not just container-internal checks.
+* **E2e test isolation adapted for Postgres**: `jest-e2e-setup.ts` points at a dedicated `gym_test` database and runs migrations once before the suite; `resetPrismaTestData()` does a single `TRUNCATE ... CASCADE` (not per-model `deleteMany()`, which raced against un-closed app instances from earlier tests) followed by reseeding. Also fixed a real pre-existing gap while doing this: `app.e2e-spec.ts` never called `app.close()` between tests, which could make an earlier test's error surface as a failure in a later, unrelated test once Postgres was in the loop.
+* Full detailed write-up, including every Prisma-v7-specific gotcha hit (driver adapters now mandatory, new generator/output path, `moduleFormat: cjs`, Dockerfile layer ordering, Jest `moduleNameMapper`, `NODE_OPTIONS=--experimental-vm-modules`, etc.) is in [POSTGRES_MIGRATION.md](POSTGRES_MIGRATION.md).
+
+Next
+
+* **Phase 4 cleanup** (delete `operations-store.ts`/`settings-store.ts`/JSON seed files) — code-ready (confirmed nothing outside the store/migration files reads them), deliberately waiting on a burn-in period in production before removing the JSON files as a rollback reference.
+* Redis (session storage) and MinIO (member photo storage) work — see the entry above; this was the direct follow-up to standing up Postgres.
+
+Notes
+
+* 2 of 32 e2e tests fail (dashboard summary counts, one member's computed status) — confirmed pre-existing and unrelated to this migration (identical failures with `PrismaModule` temporarily removed).
+* Rollback path if ever needed: pre-cutover backup tarball has the original JSON files; the migration only ever reads `.local/*.json`, never writes/deletes, so the volume itself is untouched.
+
+---
+
 ## 2026-06-26 (Branch-Session Routing Fix for WhatsApp Notifications)
 
 Completed

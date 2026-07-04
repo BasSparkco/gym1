@@ -7,9 +7,9 @@ import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { formatDate } from "@/lib/date-format";
-import DateInput from "@/components/date-input";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import MembershipFormFields from "./membership-form-fields";
 
 type Props = { params: Promise<{ memberId: string }> };
 
@@ -33,7 +33,8 @@ export default async function SellMembershipPage({ params }: Props) {
     "use server";
     const planId = formData.get("planId") as string;
     const startDate = formData.get("startDate") as string;
-    const finalPrice = Number(formData.get("finalPrice"));
+    const rawPrice = formData.get("finalPrice") as string;
+    const finalPrice = rawPrice ? Number(rawPrice) : undefined;
     const endDate = (formData.get("endDate") as string) || undefined;
 
     await createMembership({
@@ -41,7 +42,7 @@ export default async function SellMembershipPage({ params }: Props) {
       planId,
       startDate,
       endDate,
-      finalPrice: isNaN(finalPrice) ? undefined : finalPrice,
+      finalPrice: finalPrice !== undefined && !isNaN(finalPrice) ? finalPrice : undefined,
       status: "active",
     });
 
@@ -73,68 +74,19 @@ export default async function SellMembershipPage({ params }: Props) {
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-5">
-          <div className="grid gap-1.5">
-            <label htmlFor="planId" className="text-sm font-medium">
-              {t.memberships.membershipPlan} <span className="text-red-500">*</span>
-            </label>
-            {plans.length === 0 ? (
-              <p className="rounded-2xl border border-line bg-white px-4 py-3 text-sm text-foreground/50">
-                {t.memberships.noPlansAvailable}{" "}
-                <Link href="/app/membership-plans/new" className="text-brand hover:underline">
-                  {t.memberships.createPlanFirst}
-                </Link>
-              </p>
-            ) : (
-              <select
-                id="planId"
-                name="planId"
-                required
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
-                <option value="">Select a plan…</option>
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} — ${plan.price}
-                    {plan.planType === "duration"
-                      ? ` · ${plan.durationDays}d`
-                      : ` · ${plan.sessionCount} sessions`}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          <div className="grid gap-1.5 sm:grid-cols-2">
-            <div className="grid gap-1.5">
-              <label htmlFor="startDate" className="text-sm font-medium">
-                {t.memberships.startDate} <span className="text-red-500">*</span>
-              </label>
-              <DateInput id="startDate" name="startDate" dateFormat={dateFormat} defaultValue={today} required />
-            </div>
-
-            <div className="grid gap-1.5">
-              <label htmlFor="endDate" className="text-sm font-medium">
-                {t.memberships.endDate}{" "}
-                <span className="text-foreground/40 font-normal">— auto-calculated for duration plans</span>
-              </label>
-              <DateInput id="endDate" name="endDate" dateFormat={dateFormat} />
-            </div>
-          </div>
-
-          <div className="grid gap-1.5">
-            <label htmlFor="finalPrice" className="text-sm font-medium">
-              {t.memberships.finalPrice} <span className="text-foreground/40 font-normal">— leave blank to use plan default</span>
-            </label>
-            <input
-              id="finalPrice"
-              name="finalPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="e.g. 120"
-              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </div>
+          <MembershipFormFields
+            plans={plans}
+            today={today}
+            dateFormat={dateFormat}
+            labels={{
+              membershipPlan: t.memberships.membershipPlan,
+              startDate: t.memberships.startDate,
+              endDate: t.memberships.endDate,
+              finalPrice: t.memberships.finalPrice,
+              noPlansAvailable: t.memberships.noPlansAvailable,
+              createPlanFirst: t.memberships.createPlanFirst,
+            }}
+          />
 
           <div className="flex gap-3 pt-2">
             <button

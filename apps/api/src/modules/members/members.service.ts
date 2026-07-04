@@ -6,16 +6,13 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import * as QRCode from 'qrcode';
-import { localDateString } from '../../common/date';
+import { localDateString, toDateOnlyString } from '../../common/date';
 import { generateQrSig, makeQrPublicUrl, memberIdToUuid } from '../../common/qr';
 import { normalizePhone } from '../../common/phone';
 import { findCountryByCode } from '../../data/countries';
-import {
-  MemberRecord,
-  readOperationsStore,
-  writeOperationsStore,
-} from '../../data/operations-store';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Branch, Member, Sex } from '../../generated/prisma/client';
 
 type CreateMemberInput = {
   fullName?: string;
@@ -23,7 +20,7 @@ type CreateMemberInput = {
   phone?: string;
   email?: string;
   dateOfBirth?: string;
-  sex?: MemberRecord['sex'];
+  sex?: Sex;
   idNumber?: string;
   address?: string;
   height?: number;
@@ -41,7 +38,7 @@ type UpdateMemberInput = {
   phone?: string;
   email?: string;
   dateOfBirth?: string;
-  sex?: MemberRecord['sex'];
+  sex?: Sex;
   idNumber?: string;
   address?: string;
   height?: number;
@@ -57,227 +54,275 @@ type UpdateMemberInput = {
 export class MembersService {
   private readonly logger = new Logger(MembersService.name);
 
-  constructor(private readonly basIpSyncService: BasIpSyncService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly basIpSyncService: BasIpSyncService,
+  ) {}
 
   getReportingDate() {
     return localDateString();
   }
 
-  listMembersForScope(tenantId: string, branchId: string) {
-    const store = readOperationsStore();
-    const activeIds = this.buildActiveSet(store);
-    return store.members
-      .filter((m) => m.tenantId === tenantId && m.homeBranchId === branchId)
-      .map((m) => this.withComputedStatus(m, activeIds));
+  async listMembersForScope(tenantId: string, branchId: string) {
+    const members = await this.prisma.member.findMany({
+      where: { tenantId, homeBranchId: branchId },
+    });
+    const activeIds = await this.buildActiveSet(tenantId);
+    return members.map((m) => this.withComputedStatus(m, activeIds));
   }
 
-  listMembersForTenant(tenantId: string) {
-    const store = readOperationsStore();
-    const activeIds = this.buildActiveSet(store);
-    return store.members
-      .filter((m) => m.tenantId === tenantId)
-      .map((m) => this.withComputedStatus(m, activeIds));
+  async listMembersForTenant(tenantId: string) {
+    const members = await this.prisma.member.findMany({ where: { tenantId } });
+    const activeIds = await this.buildActiveSet(tenantId);
+    return members.map((m) => this.withComputedStatus(m, activeIds));
   }
 
-  getMemberForScope(tenantId: string, branchId: string, memberId: string) {
-    const store = readOperationsStore();
-    const member = store.members.find(
-      (m) =>
-        m.id === memberId &&
-        m.tenantId === tenantId &&
-        m.homeBranchId === branchId,
-    );
+  async getMemberForScope(
+    tenantId: string,
+    branchId: string | undefined,
+    memberId: string,
+  ) {
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
+    });
 
     if (!member) {
       throw new NotFoundException('Member not found.');
     }
 
-    const activeIds = this.buildActiveSet(store);
+    const activeIds = await this.buildActiveSet(tenantId);
     return this.withComputedStatus(member, activeIds);
   }
 
-  createMember(tenantId: string, branchId: string, input: CreateMemberInput) {
+  async createMember(
+    tenantId: string,
+    branchId: string,
+    input: CreateMemberInput,
+  ) {
     const fullName = input.fullName?.trim();
 
     if (!fullName) {
       throw new BadRequestException('Full name is required.');
     }
 
-    const store = readOperationsStore();
     const homeBranchId = input.homeBranchId ?? branchId;
-    this.ensureBranchBelongsToTenant(store, tenantId, homeBranchId);
-
-    const dialCode = this.getDialCodeForBranch(store, homeBranchId);
-
-    const member: MemberRecord = {
-      id: `member-${randomUUID()}`,
+    const branch = await this.ensureBranchBelongsToTenant(
       tenantId,
       homeBranchId,
-      memberNumber: this.getNextMemberNumber(store.members, tenantId),
-      fullName,
-      joinDate: localDateString(),
-      phone: normalizePhone(input.phone, dialCode),
-      email: input.email?.trim().toLowerCase() || undefined,
-      dateOfBirth: input.dateOfBirth?.trim() || undefined,
-      sex: input.sex || undefined,
-      idNumber: input.idNumber?.trim() || undefined,
-      address: input.address?.trim() || undefined,
-      height: input.height ? Number(input.height) : undefined,
-      weight: input.weight ? Number(input.weight) : undefined,
-      registeredEmployeeId: input.registeredEmployeeId?.trim() || undefined,
-      emergencyContactName: input.emergencyContactName?.trim() || undefined,
-      emergencyContactPhone: normalizePhone(input.emergencyContactPhone, dialCode),
-      medicalNotes: input.medicalNotes?.trim() || undefined,
-      rfidTag: input.rfidTag?.trim().toUpperCase() || undefined,
-    };
+    );
 
-    store.members.push(member);
-    writeOperationsStore(store);
+    const registeredEmployeeId = input.registeredEmployeeId?.trim() || undefined;
+    if (registeredEmployeeId) {
+      await this.ensureEmployeeBelongsToTenant(tenantId, registeredEmployeeId);
+    }
 
-    const activeIds = this.buildActiveSet(store);
-    return this.withComputedStatus(member, activeIds);
+    const dialCode = this.getDialCodeForBranch(branch);
+    const memberNumber = await this.getNextMemberNumber(tenantId);
+
+    const member = await this.prisma.member.create({
+      data: {
+        id: `member-${randomUUID()}`,
+        tenantId,
+        homeBranchId,
+        memberNumber,
+        fullName,
+        joinDate: new Date(localDateString()),
+        phone: normalizePhone(input.phone, dialCode),
+        email: input.email?.trim().toLowerCase() || undefined,
+        dateOfBirth: input.dateOfBirth?.trim()
+          ? new Date(input.dateOfBirth.trim())
+          : undefined,
+        sex: input.sex || undefined,
+        idNumber: input.idNumber?.trim() || undefined,
+        address: input.address?.trim() || undefined,
+        height: input.height ? Number(input.height) : undefined,
+        weight: input.weight ? Number(input.weight) : undefined,
+        registeredEmployeeId,
+        emergencyContactName: input.emergencyContactName?.trim() || undefined,
+        emergencyContactPhone: normalizePhone(
+          input.emergencyContactPhone,
+          dialCode,
+        ),
+        medicalNotes: input.medicalNotes?.trim() || undefined,
+        rfidTag: input.rfidTag?.trim().toUpperCase() || undefined,
+      },
+    });
+
+    // A brand-new member can't have an existing active membership yet.
+    return { ...this.serializeMember(member), status: 'inactive' as const };
   }
 
-  updateMember(
+  async updateMember(
     tenantId: string,
-    branchId: string,
+    branchId: string | undefined,
     memberId: string,
     input: UpdateMemberInput,
   ) {
-    const store = readOperationsStore();
-    const memberIndex = store.members.findIndex((candidate) => {
-      return (
-        candidate.id === memberId &&
-        candidate.tenantId === tenantId &&
-        candidate.homeBranchId === branchId
-      );
+    const current = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
     });
 
-    if (memberIndex === -1) {
+    if (!current) {
       throw new NotFoundException('Member not found.');
     }
 
-    const currentMember = store.members[memberIndex];
     const nextFullName =
       input.fullName === undefined
-        ? currentMember.fullName
+        ? current.fullName
         : this.normalizeMemberName(input.fullName);
-    const nextHomeBranchId = input.homeBranchId ?? currentMember.homeBranchId;
+    const nextHomeBranchId = input.homeBranchId ?? current.homeBranchId;
 
-    this.ensureBranchBelongsToTenant(store, tenantId, nextHomeBranchId);
+    const branch = await this.ensureBranchBelongsToTenant(
+      tenantId,
+      nextHomeBranchId,
+    );
 
-    const dialCode = this.getDialCodeForBranch(store, nextHomeBranchId);
+    const nextRegisteredEmployeeId =
+      input.registeredEmployeeId === undefined
+        ? undefined
+        : input.registeredEmployeeId.trim() || null;
+    if (nextRegisteredEmployeeId) {
+      await this.ensureEmployeeBelongsToTenant(
+        tenantId,
+        nextRegisteredEmployeeId,
+      );
+    }
 
-    const nextMember: MemberRecord = {
-      ...currentMember,
-      fullName: nextFullName,
-      homeBranchId: nextHomeBranchId,
-      phone:
-        input.phone === undefined
-          ? currentMember.phone
-          : normalizePhone(input.phone, dialCode),
-      email:
-        input.email === undefined
-          ? currentMember.email
-          : input.email.trim().toLowerCase() || undefined,
-      dateOfBirth:
-        input.dateOfBirth === undefined
-          ? currentMember.dateOfBirth
-          : input.dateOfBirth.trim() || undefined,
-      sex:
-        input.sex === undefined ? currentMember.sex : input.sex || undefined,
-      idNumber:
-        input.idNumber === undefined
-          ? currentMember.idNumber
-          : input.idNumber.trim() || undefined,
-      address:
-        input.address === undefined
-          ? currentMember.address
-          : input.address.trim() || undefined,
-      height:
-        input.height === undefined
-          ? currentMember.height
-          : input.height ? Number(input.height) : undefined,
-      weight:
-        input.weight === undefined
-          ? currentMember.weight
-          : input.weight ? Number(input.weight) : undefined,
-      registeredEmployeeId:
-        input.registeredEmployeeId === undefined
-          ? currentMember.registeredEmployeeId
-          : input.registeredEmployeeId.trim() || undefined,
-      emergencyContactName:
-        input.emergencyContactName === undefined
-          ? currentMember.emergencyContactName
-          : input.emergencyContactName.trim() || undefined,
-      emergencyContactPhone:
-        input.emergencyContactPhone === undefined
-          ? currentMember.emergencyContactPhone
-          : normalizePhone(input.emergencyContactPhone, dialCode),
-      medicalNotes:
-        input.medicalNotes === undefined
-          ? currentMember.medicalNotes
-          : input.medicalNotes.trim() || undefined,
-      rfidTag:
-        input.rfidTag === undefined
-          ? currentMember.rfidTag
-          : input.rfidTag.trim().toUpperCase() || undefined,
-    };
+    const dialCode = this.getDialCodeForBranch(branch);
 
-    store.members[memberIndex] = nextMember;
-    writeOperationsStore(store);
+    const updated = await this.prisma.member.update({
+      where: { id: memberId },
+      data: {
+        fullName: nextFullName,
+        homeBranchId: nextHomeBranchId,
+        phone:
+          input.phone === undefined
+            ? undefined
+            : normalizePhone(input.phone, dialCode) ?? null,
+        email:
+          input.email === undefined
+            ? undefined
+            : input.email.trim().toLowerCase() || null,
+        dateOfBirth:
+          input.dateOfBirth === undefined
+            ? undefined
+            : input.dateOfBirth.trim()
+              ? new Date(input.dateOfBirth.trim())
+              : null,
+        sex: input.sex === undefined ? undefined : input.sex || null,
+        idNumber:
+          input.idNumber === undefined
+            ? undefined
+            : input.idNumber.trim() || null,
+        address:
+          input.address === undefined
+            ? undefined
+            : input.address.trim() || null,
+        height:
+          input.height === undefined
+            ? undefined
+            : input.height
+              ? Number(input.height)
+              : null,
+        weight:
+          input.weight === undefined
+            ? undefined
+            : input.weight
+              ? Number(input.weight)
+              : null,
+        registeredEmployeeId: nextRegisteredEmployeeId,
+        emergencyContactName:
+          input.emergencyContactName === undefined
+            ? undefined
+            : input.emergencyContactName.trim() || null,
+        emergencyContactPhone:
+          input.emergencyContactPhone === undefined
+            ? undefined
+            : normalizePhone(input.emergencyContactPhone, dialCode) ?? null,
+        medicalNotes:
+          input.medicalNotes === undefined
+            ? undefined
+            : input.medicalNotes.trim() || null,
+        rfidTag:
+          input.rfidTag === undefined
+            ? undefined
+            : input.rfidTag.trim().toUpperCase() || null,
+      },
+    });
 
-    const activeIds = this.buildActiveSet(store);
-    return this.withComputedStatus(nextMember, activeIds);
+    const activeIds = await this.buildActiveSet(tenantId);
+    return this.withComputedStatus(updated, activeIds);
   }
 
-  updateMemberPicture(
+  async updateMemberPicture(
     tenantId: string,
-    branchId: string,
+    branchId: string | undefined,
     memberId: string,
     pictureUrl: string,
   ) {
-    const store = readOperationsStore();
-    const memberIndex = store.members.findIndex((candidate) => {
-      return (
-        candidate.id === memberId &&
-        candidate.tenantId === tenantId &&
-        candidate.homeBranchId === branchId
-      );
+    const current = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
     });
 
-    if (memberIndex === -1) {
+    if (!current) {
       throw new NotFoundException('Member not found.');
     }
 
-    store.members[memberIndex] = { ...store.members[memberIndex], pictureUrl };
-    writeOperationsStore(store);
-    return store.members[memberIndex];
+    const updated = await this.prisma.member.update({
+      where: { id: memberId },
+      data: { pictureUrl },
+    });
+
+    return this.serializeMember(updated);
   }
 
-  private buildActiveSet(
-    store: ReturnType<typeof readOperationsStore>,
-  ): Set<string> {
-    const today = new Date().toISOString().slice(0, 10);
-    const activeIds = new Set<string>();
-    for (const ms of store.memberships) {
-      if (
-        (ms.status === 'active' || ms.status === 'frozen') &&
-        ms.endDate >= today
-      ) {
-        activeIds.add(ms.memberId);
-      }
-    }
-    return activeIds;
+  private async buildActiveSet(tenantId: string): Promise<Set<string>> {
+    const today = new Date(localDateString());
+    const activeMemberships = await this.prisma.membership.findMany({
+      where: {
+        member: { tenantId },
+        status: { in: ['active', 'frozen'] },
+        endDate: { gte: today },
+      },
+      select: { memberId: true },
+    });
+    return new Set(activeMemberships.map((m) => m.memberId));
   }
 
-  private withComputedStatus(
-    member: MemberRecord,
-    activeIds: Set<string>,
-  ): MemberRecord & { status: 'active' | 'inactive' } {
+  private withComputedStatus(member: Member, activeIds: Set<string>) {
+    return {
+      ...this.serializeMember(member),
+      status: (activeIds.has(member.id) ? 'active' : 'inactive') as
+        | 'active'
+        | 'inactive',
+    };
+  }
+
+  // Postgres DATE columns come back as JS Date objects from Prisma; the API
+  // contract (and the web app's raw string comparisons/display of these
+  // fields) expects plain "YYYY-MM-DD" strings, same as the old JSON store.
+  private serializeMember<T extends Member>(
+    member: T,
+  ): Omit<T, 'dateOfBirth' | 'joinDate'> & {
+    dateOfBirth: string | null;
+    joinDate: string | null;
+  } {
     return {
       ...member,
-      status: activeIds.has(member.id) ? 'active' : 'inactive',
+      dateOfBirth: toDateOnlyString(member.dateOfBirth),
+      joinDate: toDateOnlyString(member.joinDate),
     };
   }
 
@@ -291,26 +336,38 @@ export class MembersService {
     return normalizedFullName;
   }
 
-  private getDialCodeForBranch(
-    store: ReturnType<typeof readOperationsStore>,
-    branchId: string,
-  ): string | undefined {
-    const branch = store.branches.find((b) => b.id === branchId);
-    if (!branch?.countryCode) return undefined;
+  private getDialCodeForBranch(branch: Branch): string | undefined {
+    if (!branch.countryCode) return undefined;
     return findCountryByCode(branch.countryCode)?.dialCode;
   }
 
-  private ensureBranchBelongsToTenant(
-    store: ReturnType<typeof readOperationsStore>,
+  private async ensureBranchBelongsToTenant(
     tenantId: string,
     branchId: string,
-  ) {
-    const branch = store.branches.find((candidate) => {
-      return candidate.id === branchId && candidate.tenantId === tenantId;
+  ): Promise<Branch> {
+    const branch = await this.prisma.branch.findFirst({
+      where: { id: branchId, tenantId },
     });
 
     if (!branch) {
       throw new BadRequestException('Home branch is invalid for this tenant.');
+    }
+
+    return branch;
+  }
+
+  private async ensureEmployeeBelongsToTenant(
+    tenantId: string,
+    employeeId: string,
+  ) {
+    const employee = await this.prisma.employee.findFirst({
+      where: { id: employeeId, tenantId },
+    });
+
+    if (!employee) {
+      throw new BadRequestException(
+        'Registered employee is invalid for this tenant.',
+      );
     }
   }
 
@@ -324,9 +381,9 @@ export class MembersService {
     tenantId: string,
     memberId: string,
   ): Promise<Buffer> {
-    const member = readOperationsStore().members.find(
-      (m) => m.id === memberId && m.tenantId === tenantId,
-    );
+    const member = await this.prisma.member.findFirst({
+      where: { id: memberId, tenantId },
+    });
     if (!member) throw new NotFoundException('Member not found.');
     return this.generateQrBuffer(member.id);
   }
@@ -350,15 +407,16 @@ export class MembersService {
    */
   async sendQrViaWhatsApp(
     tenantId: string,
-    branchId: string,
+    branchId: string | undefined,
     memberId: string,
   ): Promise<{ sent: boolean; reason?: string }> {
-    const member = readOperationsStore().members.find(
-      (m) =>
-        m.id === memberId &&
-        m.tenantId === tenantId &&
-        m.homeBranchId === branchId,
-    );
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
+    });
     if (!member) throw new NotFoundException('Member not found.');
 
     if (!member.phone) {
@@ -412,9 +470,16 @@ export class MembersService {
     return QRCode.toBuffer(uuid, { type: 'png', width: 400, margin: 2 });
   }
 
-  private getNextMemberNumber(members: MemberRecord[], tenantId: string) {
+  private async getNextMemberNumber(tenantId: string): Promise<string> {
+    // In-memory regex-filtered scan (not a SQL MAX), matching EmployeesService's
+    // employeeNumber sequencing — avoids relying on lexicographic string MAX
+    // collation behavior for what's semantically a numeric sequence.
+    const members = await this.prisma.member.findMany({
+      where: { tenantId },
+      select: { memberNumber: true },
+    });
+
     const usedSequences = members
-      .filter((member) => member.tenantId === tenantId)
       .map((member) => member.memberNumber.match(/^MEM-(\d{4})$/))
       .filter((match): match is RegExpMatchArray => match !== null)
       .map((match) => Number(match[1]));

@@ -48,28 +48,16 @@ export default async function BranchSettingsPage() {
           {t.branches.title}
         </span>
         <Link
-          href="/app/settings/language"
+          href="/app/settings/options"
           className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
         >
-          {t.settings.language}
-        </Link>
-        <Link
-          href="/app/settings/display"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.settings.display}
+          {t.settings.options}
         </Link>
         <Link
           href="/app/settings/notifications"
           className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
         >
           {t.nav.notifications}
-        </Link>
-        <Link
-          href="/app/settings/whatsapp"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.settings.whatsapp}
         </Link>
         <Link
           href="/app/settings/gates"

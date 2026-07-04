@@ -9,13 +9,14 @@ type AppShellProps = {
   user: SessionUser;
   children: React.ReactNode;
   t: Dict;
+  viewingAllBranches?: boolean;
 };
 
-export function AppShell({ children, user, t }: AppShellProps) {
+export function AppShell({ children, user, t, viewingAllBranches }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 lg:grid-cols-[280px_1fr]">
-        <aside className="border-b border-line bg-brand-strong px-6 py-8 text-white lg:border-r lg:border-b-0">
+    <div className="bg-background text-foreground lg:h-screen lg:overflow-hidden">
+      <div className="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 lg:h-full lg:grid-cols-[280px_1fr]">
+        <aside className="border-b border-line bg-brand-strong px-6 py-8 text-white lg:overflow-y-auto lg:border-b-0 lg:border-r">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
               {t.shell.appName}
@@ -31,16 +32,23 @@ export function AppShell({ children, user, t }: AppShellProps) {
           <NavMenu role={user.role} navLabels={t.nav} />
         </aside>
 
-        <div className="flex min-h-screen flex-col">
-          <header className="border-b border-line bg-surface/90 px-6 py-4 backdrop-blur">
+        <div className="flex min-h-screen flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+          <header className="shrink-0 border-b border-line bg-surface/90 px-6 py-4 backdrop-blur">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand">
                   {t.shell.pilotBranchContext}
                 </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-                  {user.branch.name}
-                </h2>
+                <div className="mt-1 flex items-center gap-2">
+                  <h2 className="text-2xl font-semibold tracking-tight">
+                    {user.branch.name}
+                  </h2>
+                  {viewingAllBranches && (
+                    <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-medium text-brand">
+                      {t.settings.dataVisibilityAllBranches}
+                    </span>
+                  )}
+                </div>
                 <p className="mt-2 text-sm text-foreground/60">{user.tenant.name}</p>
               </div>
 
@@ -52,7 +60,7 @@ export function AppShell({ children, user, t }: AppShellProps) {
             </div>
           </header>
 
-          <main className="flex-1 px-6 py-6">{children}</main>
+          <main className="flex-1 px-6 py-6 lg:overflow-y-auto">{children}</main>
         </div>
       </div>
     </div>

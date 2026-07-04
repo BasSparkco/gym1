@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { requireRole } from '../../common/require-role';
+import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { NotificationDispatchService } from './notification-dispatch.service';
 import { NotificationsService } from './notifications.service';
@@ -18,28 +19,31 @@ export class NotificationsController {
     private readonly authService: AuthService,
     private readonly notificationsService: NotificationsService,
     private readonly dispatchService: NotificationDispatchService,
+    private readonly dataScopeService: DataScopeService,
   ) {}
 
   @Get()
-  listNotifications(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listNotifications(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     return {
-      notifications: this.notificationsService.listNotificationsForTenant(
+      notifications: await this.notificationsService.listNotificationsForTenant(
         session.user.tenant.id,
+        branchId,
       ),
     };
   }
 
   @Get(':notificationId')
-  getNotification(
+  async getNotification(
     @Req() request: Request,
     @Param('notificationId') notificationId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      notification: this.notificationsService.getNotificationForTenant(
+      notification: await this.notificationsService.getNotificationForTenant(
         session.user.tenant.id,
         notificationId,
       ),
@@ -48,7 +52,7 @@ export class NotificationsController {
 
   @Post('scan')
   async scanForExpiryNotifications(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return this.notificationsService.scanForExpiryNotifications(
@@ -58,7 +62,7 @@ export class NotificationsController {
 
   @Post('dispatch')
   async dispatchPending(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return this.dispatchService.dispatchPendingForTenant(
@@ -71,7 +75,7 @@ export class NotificationsController {
     @Req() request: Request,
     @Param('notificationId') notificationId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return {
@@ -82,9 +86,9 @@ export class NotificationsController {
     };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

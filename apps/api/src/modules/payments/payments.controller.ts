@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { PaymentsService } from './payments.service';
 
@@ -26,29 +27,31 @@ export class PaymentsController {
   constructor(
     private readonly authService: AuthService,
     private readonly paymentsService: PaymentsService,
+    private readonly dataScopeService: DataScopeService,
   ) {}
 
   @Get()
-  listPayments(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listPayments(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     return {
-      payments: this.paymentsService.listPaymentsForScope(
+      payments: await this.paymentsService.listPaymentsForScope(
         session.user.tenant.id,
-        session.user.branch.id,
+        branchId,
       ),
     };
   }
 
   @Get('member/:memberId')
-  listPaymentsForMember(
+  async listPaymentsForMember(
     @Req() request: Request,
     @Param('memberId') memberId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
-      payments: this.paymentsService.listPaymentsForMember(
+      payments: await this.paymentsService.listPaymentsForMember(
         session.user.tenant.id,
         memberId,
       ),
@@ -60,7 +63,7 @@ export class PaymentsController {
     @Req() request: Request,
     @Body() body: CreatePaymentRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
       payment: await this.paymentsService.createPayment(
@@ -72,21 +75,22 @@ export class PaymentsController {
   }
 
   @Get(':paymentId')
-  getPayment(@Req() request: Request, @Param('paymentId') paymentId: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getPayment(@Req() request: Request, @Param('paymentId') paymentId: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     return {
-      payment: this.paymentsService.getPaymentForScope(
+      payment: await this.paymentsService.getPaymentForScope(
         session.user.tenant.id,
-        session.user.branch.id,
+        branchId,
         paymentId,
       ),
     };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

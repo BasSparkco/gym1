@@ -4,25 +4,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { localDateString } from '../../common/date';
-import {
-  MembershipPlanRecord,
-  MembershipRecord,
-  VisitRecord,
-  readOperationsStore,
-  writeOperationsStore,
-} from '../../data/operations-store';
+import { localDateString, toDateOnlyString } from '../../common/date';
+import { toNumber } from '../../common/decimal';
+import { PrismaService } from '../../prisma/prisma.service';
+import { AccessMethod, Membership, MembershipPlan } from '../../generated/prisma/client';
 
 type CreateVisitInput = {
   memberId?: string;
   branchId?: string;
   checkInTime?: string;
-  accessMethod?: VisitRecord['accessMethod'];
+  accessMethod?: AccessMethod;
 };
 
 type CheckInInput = {
   memberIdentifier?: string;
-  accessMethod?: VisitRecord['accessMethod'];
+  accessMethod?: AccessMethod;
 };
 
 type CheckInResult =
@@ -35,25 +31,36 @@ type CheckInResult =
         memberNumber: string;
         status: string;
       };
-      membership: MembershipRecord & { plan: MembershipPlanRecord | null };
-      visit: VisitRecord;
+      membership: unknown;
+      visit: unknown;
     };
+
+// A UTC-day range for "today" — matches the original's
+// `checkInTime.startsWith(localDateString())` string-prefix check exactly
+// (a pre-existing quirk mixing local "today" with a UTC timestamp string;
+// ported as-is rather than fixed here, per the migration plan).
+function todayUtcRange(): { gte: Date; lt: Date } {
+  const gte = new Date(`${localDateString()}T00:00:00.000Z`);
+  const lt = new Date(gte.getTime() + 24 * 60 * 60 * 1000);
+  return { gte, lt };
+}
 
 @Injectable()
 export class VisitsService {
-  getVisitForScope(tenantId: string, branchId: string, visitId: string) {
-    const store = readOperationsStore();
-    const memberIds = new Set(
-      store.members
-        .filter((member) => member.tenantId === tenantId)
-        .map((member) => member.id),
-    );
-    const visit = store.visits.find(
-      (candidate) =>
-        candidate.id === visitId &&
-        candidate.branchId === branchId &&
-        memberIds.has(candidate.memberId),
-    );
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getVisitForScope(
+    tenantId: string,
+    branchId: string | undefined,
+    visitId: string,
+  ) {
+    const visit = await this.prisma.visit.findFirst({
+      where: {
+        id: visitId,
+        member: { tenantId },
+        ...(branchId ? { branchId } : {}),
+      },
+    });
 
     if (!visit) {
       throw new NotFoundException('Visit not found.');
@@ -62,50 +69,45 @@ export class VisitsService {
     return visit;
   }
 
-  listVisitsForScope(tenantId: string, branchId: string) {
-    const store = readOperationsStore();
-    const memberIds = new Set(
-      store.members
-        .filter((member) => member.tenantId === tenantId)
-        .map((member) => member.id),
-    );
-
-    return store.visits.filter((visit) => {
-      return visit.branchId === branchId && memberIds.has(visit.memberId);
+  async listVisitsForScope(tenantId: string, branchId: string | undefined) {
+    return this.prisma.visit.findMany({
+      where: { member: { tenantId }, ...(branchId ? { branchId } : {}) },
     });
   }
 
-  checkIn(
+  async checkIn(
     tenantId: string,
     branchId: string,
     input: CheckInInput,
-  ): CheckInResult {
+  ): Promise<CheckInResult> {
     const identifier = input.memberIdentifier?.trim();
 
     if (!identifier) {
       return { granted: false, reason: 'Member identifier is required.' };
     }
 
-    const store = readOperationsStore();
-    const today = localDateString();
+    const today = toDateOnly(localDateString());
 
-    const member = store.members.find(
-      (m) =>
-        m.tenantId === tenantId &&
-        (m.memberNumber === identifier || m.id === identifier),
-    );
+    const member = await this.prisma.member.findFirst({
+      where: {
+        tenantId,
+        OR: [{ memberNumber: identifier }, { id: identifier }],
+      },
+    });
 
     if (!member) {
       return { granted: false, reason: 'Member not found.' };
     }
 
-    const membership = store.memberships.find(
-      (ms) =>
-        ms.memberId === member.id &&
-        ms.status === 'active' &&
-        ms.startDate <= today &&
-        ms.endDate >= today,
-    );
+    const membership = await this.prisma.membership.findFirst({
+      where: {
+        memberId: member.id,
+        status: 'active',
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+      include: { plan: true },
+    });
 
     if (!membership) {
       return {
@@ -114,32 +116,29 @@ export class VisitsService {
       };
     }
 
-    const plan =
-      store.membershipPlans.find((p) => p.id === membership.planId) ?? null;
-
-    const alreadyCheckedIn = store.visits.some(
-      (v) =>
-        v.memberId === member.id &&
-        v.branchId === branchId &&
-        v.checkInTime.startsWith(today) &&
-        v.checkOutTime === null,
-    );
+    const alreadyCheckedIn = await this.prisma.visit.findFirst({
+      where: {
+        memberId: member.id,
+        branchId,
+        checkOutTime: null,
+        checkInTime: todayUtcRange(),
+      },
+    });
 
     if (alreadyCheckedIn) {
       return { granted: false, reason: 'Member is already checked in.' };
     }
 
-    const visit: VisitRecord = {
-      id: `visit-${randomUUID()}`,
-      memberId: member.id,
-      branchId,
-      checkInTime: new Date().toISOString(),
-      checkOutTime: null,
-      accessMethod: input.accessMethod ?? 'manual',
-    };
-
-    store.visits.push(visit);
-    writeOperationsStore(store);
+    const visit = await this.prisma.visit.create({
+      data: {
+        id: `visit-${randomUUID()}`,
+        memberId: member.id,
+        branchId,
+        checkInTime: new Date(),
+        checkOutTime: null,
+        accessMethod: input.accessMethod ?? 'manual',
+      },
+    });
 
     return {
       granted: true,
@@ -149,24 +148,21 @@ export class VisitsService {
         memberNumber: member.memberNumber,
         status: 'active' as const,
       },
-      membership: { ...membership, plan },
+      membership: {
+        ...membership,
+        startDate: toDateOnlyString(membership.startDate),
+        endDate: toDateOnlyString(membership.endDate),
+        finalPrice: toNumber(membership.finalPrice),
+        plan: membership.plan ? this.serializePlan(membership.plan) : null,
+      },
       visit,
     };
   }
 
-  checkOut(tenantId: string, branchId: string, visitId: string) {
-    const store = readOperationsStore();
-    const memberIds = new Set(
-      store.members
-        .filter((member) => member.tenantId === tenantId)
-        .map((member) => member.id),
-    );
-    const visit = store.visits.find(
-      (v) =>
-        v.id === visitId &&
-        v.branchId === branchId &&
-        memberIds.has(v.memberId),
-    );
+  async checkOut(tenantId: string, branchId: string, visitId: string) {
+    const visit = await this.prisma.visit.findFirst({
+      where: { id: visitId, branchId, member: { tenantId } },
+    });
 
     if (!visit) {
       throw new NotFoundException('Visit not found.');
@@ -176,24 +172,24 @@ export class VisitsService {
       throw new BadRequestException('Visit already checked out.');
     }
 
-    visit.checkOutTime = new Date().toISOString();
-    writeOperationsStore(store);
-
-    return visit;
+    return this.prisma.visit.update({
+      where: { id: visitId },
+      data: { checkOutTime: new Date() },
+    });
   }
 
-  createVisit(tenantId: string, branchId: string, input: CreateVisitInput) {
+  async createVisit(tenantId: string, branchId: string, input: CreateVisitInput) {
     if (!input.memberId || !input.checkInTime) {
       throw new BadRequestException('Member and check-in time are required.');
     }
 
-    const store = readOperationsStore();
     const targetBranchId = input.branchId ?? branchId;
-    const branch = store.branches.find((candidate) => {
-      return candidate.id === targetBranchId && candidate.tenantId === tenantId;
+
+    const branch = await this.prisma.branch.findFirst({
+      where: { id: targetBranchId, tenantId },
     });
-    const member = store.members.find((candidate) => {
-      return candidate.id === input.memberId && candidate.tenantId === tenantId;
+    const member = await this.prisma.member.findFirst({
+      where: { id: input.memberId, tenantId },
     });
 
     if (!branch) {
@@ -204,18 +200,23 @@ export class VisitsService {
       throw new BadRequestException('Member is invalid for this tenant.');
     }
 
-    const visit: VisitRecord = {
-      id: `visit-${randomUUID()}`,
-      memberId: input.memberId,
-      branchId: targetBranchId,
-      checkInTime: input.checkInTime,
-      checkOutTime: null,
-      accessMethod: input.accessMethod ?? 'manual',
-    };
-
-    store.visits.push(visit);
-    writeOperationsStore(store);
-
-    return visit;
+    return this.prisma.visit.create({
+      data: {
+        id: `visit-${randomUUID()}`,
+        memberId: input.memberId,
+        branchId: targetBranchId,
+        checkInTime: new Date(input.checkInTime),
+        checkOutTime: null,
+        accessMethod: input.accessMethod ?? 'manual',
+      },
+    });
   }
+
+  private serializePlan(plan: MembershipPlan) {
+    return { ...plan, price: toNumber(plan.price) };
+  }
+}
+
+function toDateOnly(dateStr: string): Date {
+  return new Date(dateStr);
 }

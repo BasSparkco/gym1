@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { requireRole } from '../../common/require-role';
+import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 
 type CreateUserRequestBody = {
@@ -51,7 +52,10 @@ const MVP_ROLES = [
 
 @Controller()
 export class UsersController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly dataScopeService: DataScopeService,
+  ) {}
 
   @Get('roles')
   listRoles() {
@@ -59,22 +63,29 @@ export class UsersController {
   }
 
   @Get('users')
-  listUsers(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listUsers(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
     return {
-      users: this.authService.listUsersForTenant(session.user.tenant.id),
+      users: await this.authService.listUsersForTenant(
+        session.user.tenant.id,
+        branchId,
+      ),
     };
   }
 
   @Post('users')
-  createUser(@Req() request: Request, @Body() body: CreateUserRequestBody) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async createUser(
+    @Req() request: Request,
+    @Body() body: CreateUserRequestBody,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return {
-      user: this.authService.createUser(
+      user: await this.authService.createUser(
         session.user.tenant.id,
         session.user.tenant.name,
         {
@@ -90,32 +101,39 @@ export class UsersController {
   }
 
   @Get('users/:userId')
-  getUser(@Req() request: Request, @Param('userId') userId: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getUser(@Req() request: Request, @Param('userId') userId: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return {
-      user: this.authService.getUserForTenant(session.user.tenant.id, userId),
+      user: await this.authService.getUserForTenant(
+        session.user.tenant.id,
+        userId,
+      ),
     };
   }
 
   @Patch('users/:userId')
-  updateUser(
+  async updateUser(
     @Req() request: Request,
     @Param('userId') userId: string,
     @Body() body: UpdateUserRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
     return {
-      user: this.authService.updateUser(session.user.tenant.id, userId, body),
+      user: await this.authService.updateUser(
+        session.user.tenant.id,
+        userId,
+        body,
+      ),
     };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');

@@ -25,3 +25,25 @@ export function addDays(dateStr: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/**
+ * Converts a Prisma `@db.Date` column value (a JS Date at UTC midnight) back
+ * to a plain "YYYY-MM-DD" string. Postgres DATE columns have no time
+ * component, but the Prisma client always returns a Date object for them —
+ * without this conversion at the API boundary, callers that do raw string
+ * comparisons or display the value as text (both exist in the frontend, e.g.
+ * comparing membership.endDate against a "YYYY-MM-DD" cutoff, or rendering
+ * a member's date of birth) would see a full ISO datetime instead.
+ */
+export function toDateOnlyString(date: Date): string;
+export function toDateOnlyString(date: Date | null): string | null;
+export function toDateOnlyString(
+  date: Date | null | undefined,
+): string | null | undefined;
+export function toDateOnlyString(
+  date: Date | null | undefined,
+): string | null | undefined {
+  if (date === null) return null;
+  if (date === undefined) return undefined;
+  return date.toISOString().slice(0, 10);
+}

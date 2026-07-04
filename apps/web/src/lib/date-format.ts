@@ -16,6 +16,16 @@ export function formatDate(dateStr: string | undefined | null, fmt: DateFormat):
     : `${month}/${day}/${year}`;
 }
 
+/**
+ * Adds `days` to a YYYY-MM-DD date string using UTC arithmetic, mirroring the
+ * API's addDays() so the previewed end date matches what the server computes.
+ */
+export function addDaysToDateString(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function formatDateTime(isoStr: string | undefined | null, fmt: DateFormat): string {
   if (!isoStr) return "—";
   const d = new Date(isoStr);

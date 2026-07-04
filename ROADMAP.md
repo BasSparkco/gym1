@@ -42,6 +42,7 @@ Current completed work
 * Notification delivery groundwork is in place: a pluggable `NotificationProvider` interface with a console/log stand-in provider, a dispatch service that updates record status/sentAt, owner/manager-only scan and dispatch endpoints, and event-driven notification creation wired into membership sales/renewals and pending payments — all gated by the existing per-event channel settings in Settings -> Notifications. Real SMS/WhatsApp/email backends are not yet connected (see [status.md](status.md) "Notification Delivery — Groundwork").
 * SparkCo messaging is live: email and WhatsApp delivery confirmed end-to-end via `POST /api/v1/messages/send`. SMTP removed — SparkCo handles all delivery.
 * Pilot release gate walkthrough complete: full member lifecycle confirmed end-to-end with real credentials.
+* Member photo storage now uses MinIO (S3-compatible object storage) instead of local disk, proxied through the API at the same /api/uploads/members/<file> path with no frontend changes; auth sessions now live in Redis instead of Postgres, with native TTL expiry replacing manual filtering and removing the need for a cleanup job.
 
 Current next focus
 
@@ -98,6 +99,7 @@ Modules
 * Tenants
 * Branches
 * Settings (language configuration, enabled languages)
+* Session storage (Redis) and object storage (MinIO) for member photos
 
 ### Members
 

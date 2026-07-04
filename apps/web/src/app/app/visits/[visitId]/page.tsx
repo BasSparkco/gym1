@@ -63,6 +63,7 @@ export default async function VisitDetailPage({ params }: Props) {
               <dt className="text-foreground/55">{t.visits.checkInTime}</dt>
               <dd className="mt-0.5 font-medium">{localCheckInTime}</dd>
             </div>
+            {settings.checkOutTrackingEnabled && (
             <div>
               <dt className="text-foreground/55">{t.visits.checkOutTime}</dt>
               <dd className="mt-0.5">
@@ -80,6 +81,7 @@ export default async function VisitDetailPage({ params }: Props) {
                 )}
               </dd>
             </div>
+            )}
             <div>
               <dt className="text-foreground/55">{t.visits.accessMethod}</dt>
               <dd className="mt-0.5">

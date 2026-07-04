@@ -4,18 +4,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { addDays } from '../../common/date';
+import { addDays, localDateString, toDateOnlyString } from '../../common/date';
+import { toNumber } from '../../common/decimal';
 import { makeQrPublicUrl } from '../../common/qr';
-import {
-  FreezeRecord,
-  MembershipPlanRecord,
-  MemberRecord,
-  MembershipRecord,
-  readOperationsStore,
-  writeOperationsStore,
-} from '../../data/operations-store';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  Freeze,
+  Member,
+  Membership,
+  MembershipPlan,
+  MembershipStatus,
+} from '../../generated/prisma/client';
 
 type CreateMembershipPlanInput = {
   name?: string;
@@ -44,18 +45,18 @@ type CreateMembershipInput = {
   planId?: string;
   startDate?: string;
   endDate?: string;
-  status?: MembershipRecord['status'];
+  status?: MembershipStatus;
   finalPrice?: number;
 };
 
 type UpdateMembershipInput = {
-  status?: MembershipRecord['status'];
+  status?: MembershipStatus;
   startDate?: string;
   endDate?: string;
   finalPrice?: number;
 };
 
-const validMembershipStatuses = new Set<MembershipRecord['status']>([
+const validMembershipStatuses = new Set<MembershipStatus>([
   'draft',
   'active',
   'frozen',
@@ -63,68 +64,58 @@ const validMembershipStatuses = new Set<MembershipRecord['status']>([
   'cancelled',
 ]);
 
+function toDateOnly(dateStr: string): Date {
+  return new Date(dateStr);
+}
+
 @Injectable()
 export class MembershipsService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly basIpSyncService: BasIpSyncService,
   ) {}
 
-  private autoExpireStale(store: ReturnType<typeof readOperationsStore>): boolean {
-    const today = new Date().toISOString().slice(0, 10);
-    let dirty = false;
-    for (let i = 0; i < store.memberships.length; i++) {
-      const ms = store.memberships[i];
-      if (ms.status === 'active' && ms.endDate < today) {
-        store.memberships[i] = { ...ms, status: 'expired' };
-        dirty = true;
-      }
-    }
-    return dirty;
-  }
-
-  listMembershipsForTenant(tenantId: string) {
-    const store = readOperationsStore();
-    if (this.autoExpireStale(store)) writeOperationsStore(store);
-
-    const tenantMemberIds = new Set(
-      store.members
-        .filter((member) => member.tenantId === tenantId)
-        .map((member) => member.id),
-    );
-    const tenantPlanIds = new Set(
-      store.membershipPlans
-        .filter((plan) => plan.tenantId === tenantId)
-        .map((plan) => plan.id),
-    );
-
-    return store.memberships.filter((membership) => {
-      return (
-        tenantMemberIds.has(membership.memberId) &&
-        tenantPlanIds.has(membership.planId)
-      );
+  private async autoExpireStaleForTenant(tenantId: string): Promise<void> {
+    const today = toDateOnly(localDateString());
+    await this.prisma.membership.updateMany({
+      where: { member: { tenantId }, status: 'active', endDate: { lt: today } },
+      data: { status: 'expired' },
     });
   }
 
-  listMembershipPlansForTenant(tenantId: string) {
-    return readOperationsStore().membershipPlans.filter((plan) => {
-      return plan.tenantId === tenantId;
+  async listMembershipsForTenant(tenantId: string, branchId?: string) {
+    await this.autoExpireStaleForTenant(tenantId);
+
+    const memberships = await this.prisma.membership.findMany({
+      where: {
+        member: { tenantId, ...(branchId ? { homeBranchId: branchId } : {}) },
+        plan: { tenantId },
+      },
     });
+    return memberships.map((m) => this.serializeMembership(m));
   }
 
-  getMembershipPlanForTenant(tenantId: string, planId: string) {
-    const plan = readOperationsStore().membershipPlans.find(
-      (candidate) => candidate.id === planId && candidate.tenantId === tenantId,
-    );
+  async listMembershipPlansForTenant(tenantId: string) {
+    const plans = await this.prisma.membershipPlan.findMany({
+      where: { tenantId },
+    });
+    return plans.map((p) => this.serializePlan(p));
+  }
+
+  async getMembershipPlanForTenant(tenantId: string, planId: string) {
+    const plan = await this.prisma.membershipPlan.findFirst({
+      where: { id: planId, tenantId },
+    });
 
     if (!plan) {
       throw new NotFoundException('Membership plan not found.');
     }
 
-    return plan;
+    return this.serializePlan(plan);
   }
 
-  createMembershipPlan(tenantId: string, input: CreateMembershipPlanInput) {
+  async createMembershipPlan(tenantId: string, input: CreateMembershipPlanInput) {
     const name = input.name?.trim();
 
     if (!name) {
@@ -145,41 +136,37 @@ export class MembershipsService {
       );
     }
 
-    const store = readOperationsStore();
-    const plan: MembershipPlanRecord = {
-      id: `plan-${randomUUID()}`,
-      tenantId,
-      name,
-      planType,
-      durationDays: planType === 'duration' ? input.durationDays : undefined,
-      sessionCount: planType === 'session' ? input.sessionCount : undefined,
-      price: input.price ?? 0,
-      allowAllBranches: input.allowAllBranches ?? true,
-      freezeAllowed: input.freezeAllowed ?? false,
-      freezeMaxDays: input.freezeAllowed ? input.freezeMaxDays : undefined,
-    };
+    const plan = await this.prisma.membershipPlan.create({
+      data: {
+        id: `plan-${randomUUID()}`,
+        tenantId,
+        name,
+        planType,
+        durationDays: planType === 'duration' ? input.durationDays : undefined,
+        sessionCount: planType === 'session' ? input.sessionCount : undefined,
+        price: input.price ?? 0,
+        allowAllBranches: input.allowAllBranches ?? true,
+        freezeAllowed: input.freezeAllowed ?? false,
+        freezeMaxDays: input.freezeAllowed ? input.freezeMaxDays : undefined,
+      },
+    });
 
-    store.membershipPlans.push(plan);
-    writeOperationsStore(store);
-
-    return plan;
+    return this.serializePlan(plan);
   }
 
-  updateMembershipPlan(
+  async updateMembershipPlan(
     tenantId: string,
     planId: string,
     input: UpdateMembershipPlanInput,
   ) {
-    const store = readOperationsStore();
-    const idx = store.membershipPlans.findIndex(
-      (candidate) => candidate.id === planId && candidate.tenantId === tenantId,
-    );
+    const current = await this.prisma.membershipPlan.findFirst({
+      where: { id: planId, tenantId },
+    });
 
-    if (idx === -1) {
+    if (!current) {
       throw new NotFoundException('Membership plan not found.');
     }
 
-    const current = store.membershipPlans[idx];
     const planType = input.planType ?? current.planType;
     const name = input.name === undefined ? current.name : input.name.trim();
 
@@ -187,77 +174,61 @@ export class MembershipsService {
       throw new BadRequestException('Plan name is required.');
     }
 
-    const next: MembershipPlanRecord = {
-      ...current,
-      name,
-      planType,
-      durationDays:
-        planType === 'duration'
-          ? (input.durationDays ??
-            (current.planType === 'duration'
-              ? current.durationDays
-              : undefined))
-          : undefined,
-      sessionCount:
-        planType === 'session'
-          ? (input.sessionCount ??
-            (current.planType === 'session' ? current.sessionCount : undefined))
-          : undefined,
-      price: input.price ?? current.price,
-      allowAllBranches: input.allowAllBranches ?? current.allowAllBranches,
-      freezeAllowed: input.freezeAllowed ?? current.freezeAllowed,
-      freezeMaxDays:
-        (input.freezeAllowed ?? current.freezeAllowed)
+    const freezeAllowed = input.freezeAllowed ?? current.freezeAllowed;
+
+    const plan = await this.prisma.membershipPlan.update({
+      where: { id: planId },
+      data: {
+        name,
+        planType,
+        durationDays:
+          planType === 'duration'
+            ? (input.durationDays ??
+              (current.planType === 'duration'
+                ? current.durationDays
+                : null))
+            : null,
+        sessionCount:
+          planType === 'session'
+            ? (input.sessionCount ??
+              (current.planType === 'session' ? current.sessionCount : null))
+            : null,
+        price: input.price ?? current.price,
+        allowAllBranches: input.allowAllBranches ?? current.allowAllBranches,
+        freezeAllowed,
+        freezeMaxDays: freezeAllowed
           ? (input.freezeMaxDays ?? current.freezeMaxDays)
-          : undefined,
-    };
+          : null,
+      },
+    });
 
-    store.membershipPlans[idx] = next;
-    writeOperationsStore(store);
-
-    return next;
+    return this.serializePlan(plan);
   }
 
-  getMembershipForTenant(tenantId: string, membershipId: string) {
-    const store = readOperationsStore();
-    if (this.autoExpireStale(store)) writeOperationsStore(store);
+  async getMembershipForTenant(tenantId: string, membershipId: string) {
+    await this.autoExpireStaleForTenant(tenantId);
 
-    const tenantMemberIds = new Set(
-      store.members
-        .filter((member) => member.tenantId === tenantId)
-        .map((member) => member.id),
-    );
-    const membership = store.memberships.find(
-      (candidate) =>
-        candidate.id === membershipId &&
-        tenantMemberIds.has(candidate.memberId),
-    );
+    const membership = await this.prisma.membership.findFirst({
+      where: { id: membershipId, member: { tenantId } },
+    });
 
     if (!membership) {
       throw new NotFoundException('Membership not found.');
     }
 
-    return membership;
+    return this.serializeMembership(membership);
   }
 
-  updateMembership(
+  async updateMembership(
     tenantId: string,
     membershipId: string,
     input: UpdateMembershipInput,
   ) {
-    const store = readOperationsStore();
-    const tenantMemberIds = new Set(
-      store.members
-        .filter((member) => member.tenantId === tenantId)
-        .map((member) => member.id),
-    );
-    const idx = store.memberships.findIndex(
-      (candidate) =>
-        candidate.id === membershipId &&
-        tenantMemberIds.has(candidate.memberId),
-    );
+    const current = await this.prisma.membership.findFirst({
+      where: { id: membershipId, member: { tenantId } },
+    });
 
-    if (idx === -1) {
+    if (!current) {
       throw new NotFoundException('Membership not found.');
     }
 
@@ -268,41 +239,43 @@ export class MembershipsService {
       throw new BadRequestException('Membership status is invalid.');
     }
 
-    const current = store.memberships[idx];
-    const next: MembershipRecord = {
-      ...current,
-      status: input.status ?? current.status,
-      startDate: input.startDate ?? current.startDate,
-      endDate: input.endDate ?? current.endDate,
-      finalPrice: input.finalPrice ?? current.finalPrice,
-    };
+    const membership = await this.prisma.membership.update({
+      where: { id: membershipId },
+      data: {
+        status: input.status ?? current.status,
+        startDate:
+          input.startDate === undefined
+            ? undefined
+            : toDateOnly(input.startDate),
+        endDate:
+          input.endDate === undefined ? undefined : toDateOnly(input.endDate),
+        finalPrice: input.finalPrice ?? current.finalPrice,
+      },
+    });
 
-    store.memberships[idx] = next;
-    writeOperationsStore(store);
-
-    return next;
+    return this.serializeMembership(membership);
   }
 
-  listMembershipsForMember(tenantId: string, memberId: string) {
-    const store = readOperationsStore();
-    if (this.autoExpireStale(store)) writeOperationsStore(store);
+  async listMembershipsForMember(tenantId: string, memberId: string) {
+    await this.autoExpireStaleForTenant(tenantId);
 
-    const member = store.members.find(
-      (candidate) =>
-        candidate.id === memberId && candidate.tenantId === tenantId,
-    );
+    const member = await this.prisma.member.findFirst({
+      where: { id: memberId, tenantId },
+    });
 
     if (!member) {
       throw new NotFoundException('Member not found.');
     }
 
-    const planMap = new Map(
-      store.membershipPlans.map((plan) => [plan.id, plan]),
-    );
+    const memberships = await this.prisma.membership.findMany({
+      where: { memberId },
+      include: { plan: true },
+    });
 
-    return store.memberships
-      .filter((ms) => ms.memberId === memberId)
-      .map((ms) => ({ ...ms, plan: planMap.get(ms.planId) ?? null }));
+    return memberships.map((ms) => ({
+      ...this.serializeMembership(ms),
+      plan: ms.plan ? this.serializePlan(ms.plan) : null,
+    }));
   }
 
   async renewMembership(
@@ -310,23 +283,19 @@ export class MembershipsService {
     membershipId: string,
     input: { planId?: string; startDate?: string; finalPrice?: number },
   ) {
-    const store = readOperationsStore();
-    const tenantMemberIds = new Set(
-      store.members.filter((m) => m.tenantId === tenantId).map((m) => m.id),
-    );
-    const idx = store.memberships.findIndex(
-      (ms) => ms.id === membershipId && tenantMemberIds.has(ms.memberId),
-    );
+    const old = await this.prisma.membership.findFirst({
+      where: { id: membershipId, member: { tenantId } },
+      include: { member: true },
+    });
 
-    if (idx === -1) {
+    if (!old) {
       throw new NotFoundException('Membership not found.');
     }
 
-    const old = store.memberships[idx];
     const planId = input.planId ?? old.planId;
-    const plan = store.membershipPlans.find(
-      (p) => p.id === planId && p.tenantId === tenantId,
-    );
+    const plan = await this.prisma.membershipPlan.findFirst({
+      where: { id: planId, tenantId },
+    });
 
     if (!plan) {
       throw new BadRequestException(
@@ -335,10 +304,8 @@ export class MembershipsService {
     }
 
     // Default start: day after old end; fall back to provided date
-    let startDate = input.startDate;
-    if (!startDate) {
-      startDate = addDays(old.endDate, 1);
-    }
+    const startDate =
+      input.startDate ?? addDays(toDateOnlyString(old.endDate), 1);
 
     let endDate: string;
     if (plan.planType === 'duration' && plan.durationDays) {
@@ -349,24 +316,29 @@ export class MembershipsService {
       );
     }
 
-    // Mark old membership expired if still active
-    if (old.status === 'active') {
-      store.memberships[idx] = { ...old, status: 'expired' };
-    }
+    const renewalId = `membership-${randomUUID()}`;
 
-    const renewal: MembershipRecord = {
-      id: `membership-${randomUUID()}`,
-      memberId: old.memberId,
-      planId,
-      startDate,
-      endDate,
-      status: 'active',
-      finalPrice: input.finalPrice ?? plan.price,
-      previousMembershipId: old.id,
-    };
+    const renewal = await this.prisma.$transaction(async (tx) => {
+      if (old.status === 'active') {
+        await tx.membership.update({
+          where: { id: old.id },
+          data: { status: 'expired' },
+        });
+      }
 
-    store.memberships.push(renewal);
-    writeOperationsStore(store);
+      return tx.membership.create({
+        data: {
+          id: renewalId,
+          memberId: old.memberId,
+          planId: plan.id,
+          startDate: toDateOnly(startDate),
+          endDate: toDateOnly(endDate),
+          status: 'active',
+          finalPrice: input.finalPrice ?? plan.price,
+          previousMembershipId: old.id,
+        },
+      });
+    });
 
     await this.notificationsService.createNotificationsForEvent(
       tenantId,
@@ -374,34 +346,32 @@ export class MembershipsService {
       renewal.memberId,
       {
         subject: 'Membership renewed',
-        body: `Your ${plan.name} membership has been renewed and now runs through ${renewal.endDate}.`,
+        body: `Your ${plan.name} membership has been renewed and now runs through ${toDateOnlyString(renewal.endDate)}.`,
         relatedId: renewal.id,
       },
     );
 
-    const member = store.members.find((m) => m.id === renewal.memberId);
-    if (member) this.syncToDevice(member, renewal);
+    this.syncToDevice(old.member, renewal);
 
-    return renewal;
+    return this.serializeMembership(renewal);
   }
 
-  listFreezesForMembership(tenantId: string, membershipId: string) {
-    const store = readOperationsStore();
-    const tenantMemberIds = new Set(
-      store.members.filter((m) => m.tenantId === tenantId).map((m) => m.id),
-    );
-    const membership = store.memberships.find(
-      (ms) => ms.id === membershipId && tenantMemberIds.has(ms.memberId),
-    );
+  async listFreezesForMembership(tenantId: string, membershipId: string) {
+    const membership = await this.prisma.membership.findFirst({
+      where: { id: membershipId, member: { tenantId } },
+    });
 
     if (!membership) {
       throw new NotFoundException('Membership not found.');
     }
 
-    return store.freezes.filter((f) => f.membershipId === membershipId);
+    const freezes = await this.prisma.freeze.findMany({
+      where: { membershipId },
+    });
+    return freezes.map((f) => this.serializeFreeze(f));
   }
 
-  createFreeze(
+  async createFreeze(
     tenantId: string,
     membershipId: string,
     input: { startDate?: string; endDate?: string },
@@ -425,25 +395,22 @@ export class MembershipsService {
       );
     }
 
-    const store = readOperationsStore();
-    const tenantMemberIds = new Set(
-      store.members.filter((m) => m.tenantId === tenantId).map((m) => m.id),
-    );
-    const msIdx = store.memberships.findIndex(
-      (ms) => ms.id === membershipId && tenantMemberIds.has(ms.memberId),
-    );
+    const membership = await this.prisma.membership.findFirst({
+      where: { id: membershipId, member: { tenantId } },
+      include: { member: true },
+    });
 
-    if (msIdx === -1) {
+    if (!membership) {
       throw new NotFoundException('Membership not found.');
     }
-
-    const membership = store.memberships[msIdx];
 
     if (membership.status !== 'active') {
       throw new BadRequestException('Only active memberships can be frozen.');
     }
 
-    const plan = store.membershipPlans.find((p) => p.id === membership.planId);
+    const plan = await this.prisma.membershipPlan.findFirst({
+      where: { id: membership.planId },
+    });
 
     if (!plan?.freezeAllowed) {
       throw new BadRequestException(
@@ -461,55 +428,53 @@ export class MembershipsService {
       );
     }
 
-    // Extend membership end date by the freeze duration
-    store.memberships[msIdx] = {
-      ...membership,
-      status: 'frozen',
-      endDate: addDays(membership.endDate, freezeDays),
-    };
+    const nextEndDate = toDateOnly(
+      addDays(toDateOnlyString(membership.endDate), freezeDays),
+    );
 
-    const freeze: FreezeRecord = {
-      id: `freeze-${randomUUID()}`,
-      membershipId,
-      startDate: input.startDate,
-      endDate: input.endDate,
-      createdAt: new Date().toISOString(),
-    };
-
-    store.freezes.push(freeze);
-    writeOperationsStore(store);
+    const [frozenMembership, freeze] = await this.prisma.$transaction([
+      this.prisma.membership.update({
+        where: { id: membershipId },
+        data: { status: 'frozen', endDate: nextEndDate },
+      }),
+      this.prisma.freeze.create({
+        data: {
+          id: `freeze-${randomUUID()}`,
+          membershipId,
+          startDate: toDateOnly(input.startDate),
+          endDate: toDateOnly(input.endDate),
+        },
+      }),
+    ]);
 
     // Push updated end date so the device extends the valid window
-    const frozenMembership = store.memberships[msIdx];
-    const member = store.members.find((m) => m.id === frozenMembership.memberId);
-    if (member) this.syncToDevice(member, frozenMembership);
+    this.syncToDevice(membership.member, frozenMembership);
 
-    return { freeze, membership: frozenMembership };
+    return {
+      freeze: this.serializeFreeze(freeze),
+      membership: this.serializeMembership(frozenMembership),
+    };
   }
 
-  unfreezeM(tenantId: string, membershipId: string) {
-    const store = readOperationsStore();
-    const tenantMemberIds = new Set(
-      store.members.filter((m) => m.tenantId === tenantId).map((m) => m.id),
-    );
-    const idx = store.memberships.findIndex(
-      (ms) => ms.id === membershipId && tenantMemberIds.has(ms.memberId),
-    );
+  async unfreezeM(tenantId: string, membershipId: string) {
+    const membership = await this.prisma.membership.findFirst({
+      where: { id: membershipId, member: { tenantId } },
+    });
 
-    if (idx === -1) {
+    if (!membership) {
       throw new NotFoundException('Membership not found.');
     }
-
-    const membership = store.memberships[idx];
 
     if (membership.status !== 'frozen') {
       throw new BadRequestException('Only frozen memberships can be unfrozen.');
     }
 
-    store.memberships[idx] = { ...membership, status: 'active' };
-    writeOperationsStore(store);
+    const updated = await this.prisma.membership.update({
+      where: { id: membershipId },
+      data: { status: 'active' },
+    });
 
-    return store.memberships[idx];
+    return this.serializeMembership(updated);
   }
 
   async createMembership(tenantId: string, input: CreateMembershipInput) {
@@ -519,13 +484,13 @@ export class MembershipsService {
       );
     }
 
-    const store = readOperationsStore();
-    this.autoExpireStale(store);
-    const member = store.members.find((candidate) => {
-      return candidate.id === input.memberId && candidate.tenantId === tenantId;
+    await this.autoExpireStaleForTenant(tenantId);
+
+    const member = await this.prisma.member.findFirst({
+      where: { id: input.memberId, tenantId },
     });
-    const plan = store.membershipPlans.find((candidate) => {
-      return candidate.id === input.planId && candidate.tenantId === tenantId;
+    const plan = await this.prisma.membershipPlan.findFirst({
+      where: { id: input.planId, tenantId },
     });
 
     if (!member) {
@@ -538,9 +503,9 @@ export class MembershipsService {
       );
     }
 
-    const existingActive = store.memberships.find(
-      (ms) => ms.memberId === member.id && ms.status === 'active',
-    );
+    const existingActive = await this.prisma.membership.findFirst({
+      where: { memberId: member.id, status: 'active' },
+    });
 
     if (existingActive) {
       throw new BadRequestException('Member already has an active membership.');
@@ -558,20 +523,21 @@ export class MembershipsService {
       }
     }
 
-    const membership: MembershipRecord = {
-      id: `membership-${randomUUID()}`,
-      memberId: member.id,
-      planId: plan.id,
-      startDate: input.startDate,
-      endDate,
-      status: input.status ?? 'active',
-      finalPrice: input.finalPrice ?? plan.price,
-    };
+    const status = input.status ?? 'active';
 
-    store.memberships.push(membership);
-    writeOperationsStore(store);
+    const membership = await this.prisma.membership.create({
+      data: {
+        id: `membership-${randomUUID()}`,
+        memberId: member.id,
+        planId: plan.id,
+        startDate: toDateOnly(input.startDate),
+        endDate: toDateOnly(endDate),
+        status,
+        finalPrice: input.finalPrice ?? plan.price,
+      },
+    });
 
-    if (membership.status === 'active') {
+    if (status === 'active') {
       const qrUrl = makeQrPublicUrl(member.id);
       await this.notificationsService.createNotificationsForEvent(
         tenantId,
@@ -580,7 +546,7 @@ export class MembershipsService {
         {
           subject: 'Welcome to Spark Gym',
           body:
-            `Your ${plan.name} membership is now active and runs through ${membership.endDate}.\n\n` +
+            `Your ${plan.name} membership is now active and runs through ${toDateOnlyString(membership.endDate)}.\n\n` +
             `Download your QR code (show it at the entrance to enter):\n${qrUrl}`,
           relatedId: membership.id,
         },
@@ -589,7 +555,7 @@ export class MembershipsService {
       this.syncToDevice(member, membership);
     }
 
-    return membership;
+    return this.serializeMembership(membership);
   }
 
   /**
@@ -598,12 +564,38 @@ export class MembershipsService {
    * identifier regardless of whether they have an RFID tag.
    * Failures are logged but never propagated.
    */
-  private syncToDevice(member: MemberRecord, membership: MembershipRecord): void {
+  private syncToDevice(member: Member, membership: Membership): void {
     void this.basIpSyncService.pushQrIdentifier(
       member.id,
       member.fullName,
-      membership.startDate,
-      membership.endDate,
+      toDateOnlyString(membership.startDate),
+      toDateOnlyString(membership.endDate),
     );
+  }
+
+  // Postgres Decimal/Date columns come back from Prisma as Decimal/Date
+  // objects; the API contract (and the web app, which calls
+  // `.toLocaleString()` on prices and does raw string comparisons/display on
+  // dates) expects plain numbers and "YYYY-MM-DD" strings, same as the old
+  // JSON store.
+  private serializePlan(plan: MembershipPlan) {
+    return { ...plan, price: toNumber(plan.price) };
+  }
+
+  private serializeMembership(membership: Membership) {
+    return {
+      ...membership,
+      startDate: toDateOnlyString(membership.startDate),
+      endDate: toDateOnlyString(membership.endDate),
+      finalPrice: toNumber(membership.finalPrice),
+    };
+  }
+
+  private serializeFreeze(freeze: Freeze) {
+    return {
+      ...freeze,
+      startDate: toDateOnlyString(freeze.startDate),
+      endDate: toDateOnlyString(freeze.endDate),
+    };
   }
 }

@@ -14,15 +14,11 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { extname } from 'node:path';
+import { MinioService } from '../../minio/minio.service';
+import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { MembersService } from './members.service';
-
-function getUploadsDir() {
-  const root = process.env.API_DATA_ROOT ?? join(__dirname, '..', '..', '..');
-  return join(root, '.local', 'uploads', 'members');
-}
 
 type CreateMemberRequestBody = {
   fullName?: string;
@@ -67,24 +63,32 @@ export class MembersController {
   constructor(
     private readonly authService: AuthService,
     private readonly membersService: MembersService,
+    private readonly minioService: MinioService,
+    private readonly dataScopeService: DataScopeService,
   ) {}
 
   @Get()
-  listMembers(@Req() request: Request) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async listMembers(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
     return {
-      members: this.membersService.listMembersForScope(
-        session.user.tenant.id,
-        session.user.branch.id,
-      ),
+      members: branchId
+        ? await this.membersService.listMembersForScope(
+            session.user.tenant.id,
+            branchId,
+          )
+        : await this.membersService.listMembersForTenant(session.user.tenant.id),
     };
   }
 
   @Post()
-  createMember(@Req() request: Request, @Body() body: CreateMemberRequestBody) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async createMember(
+    @Req() request: Request,
+    @Body() body: CreateMemberRequestBody,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
     return {
-      member: this.membersService.createMember(
+      member: await this.membersService.createMember(
         session.user.tenant.id,
         session.user.branch.id,
         body,
@@ -94,12 +98,15 @@ export class MembersController {
 
   // Must be declared before :memberId to avoid "search" being captured as a param
   @Get('search')
-  searchMembers(@Req() request: Request, @Query('q') q: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
-    const all = this.membersService.listMembersForScope(
-      session.user.tenant.id,
-      session.user.branch.id,
-    );
+  async searchMembers(@Req() request: Request, @Query('q') q: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    const all = branchId
+      ? await this.membersService.listMembersForScope(
+          session.user.tenant.id,
+          branchId,
+        )
+      : await this.membersService.listMembersForTenant(session.user.tenant.id);
     const query = (q ?? '').trim().toLowerCase();
     const queryDigits = query.replace(/\D/g, '').replace(/^0+/, '');
     const members = query
@@ -123,28 +130,30 @@ export class MembersController {
   }
 
   @Get(':memberId')
-  getMember(@Req() request: Request, @Param('memberId') memberId: string) {
-    const session = this.getRequiredSession(request.headers.cookie);
+  async getMember(@Req() request: Request, @Param('memberId') memberId: string) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
     return {
-      member: this.membersService.getMemberForScope(
+      member: await this.membersService.getMemberForScope(
         session.user.tenant.id,
-        session.user.branch.id,
+        branchId,
         memberId,
       ),
     };
   }
 
   @Patch(':memberId')
-  updateMember(
+  async updateMember(
     @Req() request: Request,
     @Param('memberId') memberId: string,
     @Body() body: UpdateMemberRequestBody,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
     return {
-      member: this.membersService.updateMember(
+      member: await this.membersService.updateMember(
         session.user.tenant.id,
-        session.user.branch.id,
+        branchId,
         memberId,
         body,
       ),
@@ -158,7 +167,7 @@ export class MembersController {
     @Param('memberId') memberId: string,
     @Res() res: Response,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
     const buffer = await this.membersService.getMemberQrCodeBuffer(
       session.user.tenant.id,
       memberId,
@@ -191,47 +200,50 @@ export class MembersController {
     @Req() request: Request,
     @Param('memberId') memberId: string,
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
     return this.membersService.sendQrViaWhatsApp(
       session.user.tenant.id,
-      session.user.branch.id,
+      branchId,
       memberId,
     );
   }
 
-  // Uses memory storage (default) — file is written manually to disk
+  // Uses memory storage (default) — file is uploaded to MinIO object storage
   @Post(':memberId/photo')
   @UseInterceptors(FileInterceptor('picture', { limits: { fileSize: 5 * 1024 * 1024 } }))
-  uploadMemberPhoto(
+  async uploadMemberPhoto(
     @Req() request: Request,
     @Param('memberId') memberId: string,
     @UploadedFile() file: { originalname: string; buffer: Buffer; mimetype: string },
   ) {
-    const session = this.getRequiredSession(request.headers.cookie);
-
-    const uploadsDir = getUploadsDir();
-    if (!existsSync(uploadsDir)) {
-      mkdirSync(uploadsDir, { recursive: true });
-    }
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     const ext = extname(file.originalname) || '.jpg';
     const filename = `photo-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
-    writeFileSync(join(uploadsDir, filename), file.buffer);
+    await this.minioService.client.putObject(
+      this.minioService.getBucket(),
+      filename,
+      file.buffer,
+      file.buffer.length,
+      { 'Content-Type': file.mimetype },
+    );
 
     const pictureUrl = `/api/uploads/members/${filename}`;
     return {
-      member: this.membersService.updateMemberPicture(
+      member: await this.membersService.updateMemberPicture(
         session.user.tenant.id,
-        session.user.branch.id,
+        branchId,
         memberId,
         pictureUrl,
       ),
     };
   }
 
-  private getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
-      this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
     if (!session) {
       throw new UnauthorizedException('Authentication required.');
     }

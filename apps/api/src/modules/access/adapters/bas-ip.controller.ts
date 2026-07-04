@@ -9,8 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { readOperationsStore } from '../../../data/operations-store';
 import { AuthService } from '../../auth/auth.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { AccessService } from '../access.service';
 import { BasIpSyncService } from '../bas-ip-sync.service';
 import { BasIpDeviceGuard } from './bas-ip.guard';
@@ -44,22 +44,21 @@ export class BasIpController {
     private readonly accessService: AccessService,
     private readonly basIpSyncService: BasIpSyncService,
     private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post('gate/open')
   @HttpCode(200)
   async openGate(@Req() request: Request, @Body() body: OpenGateBody) {
-    const session = this.authService.getCurrentSessionFromCookieHeader(
+    const session = await this.authService.getCurrentSessionFromCookieHeader(
       request.headers.cookie,
     );
     if (!session) throw new UnauthorizedException('Authentication required.');
 
     if (body.gateId) {
-      const store = readOperationsStore();
-      const gate = store.gates.find(
-        (g) =>
-          g.id === body.gateId && g.tenantId === session.user.tenant.id,
-      );
+      const gate = await this.prisma.gate.findFirst({
+        where: { id: body.gateId, tenantId: session.user.tenant.id },
+      });
       if (!gate) {
         return { opened: false, reason: 'Gate not found.' };
       }
@@ -73,7 +72,7 @@ export class BasIpController {
   @Post('bas-ip')
   @HttpCode(200)
   @UseGuards(BasIpDeviceGuard)
-  handleAccess(
+  async handleAccess(
     @Body() body: BasIpRequestBody,
     @Query('branchId') branchId: string,
     @Query('gateId') gateId?: string,
@@ -93,7 +92,7 @@ export class BasIpController {
       return { handled: true, access: { granted: false } };
     }
 
-    const result = this.accessService.checkAccess(
+    const result = await this.accessService.checkAccess(
       identifierNumber,
       identifierType,
       branchId,
@@ -107,8 +106,7 @@ export class BasIpController {
     // Resolve the lock number from the gate config if available
     let lockNumber = 1;
     if (gateId) {
-      const store = readOperationsStore();
-      const gate = store.gates.find((g) => g.id === gateId);
+      const gate = await this.prisma.gate.findFirst({ where: { id: gateId } });
       if (gate) lockNumber = gate.lockNumber;
     }
 

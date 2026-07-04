@@ -8,6 +8,54 @@
 # Loads DOMAIN from ./.env (see .env.example)
 
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gym
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: gym
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gym -d gym"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
   api:
     build:
       context: .
@@ -17,10 +65,25 @@ services:
     environment:
       PORT: "3002"
       FRONTEND_ORIGIN: "https://${DOMAIN}"
+      DATABASE_URL: "postgresql://gym:${POSTGRES_PASSWORD}@db:5432/gym?schema=public"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379"
+      MINIO_ENDPOINT: "minio"
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - api-data:/app/.local
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - traefik-public
+      - internal
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
@@ -56,7 +119,11 @@ services:
 
 volumes:
   api-data:
+  postgres-data:
+  redis-data:
+  minio-data:
 
 networks:
   traefik-public:
     external: true
+  internal: {}
