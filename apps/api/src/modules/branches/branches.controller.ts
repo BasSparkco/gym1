@@ -19,6 +19,7 @@ type CreateBranchRequestBody = {
   address?: string;
   phone?: string;
   countryCode?: string;
+  operatingCurrencyCode?: string;
   status?: 'active' | 'inactive';
 };
 
@@ -27,6 +28,7 @@ type UpdateBranchRequestBody = {
   address?: string;
   phone?: string;
   countryCode?: string;
+  operatingCurrencyCode?: string;
   status?: 'active' | 'inactive';
 };
 

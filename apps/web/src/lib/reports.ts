@@ -66,18 +66,20 @@ export async function getActiveMembershipsReport(): Promise<{
   rows: ActiveMembershipRow[];
   total: number;
   asOfDate: string;
+  currency: string;
 }> {
   const res = await authedFetch("/reports/active-memberships");
-  return res.json() as Promise<{ rows: ActiveMembershipRow[]; total: number; asOfDate: string }>;
+  return res.json() as Promise<{ rows: ActiveMembershipRow[]; total: number; asOfDate: string; currency: string }>;
 }
 
 export async function getExpiredMembershipsReport(): Promise<{
   rows: ExpiredMembershipRow[];
   total: number;
   asOfDate: string;
+  currency: string;
 }> {
   const res = await authedFetch("/reports/expired-memberships");
-  return res.json() as Promise<{ rows: ExpiredMembershipRow[]; total: number; asOfDate: string }>;
+  return res.json() as Promise<{ rows: ExpiredMembershipRow[]; total: number; asOfDate: string; currency: string }>;
 }
 
 export async function getVisitsReport(
@@ -101,6 +103,7 @@ export async function getPaymentsReport(
   totalPaid: number;
   dateFrom: string;
   dateTo: string;
+  currency: string;
 }> {
   const params = new URLSearchParams();
   if (dateFrom) params.set("dateFrom", dateFrom);
@@ -113,5 +116,6 @@ export async function getPaymentsReport(
     totalPaid: number;
     dateFrom: string;
     dateTo: string;
+    currency: string;
   }>;
 }

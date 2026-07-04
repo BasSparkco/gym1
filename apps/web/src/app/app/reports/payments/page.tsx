@@ -2,6 +2,7 @@ import { getPaymentsReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 
@@ -25,6 +26,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
     getSettings(),
   ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
+  const currencySymbol = getCurrencySymbol(report.currency);
 
   return (
     <div className="grid gap-6">
@@ -37,7 +39,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
           <p className="mt-2 text-sm text-foreground/60">
             {report.total} payment{report.total !== 1 ? "s" : ""} from{" "}
             {report.dateFrom} to {report.dateTo}.{" "}
-            {t.reports.totalPaid}: <span className="font-semibold text-foreground">${report.totalPaid.toLocaleString()}</span>.
+            {t.reports.totalPaid}: <span className="font-semibold text-foreground">{currencySymbol}{report.totalPaid.toLocaleString()}</span>.
           </p>
         </div>
         <Link
@@ -93,7 +95,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
                       </td>
                       <td className="py-3 pr-4 text-xs text-foreground/60">{localDate}</td>
                       <td className="py-3 text-right font-medium">
-                        ${row.amount.toLocaleString()}
+                        {currencySymbol}{row.amount.toLocaleString()}
                       </td>
                     </tr>
                   );

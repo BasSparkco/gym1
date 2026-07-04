@@ -1,6 +1,7 @@
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getActiveCurrencySymbol } from "@/lib/currency";
 import Link from "next/link";
 
 function planSummary(plan: Awaited<ReturnType<typeof listMembershipPlans>>[number]) {
@@ -13,9 +14,12 @@ function planSummary(plan: Awaited<ReturnType<typeof listMembershipPlans>>[numbe
 }
 
 export default async function MembershipPlansPage() {
-  await requireSession();
+  const session = await requireSession();
   const t = await getT();
-  const plans = await listMembershipPlans();
+  const [plans, currencySymbol] = await Promise.all([
+    listMembershipPlans(),
+    getActiveCurrencySymbol(session.branch.id),
+  ]);
 
   return (
     <div className="grid gap-6">
@@ -70,7 +74,7 @@ export default async function MembershipPlansPage() {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-lg font-semibold tabular-nums">
-                  ${plan.price}
+                  {currencySymbol}{plan.price}
                 </span>
                 <div className="flex gap-2">
                   <Link

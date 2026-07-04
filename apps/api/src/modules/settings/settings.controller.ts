@@ -23,6 +23,7 @@ type UpdateSettingsRequestBody = {
   dateFormat?: string;
   checkOutTrackingEnabled?: boolean;
   ownerDataScope?: string;
+  reportingCurrencyCode?: string;
 };
 
 @Controller('settings')
@@ -52,6 +53,10 @@ export class SettingsController {
     requireRole(session.user, ['owner', 'manager']);
 
     if (body.ownerDataScope !== undefined) {
+      requireRole(session.user, ['owner']);
+    }
+
+    if (body.reportingCurrencyCode !== undefined) {
       requireRole(session.user, ['owner']);
     }
 

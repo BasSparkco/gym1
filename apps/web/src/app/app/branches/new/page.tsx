@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createBranch } from "@/lib/branches";
 import { COUNTRIES } from "@/lib/countries";
+import { CURRENCIES } from "@/lib/currencies";
 
 export default async function NewBranchPage() {
   await requireSession();
@@ -17,9 +18,18 @@ export default async function NewBranchPage() {
     const address = (formData.get("address") as string) || undefined;
     const phone = (formData.get("phone") as string) || undefined;
     const countryCode = (formData.get("countryCode") as string) || undefined;
+    const operatingCurrencyCode =
+      (formData.get("operatingCurrencyCode") as string) || undefined;
     const status = (formData.get("status") as "active" | "inactive") ?? "active";
 
-    const branch = await createBranch({ name, address, phone, countryCode, status });
+    const branch = await createBranch({
+      name,
+      address,
+      phone,
+      countryCode,
+      operatingCurrencyCode,
+      status,
+    });
     redirect(`/app/branches/${branch.id}`);
   }
 
@@ -88,6 +98,24 @@ export default async function NewBranchPage() {
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name} (+{c.dialCode})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="operatingCurrencyCode" className="text-sm font-medium">
+              {t.branches.currency}
+            </label>
+            <select
+              id="operatingCurrencyCode"
+              name="operatingCurrencyCode"
+              defaultValue="ILS"
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name} ({c.symbol})
                 </option>
               ))}
             </select>

@@ -2,6 +2,7 @@ import { getBranch } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { COUNTRIES } from "@/lib/countries";
+import { CURRENCIES } from "@/lib/currencies";
 import Link from "next/link";
 import WhatsAppCard from "./WhatsAppCard";
 
@@ -18,6 +19,7 @@ export default async function BranchDetailPage({ params }: Props) {
   const countryName = branch.countryCode
     ? (COUNTRIES.find((c) => c.code === branch.countryCode)?.name ?? branch.countryCode)
     : null;
+  const currency = CURRENCIES.find((c) => c.code === branch.operatingCurrencyCode);
 
   return (
     <div className="grid gap-6">
@@ -79,6 +81,12 @@ export default async function BranchDetailPage({ params }: Props) {
             <div>
               <dt className="text-foreground/55">{t.branches.country}</dt>
               <dd className="mt-0.5 font-medium">{countryName ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-foreground/55">{t.branches.currency}</dt>
+              <dd className="mt-0.5 font-medium">
+                {currency ? `${currency.name} (${currency.symbol})` : branch.operatingCurrencyCode}
+              </dd>
             </div>
             <div>
               <dt className="text-foreground/55">{t.branches.statusLabel}</dt>

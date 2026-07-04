@@ -68,6 +68,8 @@ export type TenantSettings = {
   dateFormat: DateFormat;
   checkOutTrackingEnabled: boolean;
   ownerDataScope: OwnerDataScope;
+  /** ISO 4217 currency code (e.g. 'ILS'). */
+  reportingCurrencyCode: string;
 };
 
 export const LANGUAGE_LABELS: Record<Language, string> = {
@@ -118,6 +120,7 @@ export async function updateSettings(data: {
   dateFormat?: DateFormat;
   checkOutTrackingEnabled?: boolean;
   ownerDataScope?: OwnerDataScope;
+  reportingCurrencyCode?: string;
 }): Promise<TenantSettings> {
   const response = await authedFetch("/settings", {
     method: "PATCH",

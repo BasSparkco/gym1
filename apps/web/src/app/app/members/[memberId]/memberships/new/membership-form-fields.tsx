@@ -18,11 +18,13 @@ export default function MembershipFormFields({
   plans,
   today,
   dateFormat,
+  currencySymbol,
   labels,
 }: {
   plans: Plan[];
   today: string;
   dateFormat: DateFormat;
+  currencySymbol: string;
   labels: {
     membershipPlan: string;
     startDate: string;
@@ -74,7 +76,7 @@ export default function MembershipFormFields({
             <option value="">Select a plan…</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} — ${plan.price}
+                {plan.name} — {currencySymbol}{plan.price}
                 {plan.planType === "duration"
                   ? ` · ${plan.durationDays}d`
                   : ` · ${plan.sessionCount} sessions`}

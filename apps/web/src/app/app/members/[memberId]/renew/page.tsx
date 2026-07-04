@@ -6,6 +6,7 @@ import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { getActiveCurrencySymbol } from "@/lib/currency";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import RenewFormFields from "./renew-form-fields";
@@ -23,6 +24,7 @@ export default async function RenewMembershipPage({ params }: Props) {
     listMembershipPlans(),
     getSettings(),
   ]);
+  const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const sorted = memberships
@@ -128,6 +130,7 @@ export default async function RenewMembershipPage({ params }: Props) {
                 }
                 dateFormat={dateFormat}
                 defaultStartDate={defaultStartDate}
+                currencySymbol={currencySymbol}
                 labels={{
                   plan: t.memberships.plan,
                   startDate: t.memberships.startDate,

@@ -5,6 +5,7 @@ import { listMembershipsForMember } from "@/lib/memberships";
 import { createPayment } from "@/lib/payments";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getActiveCurrencySymbol } from "@/lib/currency";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -19,6 +20,7 @@ export default async function RecordPaymentPage({ params }: Props) {
     getMember(memberId),
     listMembershipsForMember(memberId),
   ]);
+  const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
 
   const activeMemberships = memberships.filter((ms) =>
     ms.status === "active" || ms.status === "draft"
@@ -93,7 +95,7 @@ export default async function RecordPaymentPage({ params }: Props) {
                   .map((ms) => (
                     <option key={ms.id} value={ms.id}>
                       {ms.plan?.name ?? ms.planId} · {ms.startDate} → {ms.endDate} ·{" "}
-                      {ms.status} · ${ms.finalPrice}
+                      {ms.status} · {currencySymbol}{ms.finalPrice}
                     </option>
                   ))}
               </select>

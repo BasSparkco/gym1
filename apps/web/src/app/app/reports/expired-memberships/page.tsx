@@ -2,6 +2,7 @@ import { getExpiredMembershipsReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 
@@ -9,11 +10,12 @@ export default async function ExpiredMembershipsReportPage() {
   await requireSession();
   const t = await getT();
 
-  const [{ rows, total, asOfDate }, settings] = await Promise.all([
+  const [{ rows, total, asOfDate, currency }, settings] = await Promise.all([
     getExpiredMembershipsReport(),
     getSettings(),
   ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
+  const currencySymbol = getCurrencySymbol(currency);
 
   return (
     <div className="grid gap-6">
@@ -74,7 +76,7 @@ export default async function ExpiredMembershipsReportPage() {
                       </span>
                     </td>
                     <td className="py-3 text-right font-medium">
-                      ${row.finalPrice.toLocaleString()}
+                      {currencySymbol}{row.finalPrice.toLocaleString()}
                     </td>
                   </tr>
                 ))}

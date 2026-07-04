@@ -55,6 +55,7 @@ export type TenantSettingsRecord = {
   dateFormat: DateFormat;
   checkOutTrackingEnabled: boolean;
   ownerDataScope: OwnerDataScope;
+  reportingCurrencyCode: string;
 };
 
 type SettingsStoreData = {
@@ -94,6 +95,7 @@ const defaultSettings: SettingsStoreData = {
       dateFormat: 'dd/mm/yyyy',
       checkOutTrackingEnabled: true,
       ownerDataScope: 'all',
+      reportingCurrencyCode: 'ILS',
     },
   ],
 };
@@ -121,6 +123,7 @@ export function getDefaultTenantSettings(
     dateFormat: 'dd/mm/yyyy' as DateFormat,
     checkOutTrackingEnabled: true,
     ownerDataScope: 'all',
+    reportingCurrencyCode: 'ILS',
   };
 }
 

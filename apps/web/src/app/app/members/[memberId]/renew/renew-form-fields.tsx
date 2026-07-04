@@ -19,6 +19,7 @@ export default function RenewFormFields({
   initialPrice,
   dateFormat,
   defaultStartDate,
+  currencySymbol,
   labels,
 }: {
   plans: Plan[];
@@ -26,6 +27,7 @@ export default function RenewFormFields({
   initialPrice: number;
   dateFormat: DateFormat;
   defaultStartDate: string;
+  currencySymbol: string;
   labels: { plan: string; startDate: string; finalPrice: string; noPlansAvailable: string };
 }) {
   const [planId, setPlanId] = useState(initialPlanId);
@@ -61,7 +63,7 @@ export default function RenewFormFields({
           >
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} — ${plan.price}
+                {plan.name} — {currencySymbol}{plan.price}
                 {plan.planType === "duration"
                   ? ` · ${plan.durationDays}d`
                   : ` · ${plan.sessionCount} sessions`}

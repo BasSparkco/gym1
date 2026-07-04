@@ -6,6 +6,7 @@ import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 
@@ -42,6 +43,7 @@ export default async function MemberProfilePage({ params }: Props) {
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const homeBranch = branches.find((b) => b.id === member.homeBranchId);
+  const currencySymbol = getCurrencySymbol(homeBranch?.operatingCurrencyCode);
   const registeredEmployee = employees.find((e) => e.id === member.registeredEmployeeId);
   const photoUrl = getMemberPhotoUrl(member.pictureUrl);
 
@@ -340,7 +342,7 @@ export default async function MemberProfilePage({ params }: Props) {
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-foreground/70">${ms.finalPrice}</span>
+                    <span className="font-mono text-foreground/70">{currencySymbol}{ms.finalPrice}</span>
                     <span
                       className={[
                         "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -381,7 +383,7 @@ export default async function MemberProfilePage({ params }: Props) {
                   className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-4 py-3 text-sm"
                 >
                   <div>
-                    <span className="font-mono font-medium">${pmt.amount}</span>
+                    <span className="font-mono font-medium">{currencySymbol}{pmt.amount}</span>
                     <span className="ml-2 text-foreground/50 capitalize">{pmt.paymentMethod}</span>
                     <span className="ml-2 text-foreground/40 text-xs">
                       {formatDate(pmt.paymentDate, dateFormat)}

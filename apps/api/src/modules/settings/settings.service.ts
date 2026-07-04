@@ -10,6 +10,7 @@ import {
 } from '../../data/settings-store';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { isValidCurrencyCode } from '../../common/currencies';
 
 const VALID_LANGUAGES = new Set<Language>(['en', 'ar', 'he']);
 const VALID_DATE_FORMATS = new Set<DateFormat>(['dd/mm/yyyy', 'mm/dd/yyyy']);
@@ -23,6 +24,7 @@ export type UpdateSettingsInput = {
   dateFormat?: string;
   checkOutTrackingEnabled?: boolean;
   ownerDataScope?: string;
+  reportingCurrencyCode?: string;
 };
 
 @Injectable()
@@ -56,6 +58,8 @@ export class SettingsService {
         found.checkOutTrackingEnabled ?? defaults.checkOutTrackingEnabled,
       ownerDataScope:
         (found.ownerDataScope as OwnerDataScope) ?? defaults.ownerDataScope,
+      reportingCurrencyCode:
+        found.reportingCurrencyCode ?? defaults.reportingCurrencyCode,
     };
   }
 
@@ -110,6 +114,18 @@ export class SettingsService {
       ? (rawOwnerDataScope as OwnerDataScope)
       : current.ownerDataScope;
 
+    const rawReportingCurrencyCode = (
+      input.reportingCurrencyCode ?? current.reportingCurrencyCode
+    )
+      .trim()
+      .toUpperCase();
+
+    if (!isValidCurrencyCode(rawReportingCurrencyCode)) {
+      throw new BadRequestException('Invalid reporting currency.');
+    }
+
+    const reportingCurrencyCode = rawReportingCurrencyCode;
+
     const next: TenantSettingsRecord = {
       tenantId,
       defaultLanguage,
@@ -119,6 +135,7 @@ export class SettingsService {
       dateFormat,
       checkOutTrackingEnabled,
       ownerDataScope,
+      reportingCurrencyCode,
     };
 
     await this.prisma.tenantSettings.upsert({
@@ -132,6 +149,7 @@ export class SettingsService {
         dateFormat,
         checkOutTrackingEnabled,
         ownerDataScope,
+        reportingCurrencyCode,
       },
       update: {
         defaultLanguage,
@@ -141,6 +159,7 @@ export class SettingsService {
         dateFormat,
         checkOutTrackingEnabled,
         ownerDataScope,
+        reportingCurrencyCode,
       },
     });
 

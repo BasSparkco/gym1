@@ -118,14 +118,15 @@ model Tenant {
 // ── Branches / Employees / Gates ─────────────────────────────────────────────
 
 model Branch {
-  id          String       @id
-  tenantId    String
-  tenant      Tenant       @relation(fields: [tenantId], references: [id])
-  name        String
-  address     String?
-  phone       String?
-  countryCode String?
-  status      BranchStatus @default(active)
+  id                    String       @id
+  tenantId              String
+  tenant                Tenant       @relation(fields: [tenantId], references: [id])
+  name                  String
+  address               String?
+  phone                 String?
+  countryCode           String?
+  operatingCurrencyCode String       @default("ILS")
+  status                BranchStatus @default(active)
 
   employees     Employee[]
   gates         Gate[]
@@ -157,18 +158,18 @@ model Employee {
   isUser         Boolean        @default(false)
 
   gates             EmployeeGate[]
-  registeredMembers Member[]      @relation("MemberRegisteredEmployee")
+  registeredMembers Member[]       @relation("MemberRegisteredEmployee")
 
   @@unique([tenantId, employeeNumber])
   @@index([branchId])
 }
 
 model Gate {
-  id                String @id
+  id                String  @id
   tenantId          String
-  tenant            Tenant @relation(fields: [tenantId], references: [id])
+  tenant            Tenant  @relation(fields: [tenantId], references: [id])
   branchId          String
-  branch            Branch @relation(fields: [branchId], references: [id])
+  branch            Branch  @relation(fields: [branchId], references: [id])
   name              String
   genderRestriction Sex?
   deviceUrl         String
@@ -352,6 +353,7 @@ model TenantSettings {
   dateFormat              String   @default("dd/mm/yyyy")
   checkOutTrackingEnabled Boolean  @default(true)
   ownerDataScope          String   @default("all")
+  reportingCurrencyCode   String   @default("ILS")
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

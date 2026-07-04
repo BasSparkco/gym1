@@ -6,12 +6,14 @@ import {
 import { randomUUID } from 'node:crypto';
 import { BranchRecord } from '../../data/operations-store';
 import { PrismaService } from '../../prisma/prisma.service';
+import { isValidCurrencyCode } from '../../common/currencies';
 
 type CreateBranchInput = {
   name?: string;
   address?: string;
   phone?: string;
   countryCode?: string;
+  operatingCurrencyCode?: string;
   status?: BranchRecord['status'];
 };
 
@@ -20,6 +22,7 @@ type UpdateBranchInput = {
   address?: string;
   phone?: string;
   countryCode?: string;
+  operatingCurrencyCode?: string;
   status?: BranchRecord['status'];
 };
 
@@ -63,6 +66,9 @@ export class BranchesService {
         address: input.address?.trim() || undefined,
         phone: input.phone?.trim() || undefined,
         countryCode: input.countryCode?.trim().toUpperCase() || undefined,
+        operatingCurrencyCode: this.normalizeCurrencyCode(
+          input.operatingCurrencyCode,
+        ),
         status: this.normalizeBranchStatus(input.status),
       },
     });
@@ -98,12 +104,31 @@ export class BranchesService {
           input.countryCode === undefined
             ? current.countryCode
             : input.countryCode.trim().toUpperCase() || null,
+        operatingCurrencyCode:
+          input.operatingCurrencyCode === undefined
+            ? current.operatingCurrencyCode
+            : (this.normalizeCurrencyCode(input.operatingCurrencyCode) ??
+              current.operatingCurrencyCode),
         status:
           input.status === undefined
             ? current.status
             : this.normalizeBranchStatus(input.status),
       },
     });
+  }
+
+  private normalizeCurrencyCode(code: string | undefined): string | undefined {
+    const trimmed = code?.trim().toUpperCase();
+
+    if (!trimmed) {
+      return undefined;
+    }
+
+    if (!isValidCurrencyCode(trimmed)) {
+      throw new BadRequestException('Invalid operating currency.');
+    }
+
+    return trimmed;
   }
 
   private normalizeBranchStatus(

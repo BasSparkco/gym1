@@ -12,6 +12,8 @@ export type Branch = {
   phone?: string;
   /** ISO 3166-1 alpha-2 country code (e.g. 'IL', 'PS'). */
   countryCode?: string;
+  /** ISO 4217 currency code (e.g. 'ILS'). */
+  operatingCurrencyCode: string;
   status: "active" | "inactive";
 };
 
@@ -61,6 +63,7 @@ export async function createBranch(data: {
   address?: string;
   phone?: string;
   countryCode?: string;
+  operatingCurrencyCode?: string;
   status?: "active" | "inactive";
 }): Promise<Branch> {
   const response = await authedFetch("/branches", {
@@ -78,6 +81,7 @@ export async function updateBranch(
     address?: string;
     phone?: string;
     countryCode?: string;
+    operatingCurrencyCode?: string;
     status?: "active" | "inactive";
   }
 ): Promise<Branch> {

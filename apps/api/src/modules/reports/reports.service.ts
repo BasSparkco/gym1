@@ -85,6 +85,11 @@ export class ReportsService {
       0,
     );
 
+    const currencyCode = await this.dataScopeService.resolveCurrencyCode(
+      user,
+      branchId,
+    );
+
     const cards: DashboardCard[] = [
       {
         id: 'active-memberships',
@@ -112,7 +117,7 @@ export class ReportsService {
       {
         id: 'payments-logged',
         label: 'Payments today',
-        value: this.formatCurrency(paymentTotal),
+        value: this.formatCurrency(paymentTotal, currencyCode),
         tone: 'bg-surface-muted',
         helperText: branchId
           ? `${paidPaymentsToday.length} paid transactions at ${user.branch.name}.`
@@ -167,7 +172,12 @@ export class ReportsService {
       status: ms.status,
     }));
 
-    return { rows, total: rows.length, asOfDate: today };
+    const currency = await this.dataScopeService.resolveCurrencyCode(
+      user,
+      branchId,
+    );
+
+    return { rows, total: rows.length, asOfDate: today, currency };
   }
 
   async getExpiredMembershipsReport(user: SessionUser) {
@@ -199,7 +209,12 @@ export class ReportsService {
       status: ms.status,
     }));
 
-    return { rows, total: rows.length, asOfDate: today };
+    const currency = await this.dataScopeService.resolveCurrencyCode(
+      user,
+      branchId,
+    );
+
+    return { rows, total: rows.length, asOfDate: today, currency };
   }
 
   async getVisitsReport(user: SessionUser, dateFrom?: string, dateTo?: string) {
@@ -267,7 +282,19 @@ export class ReportsService {
       .filter((r) => r.status === 'paid')
       .reduce((sum, r) => sum + r.amount, 0);
 
-    return { rows, total: rows.length, totalPaid, dateFrom: from, dateTo: to };
+    const currency = await this.dataScopeService.resolveCurrencyCode(
+      user,
+      branchId,
+    );
+
+    return {
+      rows,
+      total: rows.length,
+      totalPaid,
+      dateFrom: from,
+      dateTo: to,
+      currency,
+    };
   }
 
   // Inclusive [from, to] range of "YYYY-MM-DD" strings, expressed as a UTC
@@ -298,10 +325,10 @@ export class ReportsService {
     }).format(new Date(`${dateKey}T00:00:00.000Z`));
   }
 
-  private formatCurrency(value: number) {
+  private formatCurrency(value: number, currencyCode: string) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currencyCode,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);

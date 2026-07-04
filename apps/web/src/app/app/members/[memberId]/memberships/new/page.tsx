@@ -6,6 +6,7 @@ import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { getActiveCurrencySymbol } from "@/lib/currency";
 import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -24,6 +25,7 @@ export default async function SellMembershipPage({ params }: Props) {
     listMembershipPlans(),
     getSettings(),
   ]);
+  const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const activeMembership = memberships.find((ms) => ms.status === "active");
@@ -78,6 +80,7 @@ export default async function SellMembershipPage({ params }: Props) {
             plans={plans}
             today={today}
             dateFormat={dateFormat}
+            currencySymbol={currencySymbol}
             labels={{
               membershipPlan: t.memberships.membershipPlan,
               startDate: t.memberships.startDate,

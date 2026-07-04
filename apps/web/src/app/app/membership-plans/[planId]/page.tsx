@@ -1,15 +1,19 @@
 import { getMembershipPlan } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getActiveCurrencySymbol } from "@/lib/currency";
 import Link from "next/link";
 
 type Props = { params: Promise<{ planId: string }> };
 
 export default async function MembershipPlanPage({ params }: Props) {
   const { planId } = await params;
-  await requireSession();
+  const session = await requireSession();
   const t = await getT();
-  const plan = await getMembershipPlan(planId);
+  const [plan, currencySymbol] = await Promise.all([
+    getMembershipPlan(planId),
+    getActiveCurrencySymbol(session.branch.id),
+  ]);
 
   const durationLabel = plan.planType === "duration"
     ? (() => {
@@ -69,7 +73,7 @@ export default async function MembershipPlanPage({ params }: Props) {
             )}
             <div>
               <dt className="text-foreground/55">{t.plans.defaultPrice}</dt>
-              <dd className="mt-0.5 font-medium tabular-nums">${plan.price}</dd>
+              <dd className="mt-0.5 font-medium tabular-nums">{currencySymbol}{plan.price}</dd>
             </div>
             <div>
               <dt className="text-foreground/55">{t.plans.branchAccess}</dt>

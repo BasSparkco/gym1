@@ -9,6 +9,7 @@ import {
   getSettings,
   updateSettings,
 } from "@/lib/settings";
+import { CURRENCIES } from "@/lib/currencies";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { cookies } from "next/headers";
@@ -37,6 +38,9 @@ export default async function OptionsSettingsPage() {
     const ownerDataScope = formData.get("ownerDataScope") as
       | OwnerDataScope
       | null;
+    const reportingCurrencyCode = formData.get("reportingCurrencyCode") as
+      | string
+      | null;
 
     const saved = await updateSettings({
       defaultLanguage,
@@ -44,6 +48,7 @@ export default async function OptionsSettingsPage() {
       dateFormat,
       checkOutTrackingEnabled,
       ...(ownerDataScope ? { ownerDataScope } : {}),
+      ...(reportingCurrencyCode ? { reportingCurrencyCode } : {}),
     });
 
     const cookieStore = await cookies();
@@ -255,6 +260,33 @@ export default async function OptionsSettingsPage() {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div className="h-px bg-line" />
+
+              {/* Reporting currency (owner only) */}
+              <div className="grid gap-4">
+                <div>
+                  <p className="text-base font-semibold">
+                    {t.settings.reportingCurrencyTitle}
+                  </p>
+                  <p className="mt-1 text-xs text-foreground/60">
+                    {t.settings.reportingCurrencyHelp}
+                  </p>
+                </div>
+
+                <select
+                  id="reportingCurrencyCode"
+                  name="reportingCurrencyCode"
+                  defaultValue={settings.reportingCurrencyCode ?? "ILS"}
+                  className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name} ({c.symbol})
+                    </option>
+                  ))}
+                </select>
               </div>
             </>
           )}

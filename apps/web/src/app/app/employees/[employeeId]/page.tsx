@@ -5,6 +5,7 @@ import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { getCurrencySymbol } from "@/lib/currencies";
 import DateInput from "@/components/date-input";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -26,6 +27,8 @@ export default async function EmployeeDetailPage({ params }: Props) {
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
+  const employeeBranch = branches.find((b) => b.id === employee.branchId);
+  const currencySymbol = getCurrencySymbol(employeeBranch?.operatingCurrencyCode);
   const canEdit = session.role === "owner" || session.role === "manager";
 
   async function handleUpdate(formData: FormData) {
@@ -263,7 +266,7 @@ export default async function EmployeeDetailPage({ params }: Props) {
               {employee.salary !== undefined && (
                 <div>
                   <dt className="text-foreground/55">{t.employees.salary}</dt>
-                  <dd className="mt-0.5 font-medium">{employee.salary}</dd>
+                  <dd className="mt-0.5 font-medium">{currencySymbol}{employee.salary}</dd>
                 </div>
               )}
               {employee.workType && (

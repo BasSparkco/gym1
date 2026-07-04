@@ -6,6 +6,7 @@ import { getT } from "@/lib/i18n";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { COUNTRIES } from "@/lib/countries";
+import { CURRENCIES } from "@/lib/currencies";
 
 type Props = {
   params: Promise<{ branchId: string }>;
@@ -24,6 +25,8 @@ export default async function EditBranchPage({ params }: Props) {
       address: (formData.get("address") as string) || undefined,
       phone: (formData.get("phone") as string) || undefined,
       countryCode: (formData.get("countryCode") as string) || undefined,
+      operatingCurrencyCode:
+        (formData.get("operatingCurrencyCode") as string) || undefined,
       status: formData.get("status") as "active" | "inactive",
     });
     redirect(`/app/branches/${branchId}`);
@@ -92,6 +95,24 @@ export default async function EditBranchPage({ params }: Props) {
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name} (+{c.dialCode})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="operatingCurrencyCode" className="text-sm font-medium">
+              {t.branches.currency}
+            </label>
+            <select
+              id="operatingCurrencyCode"
+              name="operatingCurrencyCode"
+              defaultValue={branch.operatingCurrencyCode}
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name} ({c.symbol})
                 </option>
               ))}
             </select>

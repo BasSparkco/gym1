@@ -280,6 +280,7 @@ export type Dict = {
     address: string;
     phone: string;
     country: string;
+    currency: string;
     statusLabel: string;
     details: string;
     noBranches: string;
@@ -450,6 +451,8 @@ export type Dict = {
     dataVisibilityAllBranchesHelp: string;
     dataVisibilityActiveBranch: string;
     dataVisibilityActiveBranchHelp: string;
+    reportingCurrencyTitle: string;
+    reportingCurrencyHelp: string;
     whatsapp: string;
     whatsappTitle: string;
     whatsappDescription: string;
@@ -764,6 +767,7 @@ const en: Dict = {
     address: "Address",
     phone: "Phone",
     country: "Country",
+    currency: "Currency",
     statusLabel: "Status",
     details: "Details",
     noBranches: "No branches yet. Create the first one.",
@@ -934,6 +938,8 @@ const en: Dict = {
     dataVisibilityAllBranchesHelp: "See members, employees, users, and reports from every branch in your gym.",
     dataVisibilityActiveBranch: "Active branch only",
     dataVisibilityActiveBranchHelp: "See only the branch you're currently switched into (change it under Branches).",
+    reportingCurrencyTitle: "Reporting currency",
+    reportingCurrencyHelp: "Used for company-wide reports across all branches. Each branch's own operating currency (set under Branches) is used for its day-to-day payments.",
     whatsapp: "WhatsApp",
     whatsappTitle: "WhatsApp connection",
     whatsappDescription: "Connect your gym's WhatsApp number so that member notifications are sent from your own number.",
@@ -1248,6 +1254,7 @@ const ar: Dict = {
     address: "العنوان",
     phone: "الهاتف",
     country: "الدولة",
+    currency: "العملة",
     statusLabel: "الحالة",
     details: "التفاصيل",
     noBranches: "لا توجد فروع بعد. أنشئ أول فرع.",
@@ -1418,6 +1425,8 @@ const ar: Dict = {
     dataVisibilityAllBranchesHelp: "اعرض الأعضاء والموظفين والمستخدمين والتقارير من جميع فروع صالتك.",
     dataVisibilityActiveBranch: "الفرع النشط فقط",
     dataVisibilityActiveBranchHelp: "اعرض فقط الفرع الذي أنت متصل به حاليًا (يمكن تغييره من صفحة الفروع).",
+    reportingCurrencyTitle: "عملة التقارير",
+    reportingCurrencyHelp: "تُستخدم للتقارير على مستوى الشركة عبر جميع الفروع. كل فرع يستخدم عملته التشغيلية الخاصة (يتم تعيينها من صفحة الفروع) لمدفوعاته اليومية.",
     whatsapp: "واتساب",
     whatsappTitle: "ربط واتساب",
     whatsappDescription: "اربط رقم واتساب الصالة حتى تُرسل إشعارات الأعضاء من رقمك الخاص.",
@@ -1732,6 +1741,7 @@ const he: Dict = {
     address: "כתובת",
     phone: "טלפון",
     country: "מדינה",
+    currency: "מטבע",
     statusLabel: "סטטוס",
     details: "פרטים",
     noBranches: "אין סניפים עדיין. צור את הראשון.",
@@ -1902,6 +1912,8 @@ const he: Dict = {
     dataVisibilityAllBranchesHelp: "הצג חברים, עובדים, משתמשים ודוחות מכל סניפי המכון שלך.",
     dataVisibilityActiveBranch: "הסניף הפעיל בלבד",
     dataVisibilityActiveBranchHelp: "הצג רק את הסניף שאתה מחובר אליו כרגע (ניתן לשנות תחת סניפים).",
+    reportingCurrencyTitle: "מטבע דיווח",
+    reportingCurrencyHelp: "משמש לדוחות ברמת החברה על פני כל הסניפים. לכל סניף מטבע תפעולי משלו (מוגדר תחת סניפים) המשמש לתשלומים היומיים שלו.",
     whatsapp: "WhatsApp",
     whatsappTitle: "חיבור WhatsApp",
     whatsappDescription: "חבר את מספר ה-WhatsApp של המכון כדי שהתראות לחברים יישלחו מהמספר שלך.",
