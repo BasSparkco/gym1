@@ -1,6 +1,6 @@
 "use server";
 
-import { getEmployee, updateEmployee } from "@/lib/employees";
+import { getEmployee, updateEmployee, getCoachProfile, upsertCoachProfile } from "@/lib/employees";
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
@@ -19,10 +19,11 @@ export default async function EmployeeDetailPage({ params }: Props) {
   const session = await requireSession();
   const t = await getT();
 
-  const [employee, branches, settings] = await Promise.all([
+  const [employee, branches, settings, coachProfile] = await Promise.all([
     getEmployee(employeeId),
     listBranches(),
     getSettings(),
+    getCoachProfile(employeeId),
   ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
@@ -48,6 +49,20 @@ export default async function EmployeeDetailPage({ params }: Props) {
       endDate: (formData.get("endDate") as string) || undefined,
       isUser: formData.get("isUser") === "true",
     });
+    redirect(`/app/employees/${employeeId}`);
+  }
+
+  async function handleSaveCoachProfile(formData: FormData) {
+    "use server";
+    const specializations = ((formData.get("specializations") as string) || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const certifications = ((formData.get("certifications") as string) || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    await upsertCoachProfile(employeeId, { specializations, certifications });
     redirect(`/app/employees/${employeeId}`);
   }
 
@@ -292,6 +307,65 @@ export default async function EmployeeDetailPage({ params }: Props) {
                 <dd className="mt-0.5 font-medium">{employee.isUser ? t.plans.yes : t.plans.no}</dd>
               </div>
             </dl>
+          )}
+        </section>
+
+        {/* ── Coach profile ── */}
+        <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
+            {t.classes.coachProfileTitle}
+          </p>
+          {!coachProfile && (
+            <p className="mt-2 text-sm text-foreground/60">{t.classes.notACoach}</p>
+          )}
+          {canEdit ? (
+            <form action={handleSaveCoachProfile} className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <label htmlFor="specializations" className="text-sm font-medium">
+                  {t.classes.specializations}
+                </label>
+                <input
+                  id="specializations"
+                  name="specializations"
+                  defaultValue={(coachProfile?.specializations ?? []).join(", ")}
+                  placeholder="CrossFit, HIIT"
+                  className={inputCls}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="certifications" className="text-sm font-medium">
+                  {t.classes.certifications}
+                </label>
+                <input
+                  id="certifications"
+                  name="certifications"
+                  defaultValue={(coachProfile?.certifications ?? []).join(", ")}
+                  placeholder="CF-L1"
+                  className={inputCls}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <button
+                  type="submit"
+                  className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
+                >
+                  {t.classes.saveCoachProfile}
+                </button>
+              </div>
+            </form>
+          ) : (
+            coachProfile && (
+              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-foreground/55">{t.classes.specializations}</dt>
+                  <dd className="mt-0.5 font-medium">{coachProfile.specializations.join(", ") || "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-foreground/55">{t.classes.certifications}</dt>
+                  <dd className="mt-0.5 font-medium">{coachProfile.certifications.join(", ") || "—"}</dd>
+                </div>
+              </dl>
+            )
           )}
         </section>
 

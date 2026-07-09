@@ -5,6 +5,8 @@ import { AppService } from './app.service';
 import { AccessModule } from './modules/access/access.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BranchesModule } from './modules/branches/branches.module';
+import { ClassBookingsModule } from './modules/class-bookings/class-bookings.module';
+import { ClassSessionsModule } from './modules/class-sessions/class-sessions.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { GatesModule } from './modules/gates/gates.module';
 import { MembersModule } from './modules/members/members.module';
@@ -14,6 +16,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
+import { TrainingProgramsModule } from './modules/training-programs/training-programs.module';
 import { UsersModule } from './modules/users/users.module';
 import { VisitsModule } from './modules/visits/visits.module';
 import { MinioModule } from './minio/minio.module';
@@ -40,6 +43,9 @@ import { RedisModule } from './redis/redis.module';
     ReportsModule,
     SettingsModule,
     AccessModule,
+    TrainingProgramsModule,
+    ClassSessionsModule,
+    ClassBookingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

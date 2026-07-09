@@ -140,6 +140,8 @@ export class VisitsService {
       },
     });
 
+    await this.matchClassBookingAttendance(member.id, branchId, visit.id, visit.checkInTime);
+
     return {
       granted: true,
       member: {
@@ -214,6 +216,45 @@ export class VisitsService {
 
   private serializePlan(plan: MembershipPlan) {
     return { ...plan, price: toNumber(plan.price) };
+  }
+
+  /**
+   * Best-effort: if this check-in falls within a class the member has
+   * booked at this branch today, mark that booking `attended` and link the
+   * visit. Reuses the gate check-in flow rather than a second attendance
+   * pipeline (RFID/QR/manual all funnel through here already).
+   */
+  private async matchClassBookingAttendance(
+    memberId: string,
+    branchId: string,
+    visitId: string,
+    checkInTime: Date,
+  ): Promise<void> {
+    try {
+      const today = toDateOnly(localDateString());
+      const booking = await this.prisma.classBooking.findFirst({
+        where: {
+          memberId,
+          status: 'booked',
+          visitId: null,
+          classSession: {
+            branchId,
+            date: today,
+            startTime: { lte: checkInTime },
+            endTime: { gte: checkInTime },
+          },
+        },
+      });
+
+      if (booking) {
+        await this.prisma.classBooking.update({
+          where: { id: booking.id },
+          data: { status: 'attended', visitId },
+        });
+      }
+    } catch {
+      // Never block check-in on attendance matching.
+    }
   }
 }
 

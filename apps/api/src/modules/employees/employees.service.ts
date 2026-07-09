@@ -51,6 +51,59 @@ export class EmployeesService {
     return employees.map((e) => this.serialize(e));
   }
 
+  /** Employees with a coach profile — used to populate coach pickers when
+   * scheduling classes or setting a program's default coach. */
+  async listCoachesForTenant(tenantId: string, branchId?: string) {
+    const employees = await this.prisma.employee.findMany({
+      where: {
+        tenantId,
+        status: 'active',
+        coachProfile: { isNot: null },
+        ...(branchId ? { branchId } : {}),
+      },
+      include: { coachProfile: true },
+    });
+    return employees.map((e) => ({
+      ...this.serialize(e),
+      coachProfile: e.coachProfile,
+    }));
+  }
+
+  async getCoachProfile(tenantId: string, employeeId: string) {
+    await this.getEmployeeForTenant(tenantId, employeeId);
+    return this.prisma.coachProfile.findUnique({ where: { employeeId } });
+  }
+
+  async upsertCoachProfile(
+    tenantId: string,
+    employeeId: string,
+    input: { specializations?: string[]; certifications?: string[] },
+  ) {
+    await this.getEmployeeForTenant(tenantId, employeeId);
+
+    return this.prisma.coachProfile.upsert({
+      where: { employeeId },
+      create: {
+        employeeId,
+        specializations: input.specializations ?? [],
+        certifications: input.certifications ?? [],
+      },
+      update: {
+        ...(input.specializations !== undefined && {
+          specializations: input.specializations,
+        }),
+        ...(input.certifications !== undefined && {
+          certifications: input.certifications,
+        }),
+      },
+    });
+  }
+
+  async removeCoachProfile(tenantId: string, employeeId: string) {
+    await this.getEmployeeForTenant(tenantId, employeeId);
+    await this.prisma.coachProfile.deleteMany({ where: { employeeId } });
+  }
+
   async listEmployeesForScope(tenantId: string, branchId: string) {
     const employees = await this.prisma.employee.findMany({
       where: { tenantId, branchId, status: 'active' },

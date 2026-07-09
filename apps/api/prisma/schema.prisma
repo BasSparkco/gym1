@@ -97,6 +97,20 @@ enum UserRole {
   frontDesk
 }
 
+enum ClassSessionStatus {
+  scheduled
+  cancelled
+  completed
+}
+
+enum ClassBookingStatus {
+  booked
+  waitlisted
+  attended
+  noShow
+  cancelled
+}
+
 // ── Tenant ───────────────────────────────────────────────────────────────────
 
 model Tenant {
@@ -104,15 +118,17 @@ model Tenant {
   name      String
   createdAt DateTime @default(now())
 
-  branches        Branch[]
-  employees       Employee[]
-  gates           Gate[]
-  members         Member[]
-  membershipPlans MembershipPlan[]
-  payments        Payment[]
-  notifications   Notification[]
-  settings        TenantSettings?
-  users           User[]
+  branches         Branch[]
+  employees        Employee[]
+  gates            Gate[]
+  members          Member[]
+  membershipPlans  MembershipPlan[]
+  payments         Payment[]
+  notifications    Notification[]
+  settings         TenantSettings?
+  users            User[]
+  trainingPrograms TrainingProgram[]
+  classSessions    ClassSession[]
 }
 
 // ── Branches / Employees / Gates ─────────────────────────────────────────────
@@ -128,11 +144,13 @@ model Branch {
   operatingCurrencyCode String       @default("ILS")
   status                BranchStatus @default(active)
 
-  employees     Employee[]
-  gates         Gate[]
-  visits        Visit[]
-  membersAtHome Member[]   @relation("MemberHomeBranch")
-  payments      Payment[]
+  employees        Employee[]
+  gates            Gate[]
+  visits           Visit[]
+  membersAtHome    Member[]          @relation("MemberHomeBranch")
+  payments         Payment[]
+  trainingPrograms TrainingProgram[]
+  classSessions    ClassSession[]
 
   @@index([tenantId])
 }
@@ -157,11 +175,24 @@ model Employee {
   endDate        DateTime?      @db.Date
   isUser         Boolean        @default(false)
 
-  gates             EmployeeGate[]
-  registeredMembers Member[]       @relation("MemberRegisteredEmployee")
+  gates              EmployeeGate[]
+  registeredMembers  Member[]          @relation("MemberRegisteredEmployee")
+  coachProfile       CoachProfile?
+  defaultForPrograms TrainingProgram[]
+  classSessions      ClassSession[]
 
   @@unique([tenantId, employeeNumber])
   @@index([branchId])
+}
+
+// A Coach is not a separate person record — it's an Employee extended with
+// coaching-specific data, mirroring the TenantSettings-on-Tenant pattern.
+// An employee becomes a coach by gaining this row, not by a new entity.
+model CoachProfile {
+  employeeId      String   @id
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  specializations String[]
+  certifications  String[]
 }
 
 model Gate {
@@ -225,6 +256,7 @@ model Member {
   visits        Visit[]
   payments      Payment[]
   notifications Notification[]
+  classBookings ClassBooking[]
 
   @@unique([tenantId, memberNumber])
   @@unique([tenantId, rfidTag])
@@ -243,10 +275,24 @@ model MembershipPlan {
   allowAllBranches Boolean  @default(true)
   freezeAllowed    Boolean  @default(false)
   freezeMaxDays    Int?
+  allowAllPrograms Boolean  @default(true)
 
-  memberships Membership[]
+  memberships      Membership[]
+  entitledPrograms MembershipPlanProgram[]
 
   @@index([tenantId])
+}
+
+// Exception list of Training Programs a plan may book, used only when
+// allowAllPrograms is false (mirrors allowAllBranches — most plans allow
+// everything; premium/add-on plans restrict to specific programs).
+model MembershipPlanProgram {
+  planId    String
+  plan      MembershipPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  programId String
+  program   TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@id([planId, programId])
 }
 
 model Membership {
@@ -263,8 +309,9 @@ model Membership {
   previousMembership   Membership?      @relation("MembershipRenewalChain", fields: [previousMembershipId], references: [id], onDelete: SetNull)
   renewedInto          Membership?      @relation("MembershipRenewalChain")
 
-  freezes  Freeze[]
-  payments Payment[]
+  freezes       Freeze[]
+  payments      Payment[]
+  classBookings ClassBooking[]
 
   @@index([memberId])
   @@index([planId])
@@ -282,6 +329,74 @@ model Freeze {
   @@index([membershipId])
 }
 
+// ── Training Programs / Classes / Bookings ───────────────────────────────────
+
+model TrainingProgram {
+  id             String    @id
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id])
+  branchId       String? // null = global across the tenant's branches
+  branch         Branch?   @relation(fields: [branchId], references: [id])
+  name           String
+  description    String?
+  color          String?
+  icon           String?
+  active         Boolean   @default(true)
+  maxMembers     Int?
+  defaultCoachId String?
+  defaultCoach   Employee? @relation(fields: [defaultCoachId], references: [id], onDelete: SetNull)
+
+  classSessions    ClassSession[]
+  entitledForPlans MembershipPlanProgram[]
+
+  @@index([tenantId])
+  @@index([branchId])
+}
+
+model ClassSession {
+  id           String             @id
+  tenantId     String
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  branchId     String
+  branch       Branch             @relation(fields: [branchId], references: [id])
+  programId    String
+  program      TrainingProgram    @relation(fields: [programId], references: [id])
+  coachId      String?
+  coach        Employee?          @relation(fields: [coachId], references: [id], onDelete: SetNull)
+  room         String?
+  date         DateTime           @db.Date
+  startTime    DateTime
+  endTime      DateTime
+  capacity     Int
+  status       ClassSessionStatus @default(scheduled)
+  recurrenceId String? // groups sessions generated from the same recurring rule
+
+  bookings ClassBooking[]
+
+  @@index([tenantId, branchId, date])
+  @@index([coachId, date])
+  @@index([recurrenceId])
+}
+
+model ClassBooking {
+  id             String             @id
+  classSessionId String
+  classSession   ClassSession       @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  membershipId   String
+  membership     Membership         @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  status         ClassBookingStatus @default(booked)
+  bookedAt       DateTime           @default(now())
+  cancelledAt    DateTime?
+  visitId        String?            @unique
+  visit          Visit?             @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
+  @@unique([classSessionId, memberId])
+  @@index([memberId])
+  @@index([classSessionId, status])
+}
+
 // ── Visits / Payments / Notifications ────────────────────────────────────────
 
 model Visit {
@@ -295,6 +410,8 @@ model Visit {
   accessMethod AccessMethod
   gateId       String?
   gate         Gate?        @relation(fields: [gateId], references: [id], onDelete: SetNull)
+
+  classBooking ClassBooking?
 
   @@index([memberId])
   @@index([branchId, checkInTime])

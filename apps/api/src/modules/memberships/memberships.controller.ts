@@ -23,6 +23,7 @@ type CreateMembershipPlanRequestBody = {
   allowAllBranches?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
+  allowAllPrograms?: boolean;
 };
 
 type UpdateMembershipPlanRequestBody = {
@@ -34,6 +35,7 @@ type UpdateMembershipPlanRequestBody = {
   allowAllBranches?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
+  allowAllPrograms?: boolean;
 };
 
 type CreateMembershipRequestBody = {

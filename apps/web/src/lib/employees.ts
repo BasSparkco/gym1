@@ -86,6 +86,40 @@ export async function createEmployee(data: {
   return payload.employee;
 }
 
+export type CoachProfile = {
+  employeeId: string;
+  specializations: string[];
+  certifications: string[];
+};
+
+export type Coach = Employee & { coachProfile: CoachProfile };
+
+export async function listCoaches(): Promise<Coach[]> {
+  const response = await authedFetch("/employees/coaches");
+  const payload = (await response.json()) as { coaches: Coach[] };
+  return payload.coaches;
+}
+
+export async function getCoachProfile(
+  employeeId: string,
+): Promise<CoachProfile | null> {
+  const response = await authedFetch(`/employees/${employeeId}/coach-profile`);
+  const payload = (await response.json()) as { coachProfile: CoachProfile | null };
+  return payload.coachProfile;
+}
+
+export async function upsertCoachProfile(
+  employeeId: string,
+  data: { specializations?: string[]; certifications?: string[] },
+): Promise<CoachProfile> {
+  const response = await authedFetch(`/employees/${employeeId}/coach-profile`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+  const payload = (await response.json()) as { coachProfile: CoachProfile };
+  return payload.coachProfile;
+}
+
 export async function updateEmployee(
   employeeId: string,
   data: {

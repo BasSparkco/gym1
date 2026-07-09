@@ -93,6 +93,18 @@ export class EmployeesController {
     };
   }
 
+  @Get('coaches')
+  async listCoaches(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    return {
+      coaches: await this.employeesService.listCoachesForTenant(
+        session.user.tenant.id,
+        branchId,
+      ),
+    };
+  }
+
   @Get(':employeeId')
   async getEmployee(
     @Req() request: Request,
@@ -103,6 +115,37 @@ export class EmployeesController {
       employee: await this.employeesService.getEmployeeForTenant(
         session.user.tenant.id,
         employeeId,
+      ),
+    };
+  }
+
+  @Get(':employeeId/coach-profile')
+  async getCoachProfile(
+    @Req() request: Request,
+    @Param('employeeId') employeeId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return {
+      coachProfile: await this.employeesService.getCoachProfile(
+        session.user.tenant.id,
+        employeeId,
+      ),
+    };
+  }
+
+  @Patch(':employeeId/coach-profile')
+  async upsertCoachProfile(
+    @Req() request: Request,
+    @Param('employeeId') employeeId: string,
+    @Body() body: { specializations?: string[]; certifications?: string[] },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+    return {
+      coachProfile: await this.employeesService.upsertCoachProfile(
+        session.user.tenant.id,
+        employeeId,
+        body,
       ),
     };
   }

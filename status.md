@@ -5,6 +5,33 @@ Add the newest update at the top so the latest status is always visible first.
 
 ---
 
+## 2026-07-09 (Training Programs, Classes & Coaches — Design Finalized, Implementation Started)
+
+Completed
+
+* **Design review of `docs/Training Programs & Classes Design.md`** (an AI-brainstormed draft written after a legacy-app walkthrough with the gym owner) against the live Prisma schema. Key findings: the draft's Plan/Program/Class/Coach separation is sound, but it (1) proposed a duplicate `Coach` person entity instead of extending the existing `Employee` model, (2) put Member↔Program/Class relationships as fields on `Member` instead of normalized join tables, (3) explicitly said Membership Plans should never gate Training Programs — unrealistic once premium/add-on classes exist, (4) had no tenant/branch scoping despite every other model in the schema requiring it, (5) had no capacity/waitlist concurrency handling, and (6) no plan for recurring schedules beyond "future capability."
+* **Design doc rewritten** to the finalized architecture: `TrainingProgram` (tenant/branch-scoped), `CoachProfile` (1:1 extension of `Employee`, mirrors the `TenantSettings`-on-`Tenant` pattern), `ClassSession` (template+instance split via `recurrenceId` for recurring schedules), `ClassBooking` (member enrollment/waitlist/attendance, transaction-safe capacity handling), and a `MembershipPlan.allowAllPrograms` + `MembershipPlanProgram` entitlement link (mirrors the existing `allowAllBranches` pattern). Attendance reuses the existing `Visit` model instead of a second tracking pipeline.
+* **ROADMAP.md Phase 2 updated** with the concrete module breakdown reflecting this schema; status moved from "Not Started" to "Started."
+
+* **Prisma schema + migration** (`20260709184045_add_training_programs_classes`): `TrainingProgram`, `CoachProfile` (1:1 on `Employee`), `ClassSession`, `ClassBooking`, `MembershipPlanProgram` (entitlement join), plus `MembershipPlan.allowAllPrograms` (default `true`, mirrors the existing `allowAllBranches`). All new models are tenant-scoped; `TrainingProgram.branchId` is nullable for tenant-global programs.
+* **Three new backend modules** (`apps/api/src/modules/training-programs`, `class-sessions`, `class-bookings`), following the existing manual-auth/`requireRole`/`DataScopeService` conventions (no guards/decorators, matches `employees`/`memberships`):
+  * `TrainingProgramsService` — CRUD plus `listEntitledProgramIds`/`setEntitledPrograms` for the Plan↔Program entitlement link.
+  * `ClassSessionsService` — CRUD, coach/room double-booking conflict checks at creation time, `createRecurringSessions` (template+instance split via a shared `recurrenceId`, skips-and-reports individual occurrence conflicts rather than failing the whole batch), cascade-cancels bookings when a session is cancelled.
+  * `ClassBookingsService` — `bookClass` validates active membership + plan entitlement + no overlapping booking, then inside a `$transaction` with a `SELECT ... FOR UPDATE` row lock on the session counts existing `booked` rows and atomically inserts as `booked` or `waitlisted` (closes the race the design doc flagged). `cancelBooking` promotes the oldest waitlisted booking, re-validating membership/entitlement at promotion time. An hourly `@Cron` sweep marks stale `booked` rows `noShow`.
+  * `EmployeesService` extended with `listCoachesForTenant`/`getCoachProfile`/`upsertCoachProfile` — a coach is an `Employee` with a `CoachProfile` row, not a new entity.
+  * `VisitsService.checkIn` now best-effort-matches a member's gate check-in to an open class booking (same branch, session time window) and marks it `attended` — reuses the existing `Visit`/`AccessMethod` pipeline instead of a second attendance system.
+* **7 new e2e tests** added to `test/app.e2e-spec.ts` (all passing): program CRUD + invalid-branch rejection, coach profile upsert + coach listing, session scheduling + coach/time conflict rejection, booking + capacity waitlisting + waitlist promotion on cancel + duplicate-booking rejection, plan-entitlement rejection/approval, and recurring session generation. Confirmed the 5 pre-existing date-drift e2e failures (dashboard summary counts, membership status) are unchanged and present identically on `main` without this branch's changes.
+* **Frontend**: new `lib/training-programs.ts`, `lib/class-sessions.ts`, `lib/class-bookings.ts` clients (same `authedFetch` pattern as `lib/employees.ts`); `lib/employees.ts` extended with coach-profile functions. New pages under `/app/training-programs` (list, new, detail+edit with an inline class-session list, per-session detail with a booking form and per-booking cancel), a Coach Profile section added to the existing employee detail page, and a `classes` nav entry (owner/manager/front-desk). Full `en`/`ar`/`he` i18n coverage added to `lib/i18n.ts`.
+* **Found and fixed one bug during manual verification**: `ClassSessionsService`'s serializer was spreading Prisma's internal `_count` relation-count object straight into the API response instead of just using it to compute `bookedCount` — fixed to destructure it out before spreading.
+* **Verified end-to-end against real (dev) Postgres data**, not just the e2e suite: booted a disposable API instance (port 3200, untouched live containers) and a disposable `next dev` web instance (port 3300) against the dev database, signed in as the seeded owner, and drove the full flow through the actual rendered pages — created a program, set a coach profile on a real employee, scheduled a class, booked a real member into it, and confirmed all of it rendered correctly (program list/detail, session detail with the booked member and status badge, coach profile fields) before cleaning up the test data (cancelled the session, deactivated the program) and tearing down both disposable servers. Confirmed `tsc --noEmit` and `next build` are clean on both apps.
+
+Notes
+
+* This is a new feature (Phase 2), distinct from the "Training Programs" entry under ROADMAP.md Phase 6 ("Fitness Features"), which refers to workout plans/exercise libraries/progress tracking, not scheduling — flagged in the design doc to avoid future confusion between the two.
+* Not yet built (deliberately deferred, flagged in the design doc as a follow-up question for the client): guest/drop-in passes for non-members, and a UI for managing the `MembershipPlan.allowAllPrograms`/entitled-programs toggle from the Membership Plans pages (the API exists — `PATCH /training-programs/plans/:planId/entitled-programs` — but there's no frontend for it yet, only the backend + e2e coverage).
+
+---
+
 ## 2026-07-03 (Redis for Auth Sessions + MinIO for Member Photos)
 
 Completed

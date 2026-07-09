@@ -16,6 +16,7 @@ export type Dict = {
     notifications: string;
     reports: string;
     settings: string;
+    classes: string;
   };
   shell: {
     appName: string;
@@ -23,6 +24,8 @@ export type Dict = {
     appDescription: string;
     pilotBranchContext: string;
     searchMembers: string;
+    openMenu: string;
+    closeMenu: string;
   };
   auth: {
     signIn: string;
@@ -395,6 +398,35 @@ export type Dict = {
     noVisits: string;
     noPayments: string;
     totalPaid: string;
+    membersBySex: string;
+    registrationsByEmployee: string;
+    planPerformance: string;
+    membershipStatusBreakdown: string;
+    expiringSoon: string;
+    upcomingBirthdays: string;
+    newMembersGrowth: string;
+    sexCol: string;
+    maleLabel: string;
+    femaleLabel: string;
+    unspecifiedLabel: string;
+    activeCol: string;
+    totalCol: string;
+    employeeCol: string;
+    countCol: string;
+    unassignedLabel: string;
+    allEmployeesLabel: string;
+    filterLabel: string;
+    applyFilter: string;
+    dateFromLabel: string;
+    dateToLabel: string;
+    daysLabel: string;
+    viewMembers: string;
+    planTypeCol: string;
+    revenueCol: string;
+    daysUntilCol: string;
+    birthdayCol: string;
+    phoneCol: string;
+    noResults: string;
   };
   settings: {
     title: string;
@@ -488,6 +520,56 @@ export type Dict = {
     gateDeviceConfigured: string;
     gateDeviceNotConfigured: string;
   };
+  classes: {
+    title: string;
+    programsTitle: string;
+    newProgram: string;
+    noPrograms: string;
+    programName: string;
+    description: string;
+    color: string;
+    maxMembers: string;
+    defaultCoach: string;
+    noCoach: string;
+    allBranches: string;
+    createProgram: string;
+    programDetails: string;
+    allPrograms: string;
+    sessionsTitle: string;
+    newSession: string;
+    program: string;
+    coach: string;
+    room: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    capacity: string;
+    bookedCount: string;
+    repeatWeeks: string;
+    scheduleSingle: string;
+    scheduleRecurring: string;
+    noSessions: string;
+    cancelSession: string;
+    viewSession: string;
+    sessionDetails: string;
+    bookingsTitle: string;
+    bookMember: string;
+    member: string;
+    selectMember: string;
+    book: string;
+    noBookings: string;
+    cancelBooking: string;
+    bookingBooked: string;
+    bookingWaitlisted: string;
+    bookingAttended: string;
+    bookingNoShow: string;
+    bookingCancelled: string;
+    coachProfileTitle: string;
+    specializations: string;
+    certifications: string;
+    saveCoachProfile: string;
+    notACoach: string;
+  };
 };
 
 const en: Dict = {
@@ -503,6 +585,7 @@ const en: Dict = {
     notifications: "Notifications",
     reports: "Reports",
     settings: "Settings",
+    classes: "Classes",
   },
   shell: {
     appName: "Spark Gym ERP",
@@ -510,6 +593,8 @@ const en: Dict = {
     appDescription: "MVP workspace for memberships, access control, reporting, and front-desk operations.",
     pilotBranchContext: "Pilot Branch Context",
     searchMembers: "Search members",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
   },
   auth: {
     signIn: "Sign In",
@@ -882,6 +967,35 @@ const en: Dict = {
     noVisits: "No visits found for this date range.",
     noPayments: "No payments found for this date range.",
     totalPaid: "Total paid",
+    membersBySex: "Members by Gender",
+    registrationsByEmployee: "Registrations by Employee",
+    planPerformance: "Plan Performance",
+    membershipStatusBreakdown: "Membership Status Breakdown",
+    expiringSoon: "Expiring Soon",
+    upcomingBirthdays: "Upcoming Birthdays",
+    newMembersGrowth: "New Members Growth",
+    sexCol: "Gender",
+    maleLabel: "Male",
+    femaleLabel: "Female",
+    unspecifiedLabel: "Unspecified",
+    activeCol: "Active",
+    totalCol: "Total",
+    employeeCol: "Employee",
+    countCol: "Count",
+    unassignedLabel: "Unassigned",
+    allEmployeesLabel: "All employees",
+    filterLabel: "Filter",
+    applyFilter: "Apply",
+    dateFromLabel: "From",
+    dateToLabel: "To",
+    daysLabel: "Days ahead",
+    viewMembers: "View members →",
+    planTypeCol: "Type",
+    revenueCol: "Revenue",
+    daysUntilCol: "Days left",
+    birthdayCol: "Birthday",
+    phoneCol: "Phone",
+    noResults: "No data found for this report.",
   },
   settings: {
     title: "Settings",
@@ -975,6 +1089,56 @@ const en: Dict = {
     gateDeviceConfigured: "Device configured",
     gateDeviceNotConfigured: "No device configured",
   },
+  classes: {
+    title: "Training Programs & Classes",
+    programsTitle: "Training Programs",
+    newProgram: "New Program",
+    noPrograms: "No training programs yet.",
+    programName: "Program name",
+    description: "Description",
+    color: "Color",
+    maxMembers: "Max members per class",
+    defaultCoach: "Default coach",
+    noCoach: "No coach assigned",
+    allBranches: "All branches (global)",
+    createProgram: "Create program",
+    programDetails: "Program details",
+    allPrograms: "All programs",
+    sessionsTitle: "Class Sessions",
+    newSession: "Schedule a class",
+    program: "Program",
+    coach: "Coach",
+    room: "Room",
+    date: "Date",
+    startTime: "Start time",
+    endTime: "End time",
+    capacity: "Capacity",
+    bookedCount: "Booked",
+    repeatWeeks: "Repeat weekly for (weeks)",
+    scheduleSingle: "Schedule a single class",
+    scheduleRecurring: "Schedule recurring classes",
+    noSessions: "No class sessions scheduled yet.",
+    cancelSession: "Cancel class",
+    viewSession: "View",
+    sessionDetails: "Session details",
+    bookingsTitle: "Bookings",
+    bookMember: "Book a member",
+    member: "Member",
+    selectMember: "Select a member",
+    book: "Book",
+    noBookings: "No bookings yet.",
+    cancelBooking: "Cancel booking",
+    bookingBooked: "Booked",
+    bookingWaitlisted: "Waitlisted",
+    bookingAttended: "Attended",
+    bookingNoShow: "No-show",
+    bookingCancelled: "Cancelled",
+    coachProfileTitle: "Coach Profile",
+    specializations: "Specializations (comma-separated)",
+    certifications: "Certifications (comma-separated)",
+    saveCoachProfile: "Save coach profile",
+    notACoach: "This employee has no coach profile yet — add specializations to make them bookable as a coach.",
+  },
 };
 
 const ar: Dict = {
@@ -990,6 +1154,7 @@ const ar: Dict = {
     notifications: "الإشعارات",
     reports: "التقارير",
     settings: "الإعدادات",
+    classes: "الحصص",
   },
   shell: {
     appName: "Spark Gym ERP",
@@ -997,6 +1162,8 @@ const ar: Dict = {
     appDescription: "منصة العمل لإدارة الاشتراكات والتحكم بالوصول والتقارير وعمليات الاستقبال.",
     pilotBranchContext: "سياق الفرع التجريبي",
     searchMembers: "البحث عن الأعضاء",
+    openMenu: "فتح القائمة",
+    closeMenu: "إغلاق القائمة",
   },
   auth: {
     signIn: "تسجيل الدخول",
@@ -1369,6 +1536,35 @@ const ar: Dict = {
     noVisits: "لم يتم العثور على زيارات لهذا النطاق الزمني.",
     noPayments: "لم يتم العثور على مدفوعات لهذا النطاق الزمني.",
     totalPaid: "إجمالي المدفوع",
+    membersBySex: "الأعضاء حسب الجنس",
+    registrationsByEmployee: "التسجيلات حسب الموظف",
+    planPerformance: "أداء الخطط",
+    membershipStatusBreakdown: "توزيع حالة الاشتراكات",
+    expiringSoon: "تنتهي قريبًا",
+    upcomingBirthdays: "أعياد الميلاد القادمة",
+    newMembersGrowth: "نمو الأعضاء الجدد",
+    sexCol: "الجنس",
+    maleLabel: "ذكر",
+    femaleLabel: "أنثى",
+    unspecifiedLabel: "غير محدد",
+    activeCol: "نشط",
+    totalCol: "الإجمالي",
+    employeeCol: "الموظف",
+    countCol: "العدد",
+    unassignedLabel: "غير مسند",
+    allEmployeesLabel: "جميع الموظفين",
+    filterLabel: "تصفية",
+    applyFilter: "تطبيق",
+    dateFromLabel: "من",
+    dateToLabel: "إلى",
+    daysLabel: "عدد الأيام القادمة",
+    viewMembers: "عرض الأعضاء ←",
+    planTypeCol: "النوع",
+    revenueCol: "الإيرادات",
+    daysUntilCol: "الأيام المتبقية",
+    birthdayCol: "تاريخ الميلاد",
+    phoneCol: "الهاتف",
+    noResults: "لا توجد بيانات لهذا التقرير.",
   },
   settings: {
     title: "الإعدادات",
@@ -1462,6 +1658,56 @@ const ar: Dict = {
     gateDeviceConfigured: "الجهاز مضبوط",
     gateDeviceNotConfigured: "لا يوجد جهاز مضبوط",
   },
+  classes: {
+    title: "البرامج التدريبية والحصص",
+    programsTitle: "البرامج التدريبية",
+    newProgram: "برنامج جديد",
+    noPrograms: "لا توجد برامج تدريبية بعد.",
+    programName: "اسم البرنامج",
+    description: "الوصف",
+    color: "اللون",
+    maxMembers: "الحد الأقصى للأعضاء لكل حصة",
+    defaultCoach: "المدرب الافتراضي",
+    noCoach: "لا يوجد مدرب معيّن",
+    allBranches: "جميع الفروع (عام)",
+    createProgram: "إنشاء برنامج",
+    programDetails: "تفاصيل البرنامج",
+    allPrograms: "جميع البرامج",
+    sessionsTitle: "الحصص المجدولة",
+    newSession: "جدولة حصة",
+    program: "البرنامج",
+    coach: "المدرب",
+    room: "القاعة",
+    date: "التاريخ",
+    startTime: "وقت البدء",
+    endTime: "وقت الانتهاء",
+    capacity: "السعة",
+    bookedCount: "المحجوز",
+    repeatWeeks: "تكرار أسبوعي لعدد (أسابيع)",
+    scheduleSingle: "جدولة حصة واحدة",
+    scheduleRecurring: "جدولة حصص متكررة",
+    noSessions: "لا توجد حصص مجدولة بعد.",
+    cancelSession: "إلغاء الحصة",
+    viewSession: "عرض",
+    sessionDetails: "تفاصيل الحصة",
+    bookingsTitle: "الحجوزات",
+    bookMember: "حجز عضو",
+    member: "العضو",
+    selectMember: "اختر عضوًا",
+    book: "حجز",
+    noBookings: "لا توجد حجوزات بعد.",
+    cancelBooking: "إلغاء الحجز",
+    bookingBooked: "محجوز",
+    bookingWaitlisted: "قائمة الانتظار",
+    bookingAttended: "حضر",
+    bookingNoShow: "لم يحضر",
+    bookingCancelled: "ملغى",
+    coachProfileTitle: "ملف المدرب",
+    specializations: "التخصصات (مفصولة بفواصل)",
+    certifications: "الشهادات (مفصولة بفواصل)",
+    saveCoachProfile: "حفظ ملف المدرب",
+    notACoach: "لا يملك هذا الموظف ملف مدرب بعد — أضف التخصصات لجعله قابلاً للحجز كمدرب.",
+  },
 };
 
 const he: Dict = {
@@ -1477,6 +1723,7 @@ const he: Dict = {
     notifications: "התראות",
     reports: "דוחות",
     settings: "הגדרות",
+    classes: "שיעורים",
   },
   shell: {
     appName: "Spark Gym ERP",
@@ -1484,6 +1731,8 @@ const he: Dict = {
     appDescription: "סביבת עבודה לניהול מנויים, בקרת גישה, דיווח ועבודת קבלה.",
     pilotBranchContext: "הקשר סניף פיילוט",
     searchMembers: "חפש חברים",
+    openMenu: "פתח תפריט",
+    closeMenu: "סגור תפריט",
   },
   auth: {
     signIn: "כניסה",
@@ -1856,6 +2105,35 @@ const he: Dict = {
     noVisits: "לא נמצאו ביקורים לטווח תאריכים זה.",
     noPayments: "לא נמצאו תשלומים לטווח תאריכים זה.",
     totalPaid: "סה\"כ שולם",
+    membersBySex: "חברים לפי מגדר",
+    registrationsByEmployee: "רישומים לפי עובד",
+    planPerformance: "ביצועי תוכניות",
+    membershipStatusBreakdown: "פילוח סטטוס מנויים",
+    expiringSoon: "פגי תוקף בקרוב",
+    upcomingBirthdays: "ימי הולדת קרובים",
+    newMembersGrowth: "צמיחת חברים חדשים",
+    sexCol: "מגדר",
+    maleLabel: "זכר",
+    femaleLabel: "נקבה",
+    unspecifiedLabel: "לא צוין",
+    activeCol: "פעיל",
+    totalCol: "סה\"כ",
+    employeeCol: "עובד",
+    countCol: "כמות",
+    unassignedLabel: "לא משויך",
+    allEmployeesLabel: "כל העובדים",
+    filterLabel: "סינון",
+    applyFilter: "החל",
+    dateFromLabel: "מ־",
+    dateToLabel: "עד",
+    daysLabel: "ימים קדימה",
+    viewMembers: "הצג חברים ←",
+    planTypeCol: "סוג",
+    revenueCol: "הכנסות",
+    daysUntilCol: "ימים שנותרו",
+    birthdayCol: "יום הולדת",
+    phoneCol: "טלפון",
+    noResults: "לא נמצאו נתונים עבור דוח זה.",
   },
   settings: {
     title: "הגדרות",
@@ -1948,6 +2226,56 @@ const he: Dict = {
     gateDeleteConfirm: "למחוק שער זה? לא ניתן לבטל פעולה זו.",
     gateDeviceConfigured: "מכשיר מוגדר",
     gateDeviceNotConfigured: "אין מכשיר מוגדר",
+  },
+  classes: {
+    title: "תוכניות אימון ושיעורים",
+    programsTitle: "תוכניות אימון",
+    newProgram: "תוכנית חדשה",
+    noPrograms: "אין עדיין תוכניות אימון.",
+    programName: "שם התוכנית",
+    description: "תיאור",
+    color: "צבע",
+    maxMembers: "מספר חברים מרבי לשיעור",
+    defaultCoach: "מאמן ברירת מחדל",
+    noCoach: "לא הוקצה מאמן",
+    allBranches: "כל הסניפים (כללי)",
+    createProgram: "צור תוכנית",
+    programDetails: "פרטי התוכנית",
+    allPrograms: "כל התוכניות",
+    sessionsTitle: "שיעורים מתוזמנים",
+    newSession: "תזמן שיעור",
+    program: "תוכנית",
+    coach: "מאמן",
+    room: "חדר",
+    date: "תאריך",
+    startTime: "שעת התחלה",
+    endTime: "שעת סיום",
+    capacity: "קיבולת",
+    bookedCount: "מוזמן",
+    repeatWeeks: "חזור מדי שבוע למשך (שבועות)",
+    scheduleSingle: "תזמן שיעור בודד",
+    scheduleRecurring: "תזמן שיעורים חוזרים",
+    noSessions: "אין עדיין שיעורים מתוזמנים.",
+    cancelSession: "בטל שיעור",
+    viewSession: "צפה",
+    sessionDetails: "פרטי השיעור",
+    bookingsTitle: "הזמנות",
+    bookMember: "הזמן חבר",
+    member: "חבר",
+    selectMember: "בחר חבר",
+    book: "הזמן",
+    noBookings: "אין עדיין הזמנות.",
+    cancelBooking: "בטל הזמנה",
+    bookingBooked: "מוזמן",
+    bookingWaitlisted: "ברשימת המתנה",
+    bookingAttended: "נכח",
+    bookingNoShow: "לא הופיע",
+    bookingCancelled: "בוטל",
+    coachProfileTitle: "פרופיל מאמן",
+    specializations: "התמחויות (מופרדות בפסיקים)",
+    certifications: "הסמכות (מופרדות בפסיקים)",
+    saveCoachProfile: "שמור פרופיל מאמן",
+    notACoach: "לעובד זה אין עדיין פרופיל מאמן — הוסף התמחויות כדי לאפשר הזמנתו כמאמן.",
   },
 };
 

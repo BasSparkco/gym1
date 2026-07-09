@@ -27,6 +27,7 @@ type CreateMembershipPlanInput = {
   allowAllBranches?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
+  allowAllPrograms?: boolean;
 };
 
 type UpdateMembershipPlanInput = {
@@ -38,6 +39,7 @@ type UpdateMembershipPlanInput = {
   allowAllBranches?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
+  allowAllPrograms?: boolean;
 };
 
 type CreateMembershipInput = {
@@ -148,6 +150,7 @@ export class MembershipsService {
         allowAllBranches: input.allowAllBranches ?? true,
         freezeAllowed: input.freezeAllowed ?? false,
         freezeMaxDays: input.freezeAllowed ? input.freezeMaxDays : undefined,
+        allowAllPrograms: input.allowAllPrograms ?? true,
       },
     });
 
@@ -199,6 +202,7 @@ export class MembershipsService {
         freezeMaxDays: freezeAllowed
           ? (input.freezeMaxDays ?? current.freezeMaxDays)
           : null,
+        allowAllPrograms: input.allowAllPrograms ?? current.allowAllPrograms,
       },
     });
 

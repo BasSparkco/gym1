@@ -1562,4 +1562,333 @@ describe('API (e2e)', () => {
       .send({ identifier_number: 'AABBCCDD', identifier_type: 'card' })
       .expect(401);
   });
+
+  describe('Training Programs, Classes & Coaches', () => {
+    async function signInAsOwner() {
+      const signInResponse = await request(getHttpServer())
+        .post('/api/auth/sign-in')
+        .send({ identifier: 'owner@sparkgym.local', password: 'owner123' })
+        .expect(200);
+      return signInResponse.get('Set-Cookie');
+    }
+
+    it('creates, lists, and updates training programs', async () => {
+      const cookies = await signInAsOwner();
+
+      const createResponse = await request(getHttpServer())
+        .post('/api/training-programs')
+        .set('Cookie', cookies)
+        .send({ name: 'CrossFit', branchId: 'Platinum Fitness', maxMembers: 12 })
+        .expect(201);
+
+      const createBody = createResponse.body as {
+        program: { id: string; name: string; active: boolean };
+      };
+      expect(createBody.program).toMatchObject({
+        name: 'CrossFit',
+        active: true,
+      });
+
+      const listResponse = await request(getHttpServer())
+        .get('/api/training-programs')
+        .set('Cookie', cookies)
+        .expect(200);
+      const listBody = listResponse.body as { programs: Array<{ id: string }> };
+      expect(
+        listBody.programs.some((p) => p.id === createBody.program.id),
+      ).toBe(true);
+
+      const updateResponse = await request(getHttpServer())
+        .patch(`/api/training-programs/${createBody.program.id}`)
+        .set('Cookie', cookies)
+        .send({ active: false })
+        .expect(200);
+      const updateBody = updateResponse.body as {
+        program: { active: boolean };
+      };
+      expect(updateBody.program.active).toBe(false);
+    });
+
+    it('rejects a training program with an invalid branch', async () => {
+      const cookies = await signInAsOwner();
+
+      await request(getHttpServer())
+        .post('/api/training-programs')
+        .set('Cookie', cookies)
+        .send({ name: 'Yoga', branchId: 'non-existent-branch' })
+        .expect(400);
+    });
+
+    it('gives an employee a coach profile and lists coaches', async () => {
+      const cookies = await signInAsOwner();
+
+      const before = await request(getHttpServer())
+        .get('/api/employees/coaches')
+        .set('Cookie', cookies)
+        .expect(200);
+      expect((before.body as { coaches: unknown[] }).coaches).toHaveLength(0);
+
+      const upsertResponse = await request(getHttpServer())
+        .patch('/api/employees/emp-001/coach-profile')
+        .set('Cookie', cookies)
+        .send({ specializations: ['CrossFit', 'HIIT'], certifications: ['CF-L1'] })
+        .expect(200);
+      expect(
+        (upsertResponse.body as { coachProfile: { specializations: string[] } })
+          .coachProfile.specializations,
+      ).toEqual(['CrossFit', 'HIIT']);
+
+      const after = await request(getHttpServer())
+        .get('/api/employees/coaches')
+        .set('Cookie', cookies)
+        .expect(200);
+      const afterBody = after.body as {
+        coaches: Array<{ id: string; coachProfile: { specializations: string[] } }>;
+      };
+      expect(afterBody.coaches).toHaveLength(1);
+      expect(afterBody.coaches[0].id).toBe('emp-001');
+    });
+
+    it('schedules a class session and rejects an overlapping one for the same coach', async () => {
+      const cookies = await signInAsOwner();
+
+      const programResponse = await request(getHttpServer())
+        .post('/api/training-programs')
+        .set('Cookie', cookies)
+        .send({ name: 'CrossFit', branchId: 'Platinum Fitness' })
+        .expect(201);
+      const programId = (
+        programResponse.body as { program: { id: string } }
+      ).program.id;
+
+      await request(getHttpServer())
+        .patch('/api/employees/emp-001/coach-profile')
+        .set('Cookie', cookies)
+        .send({ specializations: ['CrossFit'] })
+        .expect(200);
+
+      const sessionResponse = await request(getHttpServer())
+        .post('/api/class-sessions')
+        .set('Cookie', cookies)
+        .send({
+          programId,
+          branchId: 'Platinum Fitness',
+          coachId: 'emp-001',
+          room: 'Studio A',
+          date: '2026-07-15',
+          startTime: '18:00',
+          endTime: '19:00',
+          capacity: 1,
+        })
+        .expect(201);
+
+      const sessionId = (
+        sessionResponse.body as { classSession: { id: string; bookedCount: number } }
+      ).classSession.id;
+      expect(
+        (sessionResponse.body as { classSession: { bookedCount: number } })
+          .classSession.bookedCount,
+      ).toBe(0);
+
+      // Same coach, overlapping time -> conflict.
+      await request(getHttpServer())
+        .post('/api/class-sessions')
+        .set('Cookie', cookies)
+        .send({
+          programId,
+          branchId: 'Platinum Fitness',
+          coachId: 'emp-001',
+          date: '2026-07-15',
+          startTime: '18:30',
+          endTime: '19:30',
+          capacity: 5,
+        })
+        .expect(400);
+
+      await request(getHttpServer())
+        .post(`/api/class-sessions/${sessionId}/cancel`)
+        .set('Cookie', cookies)
+        .expect(201);
+    });
+
+    it('books a class, waitlists over capacity, and promotes on cancellation', async () => {
+      const cookies = await signInAsOwner();
+
+      const programResponse = await request(getHttpServer())
+        .post('/api/training-programs')
+        .set('Cookie', cookies)
+        .send({ name: 'CrossFit', branchId: 'Platinum Fitness' })
+        .expect(201);
+      const programId = (
+        programResponse.body as { program: { id: string } }
+      ).program.id;
+
+      const sessionResponse = await request(getHttpServer())
+        .post('/api/class-sessions')
+        .set('Cookie', cookies)
+        .send({
+          programId,
+          branchId: 'Platinum Fitness',
+          date: '2026-07-16',
+          startTime: '08:00',
+          endTime: '09:00',
+          capacity: 1,
+        })
+        .expect(201);
+      const classSessionId = (
+        sessionResponse.body as { classSession: { id: string } }
+      ).classSession.id;
+
+      const firstBooking = await request(getHttpServer())
+        .post('/api/class-bookings')
+        .set('Cookie', cookies)
+        .send({ classSessionId, memberId: 'member-001' })
+        .expect(201);
+      expect(
+        (firstBooking.body as { booking: { status: string } }).booking.status,
+      ).toBe('booked');
+
+      const secondBooking = await request(getHttpServer())
+        .post('/api/class-bookings')
+        .set('Cookie', cookies)
+        .send({ classSessionId, memberId: 'member-002' })
+        .expect(201);
+      expect(
+        (secondBooking.body as { booking: { status: string; id: string } })
+          .booking.status,
+      ).toBe('waitlisted');
+
+      // Duplicate booking for the same member+session is rejected.
+      await request(getHttpServer())
+        .post('/api/class-bookings')
+        .set('Cookie', cookies)
+        .send({ classSessionId, memberId: 'member-001' })
+        .expect(400);
+
+      const firstBookingId = (firstBooking.body as { booking: { id: string } })
+        .booking.id;
+
+      const cancelResponse = await request(getHttpServer())
+        .post(`/api/class-bookings/${firstBookingId}/cancel`)
+        .set('Cookie', cookies)
+        .expect(201);
+      expect(
+        (cancelResponse.body as { booking: { status: string } }).booking
+          .status,
+      ).toBe('cancelled');
+
+      const sessionBookings = await request(getHttpServer())
+        .get(`/api/class-bookings/session/${classSessionId}`)
+        .set('Cookie', cookies)
+        .expect(200);
+      const bookings = (
+        sessionBookings.body as {
+          bookings: Array<{ memberId: string; status: string }>;
+        }
+      ).bookings;
+      expect(
+        bookings.find((b) => b.memberId === 'member-002')?.status,
+      ).toBe('booked');
+    });
+
+    it('rejects a booking when the plan does not entitle the training program', async () => {
+      const cookies = await signInAsOwner();
+
+      const programResponse = await request(getHttpServer())
+        .post('/api/training-programs')
+        .set('Cookie', cookies)
+        .send({ name: 'Premium Pilates', branchId: 'Platinum Fitness' })
+        .expect(201);
+      const programId = (
+        programResponse.body as { program: { id: string } }
+      ).program.id;
+
+      // member-002 is on plan-ramallah-standard; restrict it to no programs.
+      await request(getHttpServer())
+        .patch('/api/memberships/plans/plan-ramallah-standard')
+        .set('Cookie', cookies)
+        .send({ allowAllPrograms: false })
+        .expect(200);
+
+      const sessionResponse = await request(getHttpServer())
+        .post('/api/class-sessions')
+        .set('Cookie', cookies)
+        .send({
+          programId,
+          branchId: 'Platinum Fitness',
+          date: '2026-07-17',
+          startTime: '10:00',
+          endTime: '11:00',
+          capacity: 5,
+        })
+        .expect(201);
+      const classSessionId = (
+        sessionResponse.body as { classSession: { id: string } }
+      ).classSession.id;
+
+      await request(getHttpServer())
+        .post('/api/class-bookings')
+        .set('Cookie', cookies)
+        .send({ classSessionId, memberId: 'member-002' })
+        .expect(400);
+
+      // Entitle the plan for this specific program -> booking now succeeds.
+      await request(getHttpServer())
+        .patch('/api/training-programs/plans/plan-ramallah-standard/entitled-programs')
+        .set('Cookie', cookies)
+        .send({ programIds: [programId] })
+        .expect(200);
+
+      await request(getHttpServer())
+        .post('/api/class-bookings')
+        .set('Cookie', cookies)
+        .send({ classSessionId, memberId: 'member-002' })
+        .expect(201);
+    });
+
+    it('generates recurring class sessions sharing a recurrenceId', async () => {
+      const cookies = await signInAsOwner();
+
+      const programResponse = await request(getHttpServer())
+        .post('/api/training-programs')
+        .set('Cookie', cookies)
+        .send({ name: 'Morning Yoga', branchId: 'Platinum Fitness' })
+        .expect(201);
+      const programId = (
+        programResponse.body as { program: { id: string } }
+      ).program.id;
+
+      const recurringResponse = await request(getHttpServer())
+        .post('/api/class-sessions/recurring')
+        .set('Cookie', cookies)
+        .send({
+          programId,
+          branchId: 'Platinum Fitness',
+          date: '2026-08-03',
+          startTime: '07:00',
+          endTime: '08:00',
+          capacity: 10,
+          repeatWeeks: 3,
+        })
+        .expect(201);
+
+      const recurringBody = recurringResponse.body as {
+        recurrenceId: string;
+        created: Array<{ date: string; recurrenceId: string }>;
+        skipped: unknown[];
+      };
+      expect(recurringBody.created).toHaveLength(3);
+      expect(recurringBody.skipped).toHaveLength(0);
+      expect(
+        recurringBody.created.every(
+          (s) => s.recurrenceId === recurringBody.recurrenceId,
+        ),
+      ).toBe(true);
+      expect(recurringBody.created.map((s) => s.date)).toEqual([
+        '2026-08-03',
+        '2026-08-10',
+        '2026-08-17',
+      ]);
+    });
+  });
 });

@@ -148,15 +148,17 @@ Deliverables
 
 Status
 
-* Not Started
+* Started — Training Programs & Classes design finalized, implementation in progress. See [docs/Training Programs & Classes Design.md](docs/Training%20Programs%20%26%20Classes%20Design.md) for the full architecture.
 
 Modules
 
-### Classes
+### Training Programs, Classes & Coaches
 
-* Class scheduling
-* Capacity management
-* Reservations
+* `TrainingProgram` — the activity/discipline (tenant-scoped, optionally branch-specific).
+* `CoachProfile` — 1:1 extension of the existing `Employee` model (specializations, certifications) rather than a duplicate person entity.
+* `ClassSession` — scheduled occurrences of a Training Program (template+instance split via `recurrenceId` for recurring schedules).
+* `ClassBooking` — member enrollment/waitlist/attendance per session, transaction-safe capacity handling, entitlement check against `MembershipPlan.allowAllPrograms` / `MembershipPlanProgram`.
+* Class scheduling, capacity management, reservations, waiting lists, attendance (reuses the existing `Visit` model rather than a second tracking pipeline).
 
 ### Employee Management
 
@@ -167,12 +169,6 @@ Modules
 
 * Locker rental
 * Rental tracking
-
-### Class Management
-
-* Class scheduling
-* Capacity management
-* Reservations
 
 Deliverables
 

@@ -38,6 +38,11 @@ const navigationItems: NavigationItem[] = [
     roles: ["owner", "manager"],
   },
   {
+    labelKey: "classes",
+    href: "/app/training-programs",
+    roles: ["owner", "manager", "front-desk"],
+  },
+  {
     labelKey: "members",
     href: "/app/members",
     roles: ["owner", "manager", "front-desk"],
@@ -72,9 +77,10 @@ const navigationItems: NavigationItem[] = [
 type NavMenuProps = {
   role: UserRole;
   navLabels: Dict["nav"];
+  onNavigate?: () => void;
 };
 
-export function NavMenu({ role, navLabels }: NavMenuProps) {
+export function NavMenu({ role, navLabels, onNavigate }: NavMenuProps) {
   const pathname = usePathname();
   const allowedItems = navigationItems.filter((item) => item.roles.includes(role));
 
@@ -90,6 +96,7 @@ export function NavMenu({ role, navLabels }: NavMenuProps) {
           <Link
             key={item.labelKey}
             href={item.href}
+            onClick={onNavigate}
             className={[
               "rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
               isActive
