@@ -58,6 +58,88 @@ export class ReportsController {
     );
   }
 
+  @Get('members-by-sex')
+  async getMembersBySex(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.reportsService.getMembersBySexReport(session.user);
+  }
+
+  @Get('registrations-by-employee')
+  async getRegistrationsByEmployee(
+    @Req() request: Request,
+    @Query('employeeId') employeeId?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.reportsService.getRegistrationsByEmployeeReport(
+      session.user,
+      employeeId,
+      dateFrom,
+      dateTo,
+    );
+  }
+
+  @Get('plan-performance')
+  async getPlanPerformance(
+    @Req() request: Request,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.reportsService.getPlanPerformanceReport(
+      session.user,
+      dateFrom,
+      dateTo,
+    );
+  }
+
+  @Get('membership-status-breakdown')
+  async getMembershipStatusBreakdown(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.reportsService.getMembershipStatusBreakdownReport(
+      session.user,
+    );
+  }
+
+  @Get('expiring-soon')
+  async getExpiringSoon(
+    @Req() request: Request,
+    @Query('days') days?: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.reportsService.getExpiringSoonReport(
+      session.user,
+      days ? Number(days) : undefined,
+    );
+  }
+
+  @Get('upcoming-birthdays')
+  async getUpcomingBirthdays(
+    @Req() request: Request,
+    @Query('days') days?: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.reportsService.getUpcomingBirthdaysReport(
+      session.user,
+      days ? Number(days) : undefined,
+    );
+  }
+
+  @Get('new-members-growth')
+  async getNewMembersGrowth(
+    @Req() request: Request,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.reportsService.getNewMembersGrowthReport(
+      session.user,
+      dateFrom,
+      dateTo,
+    );
+  }
+
   private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
       await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);

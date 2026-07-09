@@ -2,103 +2,198 @@
 
 ## Purpose
 
-This document defines the currency architecture used across all SparkCo SaaS applications.
+This document defines the currency architecture for all SparkCo SaaS applications.
 
-The goal is to build a financial foundation that supports:
+The objective is to build a flexible financial foundation that supports:
 
 * Gym Management
 * POS
 * Accounting
 * E-Commerce
-* Future SaaS products
+* Future SaaS Products
 
-The design must support multiple countries, multiple branches, and future accounting features without requiring database redesign.
+The design must support:
 
----
+* Multiple companies
+* Multiple branches
+* Multiple countries
+* Multiple currencies
+* Future accounting modules
+* Future ERP features
 
-# General Principles
-
-## Branch-Based Financial Entity
-
-The financial entity in the system is the **Branch**, not the Company.
-
-A company may own multiple branches operating in different countries.
-
-Example:
-
-```
-Spark Fitness
-
-├── Tel Aviv Branch
-│   Base Currency: ILS
-│
-├── Amman Branch
-│   Base Currency: JOD
-│
-└── Dubai Branch
-    Base Currency: AED
-```
-
-Each branch manages its own financial records using its own base currency.
+without requiring database redesign.
 
 ---
 
-# Base Currency
+# Financial Model
 
-Every branch must have exactly one **Base Currency**.
+The system defines three different currency levels.
 
-The base currency is selected during branch creation.
+## 1. Company Reporting Currency
 
-Example:
+Each company has exactly one reporting currency.
 
-```
-Branch Name:
-Tel Aviv
-
-Base Currency:
-ILS
-```
-
-All financial reports generated for that branch must use the base currency.
+This currency is used to generate company-wide financial reports across all branches.
 
 Examples:
 
 * Profit & Loss
-* Expenses
 * Revenue
-* Cash Flow
-* Financial Summary
+* Expenses
+* Financial Statements
+* Executive Reports
+
+Example:
+
+```text
+Spark Fitness
+
+Reporting Currency:
+USD
+```
 
 ---
 
-# Changing the Base Currency
+## 2. Branch Operating Currency
 
-The base currency may only be changed **before any financial transaction exists**.
+Each branch has exactly one operating currency.
 
-Once the first financial transaction is created, the base currency becomes immutable.
+This is the currency normally used for:
+
+* Membership payments
+* Product sales
+* Expenses
+* Salaries
+* Cash drawers
+* Daily operations
+
+Example:
+
+```text
+Spark Fitness
+
+Tel Aviv Branch
+Operating Currency:
+ILS
+
+Amman Branch
+Operating Currency:
+JOD
+
+Dubai Branch
+Operating Currency:
+AED
+```
+
+Each branch generates its own financial reports using its operating currency.
+
+---
+
+## 3. Transaction Currency
+
+Every financial transaction may be performed using any currency.
+
+Examples:
+
+* Member pays in USD
+* Customer pays in EUR
+* Supplier is paid in GBP
+
+The transaction currency is always preserved.
+
+It must never be replaced by a converted value.
+
+---
+
+# Currency Flow
+
+Example:
+
+Company Reporting Currency
+
+```text
+USD
+```
+
+Branch Operating Currency
+
+```text
+ILS
+```
+
+Customer Payment
+
+```text
+100 EUR
+```
+
+Exchange Rates
+
+```text
+1 EUR = 4.20 ILS
+
+1 EUR = 1.17 USD
+```
+
+Stored Transaction
+
+```text
+Original Amount:
+100 EUR
+
+Branch Amount:
+420 ILS
+
+Company Amount:
+117 USD
+```
+
+This allows reporting at every required level.
+
+---
+
+# Company Settings
+
+Each company stores:
+
+```text
+Company
+
+Reporting Currency
+```
+
+The reporting currency is selected during company setup.
+
+Changing the reporting currency after financial transactions exist is strongly discouraged.
+
+A future migration process may be implemented if this feature becomes necessary.
+
+---
+
+# Branch Settings
+
+Each branch stores:
+
+```text
+Branch
+
+Operating Currency
+```
+
+The operating currency is selected during branch creation.
+
+The operating currency may only be changed before any financial transaction exists.
+
+Once financial records exist, the operating currency becomes immutable.
 
 Reason:
 
-Changing the base currency would invalidate:
+Changing the operating currency would invalidate:
 
-* Financial reports
 * Historical balances
+* Branch reports
+* Stored converted amounts
 * Accounting records
-* Stored base amounts
-
-Therefore:
-
-```
-Transactions == 0
-
-✓ Base Currency can be changed
-```
-
-```
-Transactions > 0
-
-✗ Base Currency cannot be changed
-```
 
 ---
 
@@ -106,9 +201,9 @@ Transactions > 0
 
 A dedicated currency table must exist.
 
-Suggested structure:
+Suggested fields:
 
-```
+```text
 currencies
 
 id
@@ -121,13 +216,13 @@ created_at
 updated_at
 ```
 
-Examples:
+Example data:
 
-| Code | Symbol | Name            |
+| Code | Symbol | Currency        |
 | ---- | ------ | --------------- |
-| ILS  | ₪      | Israeli Shekel  |
 | USD  | $      | US Dollar       |
 | EUR  | €      | Euro            |
+| ILS  | ₪      | Israeli Shekel  |
 | JOD  | JD     | Jordanian Dinar |
 | SAR  | ﷼      | Saudi Riyal     |
 | AED  | د.إ    | UAE Dirham      |
@@ -137,150 +232,195 @@ Currencies should be seeded during installation.
 
 ---
 
+# Exchange Rates
+
+Exchange rates should be maintained automatically.
+
+A scheduled background job should periodically retrieve the latest exchange rates from a trusted external provider.
+
+Possible providers:
+
+* European Central Bank (ECB)
+* Frankfurter API
+* ExchangeRate.host
+* Open Exchange Rates
+* Other supported providers
+
+Exchange rates should be stored locally inside the database.
+
+Suggested table:
+
+```text
+exchange_rates
+
+id
+
+from_currency_id
+
+to_currency_id
+
+rate
+
+provider
+
+effective_date
+
+created_at
+```
+
+The application should use the locally stored rates instead of calling external APIs during financial transactions.
+
+---
+
 # Financial Transactions
 
-Every financial transaction must preserve both:
+Every transaction stores three monetary values.
 
-* The original payment information
-* The accounting value in the branch's base currency
+## Original Transaction
+
+The exact payment made by the customer.
 
 Example:
 
-Customer pays:
-
-```
-100 USD
+```text
+100 EUR
 ```
 
-Exchange Rate:
+Fields:
 
+```text
+original_amount
+
+original_currency_id
 ```
-1 USD = 3.65 ILS
+
+---
+
+## Branch Amount
+
+The converted amount using the branch operating currency.
+
+Fields:
+
+```text
+branch_amount
+
+branch_currency_id
 ```
 
-Stored values:
+---
 
+## Company Amount
+
+The converted amount using the company reporting currency.
+
+Fields:
+
+```text
+company_amount
+
+company_currency_id
 ```
-Original Amount:
-100
 
-Original Currency:
+---
+
+# Exchange Rates Used
+
+Every transaction must permanently store the exchange rates used during conversion.
+
+Example:
+
+```text
+rate_to_branch
+
+rate_to_company
+```
+
+Historical exchange rates must never change.
+
+Future exchange rate updates must never modify existing transactions.
+
+---
+
+# Example Transaction
+
+Company Reporting Currency
+
+```text
 USD
-
-Exchange Rate:
-3.65
-
-Base Amount:
-365.00
 ```
 
-This allows:
+Branch Operating Currency
 
-* Accurate accounting
-* Historical consistency
-* Future auditing
-* Multi-currency reporting
-
----
-
-# Why Store Both Amounts?
-
-Never replace the original payment with the converted amount.
-
-Incorrect:
-
-```
-365 ILS
-```
-
-Correct:
-
-```
-Original Amount:
-100 USD
-
-Exchange Rate:
-3.65
-
-Base Amount:
-365 ILS
-```
-
-The original payment must always remain available.
-
----
-
-# Exchange Rate
-
-The exchange rate must be stored with every transaction.
-
-The stored rate must never change.
-
-Future exchange-rate updates must not affect historical transactions.
-
-Example:
-
-```
-Transaction Date:
-2026-07-04
-
-Original:
-100 USD
-
-Rate:
-3.65
-
-Base:
-365 ILS
-```
-
-If the exchange rate becomes:
-
-```
-3.90
-```
-
-the historical transaction must remain unchanged.
-
----
-
-# Reports
-
-Financial reports always use the branch base currency.
-
-Examples:
-
-* Profit & Loss
-* Revenue
-* Expenses
-* Membership Income
-* Product Sales
-* Cash Reports
-
-All totals must be calculated using **Base Amount**.
-
----
-
-# Original Currency Reports
-
-The system should also be able to generate reports grouped by original currency.
-
-Example:
-
-```
-Received Today
-
+```text
 ILS
-25,000
+```
+
+Customer Payment
+
+```text
+100 EUR
+```
+
+Exchange Rates
+
+```text
+EUR → ILS = 4.20
+
+EUR → USD = 1.17
+```
+
+Stored Values
+
+```text
+Original
+
+100 EUR
+
+Branch
+
+420 ILS
+
+Company
+
+117 USD
+```
+
+---
+
+# Reporting
+
+Branch reports always use:
+
+```text
+Branch Operating Currency
+```
+
+Company reports always use:
+
+```text
+Company Reporting Currency
+```
+
+Original transaction reports may also be generated.
+
+Example:
+
+```text
+Payments Today
 
 USD
-430
+
+250
 
 EUR
-180
-```
 
-This information is only available if the original currency is stored.
+180
+
+ILS
+
+1,450
+```
 
 ---
 
@@ -295,61 +435,79 @@ Do NOT use:
 
 Use:
 
-```
+```text
 NUMERIC(18,2)
 ```
 
 or
 
-```
+```text
 DECIMAL(18,2)
 ```
 
-depending on project standards.
+for all monetary values.
 
 ---
 
 # Future Features
 
-The currency design is prepared for future implementation of:
+The architecture is prepared for:
 
 * POS
 * Accounting
-* Cash Management
 * Bank Accounts
-* Exchange Rates
+* Cash Management
+* Exchange Rate Providers
 * Financial Statements
+* General Ledger
 * Multi-Currency Payments
+* ERP Modules
 
-No database redesign should be required.
+No redesign should be required.
 
 ---
 
 # Design Decisions
 
-* Financial entity is the **Branch**.
-* Every branch has exactly one base currency.
-* Base currency is selected during branch creation.
-* Base currency cannot be changed after financial transactions exist.
+* Every company has one Reporting Currency.
+* Every branch has one Operating Currency.
+* Every transaction preserves its Original Currency.
 * Every transaction stores:
 
   * Original Amount
   * Original Currency
-  * Exchange Rate
-  * Base Amount
-* Financial reports always use the branch base currency.
-* Historical exchange rates are preserved permanently.
-* Monetary values use `NUMERIC` / `DECIMAL`, never floating-point types.
+  * Branch Amount
+  * Branch Currency
+  * Company Amount
+  * Company Currency
+  * Exchange Rate to Branch
+  * Exchange Rate to Company
+* Exchange rates are periodically synchronized from external providers.
+* Transactions always use locally stored exchange rates.
+* Historical transactions are immutable.
+* Financial reports always use stored converted values.
+* Monetary values use `NUMERIC` or `DECIMAL`, never floating-point types.
 
 ---
 
-# Future Considerations
+# Architecture Summary
 
-Potential future enhancements include:
-
-* Exchange rate management
-* Automatic exchange rate providers
-* Multi-currency invoices
-* Multi-currency payments within a single transaction
-* Financial period locking
-* Full double-entry accounting integration
+```text
+                    Company
+            Reporting Currency (USD)
+                     │
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+     Branch A              Branch B
+ Operating: ILS         Operating: JOD
+          │                     │
+          │                     │
+      Customer Pays        Customer Pays
+        100 EUR             50 GBP
+          │                     │
+          ▼                     ▼
+ Original Currency      Original Currency
+ Branch Amount          Branch Amount
+ Company Amount         Company Amount
+```

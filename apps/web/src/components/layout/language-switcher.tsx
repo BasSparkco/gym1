@@ -4,7 +4,11 @@ import { LANG_COOKIE, Language, getSettings } from "@/lib/settings";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export async function LanguageSwitcher() {
+type LanguageSwitcherProps = {
+  variant?: "light" | "dark";
+};
+
+export async function LanguageSwitcher({ variant = "light" }: LanguageSwitcherProps) {
   const [currentLang, settings] = await Promise.all([getLang(), getSettings()]);
   const { enabledLanguages } = settings;
 
@@ -26,14 +30,26 @@ export async function LanguageSwitcher() {
     redirect(referer);
   }
 
+  const isDark = variant === "dark";
+
   return (
-    <div className="flex gap-1">
+    <div
+      className={
+        isDark
+          ? "inline-flex gap-1 rounded-full border border-white/25 bg-white/5 p-1"
+          : "flex gap-1"
+      }
+    >
       {enabledLanguages.map((lang) => {
         const isActive = lang === currentLang;
         return isActive ? (
           <span
             key={lang}
-            className="rounded-full bg-brand px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white"
+            className={
+              isDark
+                ? "rounded-full bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-strong"
+                : "rounded-full bg-brand px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white"
+            }
           >
             {lang}
           </span>
@@ -42,7 +58,11 @@ export async function LanguageSwitcher() {
             <input type="hidden" name="lang" value={lang} />
             <button
               type="submit"
-              className="rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground/60 transition hover:border-brand hover:text-brand"
+              className={
+                isDark
+                  ? "rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/65 transition hover:bg-white/10 hover:text-white"
+                  : "rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground/60 transition hover:border-brand hover:text-brand"
+              }
             >
               {lang}
             </button>

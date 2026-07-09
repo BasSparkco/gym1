@@ -1,5 +1,6 @@
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MemberSearchInput } from "@/components/layout/member-search-input";
+import { MobileHeader } from "@/components/layout/mobile-header";
 import { NavMenu } from "@/components/layout/nav-menu";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import type { SessionUser } from "@/lib/auth";
@@ -15,8 +16,14 @@ type AppShellProps = {
 export function AppShell({ children, user, t, viewingAllBranches }: AppShellProps) {
   return (
     <div className="bg-background text-foreground lg:h-screen lg:overflow-hidden">
+      <MobileHeader
+        user={user}
+        t={t}
+        languageSwitcher={<LanguageSwitcher variant="dark" />}
+      />
+
       <div className="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 lg:h-full lg:grid-cols-[280px_1fr]">
-        <aside className="border-b border-line bg-brand-strong px-6 py-8 text-white lg:overflow-y-auto lg:border-b-0 lg:border-r">
+        <aside className="hidden border-b border-line bg-brand-strong px-6 py-8 text-white lg:block lg:overflow-y-auto lg:border-b-0 lg:border-r">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
               {t.shell.appName}
@@ -33,7 +40,7 @@ export function AppShell({ children, user, t, viewingAllBranches }: AppShellProp
         </aside>
 
         <div className="flex min-h-screen flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
-          <header className="shrink-0 border-b border-line bg-surface/90 px-6 py-4 backdrop-blur">
+          <header className="hidden shrink-0 border-b border-line bg-surface/90 px-6 py-4 backdrop-blur lg:block">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand">

@@ -8,9 +8,10 @@ type SignOutButtonProps = {
   name: string;
   role: string;
   label: string;
+  variant?: "card" | "button";
 };
 
-export function SignOutButton({ name, role, label }: SignOutButtonProps) {
+export function SignOutButton({ name, role, label, variant = "card" }: SignOutButtonProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,6 +28,19 @@ export function SignOutButton({ name, role, label }: SignOutButtonProps) {
       router.refresh();
       setIsSubmitting(false);
     }
+  }
+
+  if (variant === "button") {
+    return (
+      <button
+        className="w-full rounded-full bg-white px-4 py-3 text-center text-sm font-semibold text-brand-strong transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+        type="button"
+        onClick={handleSignOut}
+        disabled={isSubmitting}
+      >
+        {label}
+      </button>
+    );
   }
 
   return (

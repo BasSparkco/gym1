@@ -4,6 +4,7 @@ import { MembersModule } from '../members/members.module';
 import { MembershipsModule } from '../memberships/memberships.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { VisitsModule } from '../visits/visits.module';
+import { EmployeesModule } from '../employees/employees.module';
 import { DataScopeModule } from '../../common/data-scope.module';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
@@ -15,6 +16,7 @@ import { ReportsService } from './reports.service';
     MembershipsModule,
     PaymentsModule,
     VisitsModule,
+    EmployeesModule,
     DataScopeModule,
   ],
   controllers: [ReportsController],
