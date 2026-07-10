@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { toDateOnlyString } from '../../common/date';
 import { toNumber } from '../../common/decimal';
@@ -17,7 +21,7 @@ export type CreateEmployeeInput = {
   workType?: 'fullTime' | 'partTime' | 'trainee';
   startDate?: string;
   endDate?: string;
-  isUser?: boolean;
+  coachProfile?: { specializations?: string[]; certifications?: string[] };
 };
 
 export type UpdateEmployeeInput = {
@@ -33,7 +37,6 @@ export type UpdateEmployeeInput = {
   workType?: 'fullTime' | 'partTime' | 'trainee';
   startDate?: string;
   endDate?: string;
-  isUser?: boolean;
 };
 
 function toDate(value: string | undefined): Date | undefined {
@@ -47,6 +50,7 @@ export class EmployeesService {
   async listEmployeesForTenant(tenantId: string, branchId?: string) {
     const employees = await this.prisma.employee.findMany({
       where: { tenantId, ...(branchId ? { branchId } : {}) },
+      include: { user: { select: { id: true, username: true } } },
     });
     return employees.map((e) => this.serialize(e));
   }
@@ -101,6 +105,24 @@ export class EmployeesService {
 
   async removeCoachProfile(tenantId: string, employeeId: string) {
     await this.getEmployeeForTenant(tenantId, employeeId);
+
+    // Class sessions and program defaults reference the Employee, so deleting
+    // the profile wouldn't break FKs — but it would make this coach invisible
+    // to the pickers while still being scheduled. Block until reassigned.
+    const [programCount, upcomingSessionCount] = await Promise.all([
+      this.prisma.trainingProgram.count({
+        where: { defaultCoachId: employeeId },
+      }),
+      this.prisma.classSession.count({
+        where: { coachId: employeeId, date: { gte: new Date() } },
+      }),
+    ]);
+    if (programCount > 0 || upcomingSessionCount > 0) {
+      throw new BadRequestException(
+        'This coach is still assigned to training programs or upcoming class sessions. Reassign those first.',
+      );
+    }
+
     await this.prisma.coachProfile.deleteMany({ where: { employeeId } });
   }
 
@@ -114,6 +136,7 @@ export class EmployeesService {
   async getEmployeeForTenant(tenantId: string, employeeId: string) {
     const employee = await this.prisma.employee.findFirst({
       where: { id: employeeId, tenantId },
+      include: { user: { select: { id: true, username: true } } },
     });
     if (!employee) throw new NotFoundException('Employee not found.');
     return this.serialize(employee);
@@ -153,7 +176,16 @@ export class EmployeesService {
         workType: input.workType,
         startDate: toDate(input.startDate),
         endDate: toDate(input.endDate),
-        isUser: input.isUser,
+        // Nested create keeps "employee + coach profile" atomic — no
+        // half-created coach if the request fails partway.
+        ...(input.coachProfile && {
+          coachProfile: {
+            create: {
+              specializations: input.coachProfile.specializations ?? [],
+              certifications: input.coachProfile.certifications ?? [],
+            },
+          },
+        }),
       },
     });
 
@@ -188,7 +220,6 @@ export class EmployeesService {
           startDate: toDate(input.startDate),
         }),
         ...(input.endDate !== undefined && { endDate: toDate(input.endDate) }),
-        ...(input.isUser !== undefined && { isUser: input.isUser }),
       },
     });
 
@@ -199,7 +230,9 @@ export class EmployeesService {
   // objects; the API contract (and the web app, which calls
   // `.toLocaleString()` on salary and displays dates as plain text) expects
   // a plain number and "YYYY-MM-DD" strings, same as the old JSON store.
-  private serialize(employee: Employee) {
+  private serialize(
+    employee: Employee & { user?: { id: string; username: string } | null },
+  ) {
     return {
       ...employee,
       salary: toNumber(employee.salary),

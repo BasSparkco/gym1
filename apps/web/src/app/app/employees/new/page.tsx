@@ -24,6 +24,15 @@ export default async function NewEmployeePage() {
     "use server";
     const branchId = (formData.get("branchId") as string) || session.branch.id;
     const salaryRaw = formData.get("salary") as string;
+    const isCoach = formData.get("isCoach") === "true";
+    const specializations = ((formData.get("specializations") as string) || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const certifications = ((formData.get("certifications") as string) || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const employee = await createEmployee({
       fullName: formData.get("fullName") as string,
       branchId,
@@ -36,7 +45,7 @@ export default async function NewEmployeePage() {
       workType: (formData.get("workType") as "fullTime" | "partTime" | "trainee") || undefined,
       startDate: (formData.get("startDate") as string) || undefined,
       endDate: (formData.get("endDate") as string) || undefined,
-      isUser: formData.get("isUser") === "true",
+      coachProfile: isCoach ? { specializations, certifications } : undefined,
     });
     redirect(`/app/employees/${employee.id}`);
   }
@@ -148,21 +157,35 @@ export default async function NewEmployeePage() {
             </div>
           </div>
 
-          {/* ── System access ── */}
+          {/* ── Coach profile (revealed via peer-checked, no client JS) ── */}
           <div>
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-brand">
-              {t.employees.systemAccess}
+              {t.classes.coachProfileTitle}
             </p>
-            <label className="flex cursor-pointer items-center gap-3">
-              <input type="hidden" name="isUser" value="false" />
-              <input
-                type="checkbox"
-                name="isUser"
-                value="true"
-                className="h-4 w-4 rounded border-line accent-brand"
-              />
-              <span className="text-sm">{t.employees.isUser}</span>
+            <input
+              type="checkbox"
+              id="isCoach"
+              name="isCoach"
+              value="true"
+              className="peer h-4 w-4 cursor-pointer rounded border-line align-middle accent-brand"
+            />
+            <label htmlFor="isCoach" className="ms-3 cursor-pointer align-middle text-sm">
+              {t.employees.isCoach}
             </label>
+            <div className="mt-4 hidden gap-4 peer-checked:grid sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <label htmlFor="specializations" className="text-sm font-medium">
+                  {t.classes.specializations}
+                </label>
+                <input id="specializations" name="specializations" placeholder="CrossFit, HIIT" className={inputCls} />
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="certifications" className="text-sm font-medium">
+                  {t.classes.certifications}
+                </label>
+                <input id="certifications" name="certifications" placeholder="CF-L1" className={inputCls} />
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">

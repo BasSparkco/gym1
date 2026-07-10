@@ -1,9 +1,11 @@
 "use server";
 
-import { createUser } from "@/lib/users";
+import { createUser, listUsers } from "@/lib/users";
 import { listBranches } from "@/lib/branches";
+import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import EmployeeCombobox from "@/components/employee-combobox";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { UserRole } from "@/lib/auth";
@@ -11,7 +13,24 @@ import type { UserRole } from "@/lib/auth";
 export default async function NewUserPage() {
   const session = await requireSession();
   const t = await getT();
-  const branches = await listBranches();
+
+  if (session.role !== "owner" && session.role !== "manager") {
+    redirect("/app/dashboard");
+  }
+
+  const [branches, employees, users] = await Promise.all([
+    listBranches(),
+    listEmployees(),
+    listUsers(),
+  ]);
+
+  // Only employees without an account can be linked (one account per employee).
+  const linkedEmployeeIds = new Set(
+    users.map((u) => u.employeeId).filter(Boolean),
+  );
+  const linkableEmployees = employees.filter(
+    (e) => e.status === "active" && !linkedEmployeeIds.has(e.id),
+  );
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -25,6 +44,7 @@ export default async function NewUserPage() {
       password: formData.get("password") as string,
       branchId: branchId || session.branch.id,
       branchName: selectedBranch?.name ?? session.branch.name,
+      employeeId: formData.get("employeeId") as string,
     });
     redirect(`/app/users/${user.id}`);
   }
@@ -37,7 +57,7 @@ export default async function NewUserPage() {
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.users.newStaffUser}</h1>
         <p className="mt-2 text-sm leading-7 text-foreground/70">
-          Create a staff account. Email, name, role, and password are required.
+          Create a staff account. Email, name, role, password, and a linked employee are required.
         </p>
       </section>
 
@@ -103,6 +123,26 @@ export default async function NewUserPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label className="text-sm font-medium">
+              {t.users.linkToEmployee} <span className="text-red-500">*</span>
+            </label>
+            <EmployeeCombobox
+              name="employeeId"
+              options={linkableEmployees.map((e) => ({
+                id: e.id,
+                fullName: e.fullName,
+                employeeNumber: e.employeeNumber,
+              }))}
+              placeholder={t.users.searchEmployee}
+              required
+            />
+            <p className="text-xs text-foreground/50">{t.users.linkToEmployeeHint}</p>
+            {linkableEmployees.length === 0 && (
+              <p className="text-xs text-red-600">{t.users.noLinkableEmployees}</p>
+            )}
           </div>
 
           <div className="grid gap-1.5">

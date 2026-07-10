@@ -21,6 +21,7 @@ export type Employee = {
   startDate?: string;
   endDate?: string;
   isUser?: boolean;
+  user?: { id: string; username: string } | null;
 };
 
 async function getCookieHeader() {
@@ -76,7 +77,7 @@ export async function createEmployee(data: {
   workType?: "fullTime" | "partTime" | "trainee";
   startDate?: string;
   endDate?: string;
-  isUser?: boolean;
+  coachProfile?: { specializations?: string[]; certifications?: string[] };
 }): Promise<Employee> {
   const response = await authedFetch("/employees", {
     method: "POST",
@@ -120,6 +121,12 @@ export async function upsertCoachProfile(
   return payload.coachProfile;
 }
 
+export async function removeCoachProfile(employeeId: string): Promise<void> {
+  await authedFetch(`/employees/${employeeId}/coach-profile`, {
+    method: "DELETE",
+  });
+}
+
 export async function updateEmployee(
   employeeId: string,
   data: {
@@ -135,7 +142,6 @@ export async function updateEmployee(
     workType?: "fullTime" | "partTime" | "trainee";
     startDate?: string;
     endDate?: string;
-    isUser?: boolean;
   },
 ): Promise<Employee> {
   const response = await authedFetch(`/employees/${employeeId}`, {

@@ -22,6 +22,9 @@ export type SessionUser = {
   username: string;
   name: string;
   role: 'owner' | 'manager' | 'front-desk';
+  // Employee record this account belongs to, if any — used e.g. to default a
+  // new member's "registered by" to the person doing the registration.
+  employeeId: string | null;
   tenant: {
     id: string;
     name: string;
@@ -51,6 +54,9 @@ export type CreateUserInput = {
   password: string;
   branchId: string;
   branchName: string;
+  // Every account must be linked to an employee record (enforced below) —
+  // an account is always someone's staff identity, not a standalone login.
+  employeeId: string;
 };
 
 export type UpdateUserInput = {
@@ -59,6 +65,8 @@ export type UpdateUserInput = {
   branchId?: string;
   branchName?: string;
   password?: string;
+  // string = link to that employee, null = unlink, undefined = no change
+  employeeId?: string | null;
 };
 
 // Prisma enum values can't contain hyphens, so 'front-desk' is stored as
@@ -278,24 +286,58 @@ export class AuthService {
       throw new BadRequestException('A user with this email already exists.');
     }
 
+    if (!input.employeeId) {
+      throw new BadRequestException(
+        'A user account must be linked to an employee.',
+      );
+    }
+    await this.assertEmployeeLinkable(tenantId, input.employeeId);
+
     const username = email.split('@')[0];
 
-    const newUser = await this.prisma.user.create({
-      data: {
-        id: `user-${randomUUID()}`,
-        tenantId,
-        email,
-        username,
-        name: input.name.trim(),
-        role: ROLE_TO_DB[input.role],
-        passwordHash: this.hashPassword(input.password),
-        branchId: input.branchId,
-        branchName: input.branchName,
-      },
-      include: { tenant: true },
+    const newUser = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          id: `user-${randomUUID()}`,
+          tenantId,
+          email,
+          username,
+          name: input.name.trim(),
+          role: ROLE_TO_DB[input.role],
+          passwordHash: this.hashPassword(input.password),
+          branchId: input.branchId,
+          branchName: input.branchName,
+          employeeId: input.employeeId,
+        },
+        include: { tenant: true },
+      });
+
+      await tx.employee.update({
+        where: { id: input.employeeId },
+        data: { isUser: true },
+      });
+
+      return user;
     });
 
     return this.toSessionUser(newUser);
+  }
+
+  // An employee can be linked to at most one account (also enforced by the
+  // unique index on User.employeeId) and must belong to the caller's tenant.
+  private async assertEmployeeLinkable(tenantId: string, employeeId: string) {
+    const employee = await this.prisma.employee.findFirst({
+      where: { id: employeeId, tenantId },
+      include: { user: { select: { id: true } } },
+    });
+    if (!employee) {
+      throw new BadRequestException('Employee not found.');
+    }
+    if (employee.user) {
+      throw new BadRequestException(
+        'This employee is already linked to a user account.',
+      );
+    }
   }
 
   async syncBranchNameForUsers(
@@ -342,20 +384,53 @@ export class AuthService {
       throw new NotFoundException('User not found.');
     }
 
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(input.name !== undefined && { name: input.name.trim() }),
-        ...(input.role !== undefined && { role: ROLE_TO_DB[input.role] }),
-        ...(input.branchId !== undefined && { branchId: input.branchId }),
-        ...(input.branchName !== undefined && {
-          branchName: input.branchName,
-        }),
-        ...(input.password !== undefined && {
-          passwordHash: this.hashPassword(input.password),
-        }),
-      },
-      include: { tenant: true },
+    if (input.employeeId === null) {
+      throw new BadRequestException(
+        'A user account must stay linked to an employee.',
+      );
+    }
+
+    const employeeIdChanged =
+      input.employeeId !== undefined && input.employeeId !== existing.employeeId;
+
+    if (employeeIdChanged && input.employeeId) {
+      await this.assertEmployeeLinkable(tenantId, input.employeeId);
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { id: userId },
+        data: {
+          ...(input.name !== undefined && { name: input.name.trim() }),
+          ...(input.role !== undefined && { role: ROLE_TO_DB[input.role] }),
+          ...(input.branchId !== undefined && { branchId: input.branchId }),
+          ...(input.branchName !== undefined && {
+            branchName: input.branchName,
+          }),
+          ...(input.password !== undefined && {
+            passwordHash: this.hashPassword(input.password),
+          }),
+          ...(employeeIdChanged && { employeeId: input.employeeId }),
+        },
+        include: { tenant: true },
+      });
+
+      if (employeeIdChanged) {
+        if (existing.employeeId) {
+          await tx.employee.update({
+            where: { id: existing.employeeId },
+            data: { isUser: false },
+          });
+        }
+        if (input.employeeId) {
+          await tx.employee.update({
+            where: { id: input.employeeId },
+            data: { isUser: true },
+          });
+        }
+      }
+
+      return user;
     });
 
     return this.toSessionUser(updated);
@@ -371,6 +446,7 @@ export class AuthService {
     tenant: { name: string };
     branchId: string;
     branchName: string;
+    employeeId: string | null;
   }): SessionUser {
     return {
       id: user.id,
@@ -378,6 +454,7 @@ export class AuthService {
       username: user.username,
       name: user.name,
       role: ROLE_FROM_DB[user.role],
+      employeeId: user.employeeId,
       tenant: { id: user.tenantId, name: user.tenant.name },
       branch: { id: user.branchId, name: user.branchName },
     };

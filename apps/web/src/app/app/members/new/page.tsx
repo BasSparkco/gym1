@@ -11,7 +11,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function NewMemberPage() {
-  await requireSession();
+  const session = await requireSession();
   const t = await getT();
   const [branches, employees, settings] = await Promise.all([listBranches(), listEmployees(), getSettings()]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
@@ -151,7 +151,12 @@ export default async function NewMemberPage() {
 
               <div className="grid gap-1.5 sm:col-span-2">
                 <label htmlFor="registeredEmployeeId" className="text-sm font-medium">{t.members.registeredEmployee}</label>
-                <select id="registeredEmployeeId" name="registeredEmployeeId" className={inputClass}>
+                <select
+                  id="registeredEmployeeId"
+                  name="registeredEmployeeId"
+                  defaultValue={session.employeeId ?? ""}
+                  className={inputClass}
+                >
                   <option value="">—</option>
                   {employees.map((e) => (
                     <option key={e.id} value={e.id}>{e.fullName} ({e.employeeNumber})</option>

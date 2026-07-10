@@ -1,6 +1,12 @@
 "use server";
 
-import { getEmployee, updateEmployee, getCoachProfile, upsertCoachProfile } from "@/lib/employees";
+import {
+  getEmployee,
+  updateEmployee,
+  getCoachProfile,
+  upsertCoachProfile,
+  removeCoachProfile,
+} from "@/lib/employees";
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
@@ -47,22 +53,23 @@ export default async function EmployeeDetailPage({ params }: Props) {
       workType: (formData.get("workType") as "fullTime" | "partTime" | "trainee") || undefined,
       startDate: (formData.get("startDate") as string) || undefined,
       endDate: (formData.get("endDate") as string) || undefined,
-      isUser: formData.get("isUser") === "true",
     });
-    redirect(`/app/employees/${employeeId}`);
-  }
 
-  async function handleSaveCoachProfile(formData: FormData) {
-    "use server";
-    const specializations = ((formData.get("specializations") as string) || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const certifications = ((formData.get("certifications") as string) || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    await upsertCoachProfile(employeeId, { specializations, certifications });
+    const isCoach = formData.get("isCoach") === "true";
+    if (isCoach) {
+      const specializations = ((formData.get("specializations") as string) || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const certifications = ((formData.get("certifications") as string) || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      await upsertCoachProfile(employeeId, { specializations, certifications });
+    } else if (coachProfile) {
+      await removeCoachProfile(employeeId);
+    }
+
     redirect(`/app/employees/${employeeId}`);
   }
 
@@ -207,22 +214,48 @@ export default async function EmployeeDetailPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* System access */}
+              {/* Coach profile (revealed via peer-checked, no client JS) */}
               <div>
                 <p className="mb-3 text-xs font-medium text-foreground/50 uppercase tracking-wider">
-                  {t.employees.systemAccess}
+                  {t.classes.coachProfileTitle}
                 </p>
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input type="hidden" name="isUser" value="false" />
-                  <input
-                    type="checkbox"
-                    name="isUser"
-                    value="true"
-                    defaultChecked={employee.isUser === true}
-                    className="h-4 w-4 rounded border-line accent-brand"
-                  />
-                  <span className="text-sm">{t.employees.isUser}</span>
+                <input
+                  type="checkbox"
+                  id="isCoach"
+                  name="isCoach"
+                  value="true"
+                  defaultChecked={coachProfile !== null}
+                  className="peer h-4 w-4 cursor-pointer rounded border-line align-middle accent-brand"
+                />
+                <label htmlFor="isCoach" className="ms-3 cursor-pointer align-middle text-sm">
+                  {t.employees.isCoach}
                 </label>
+                <div className="mt-4 hidden gap-4 peer-checked:grid sm:grid-cols-2">
+                  <div className="grid gap-1.5">
+                    <label htmlFor="specializations" className="text-sm font-medium">
+                      {t.classes.specializations}
+                    </label>
+                    <input
+                      id="specializations"
+                      name="specializations"
+                      defaultValue={(coachProfile?.specializations ?? []).join(", ")}
+                      placeholder="CrossFit, HIIT"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <label htmlFor="certifications" className="text-sm font-medium">
+                      {t.classes.certifications}
+                    </label>
+                    <input
+                      id="certifications"
+                      name="certifications"
+                      defaultValue={(coachProfile?.certifications ?? []).join(", ")}
+                      placeholder="CF-L1"
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-1">
@@ -302,59 +335,36 @@ export default async function EmployeeDetailPage({ params }: Props) {
                   <dd className="mt-0.5 font-medium">{employee.endDate}</dd>
                 </div>
               )}
-              <div>
-                <dt className="text-foreground/55">{t.employees.isUser}</dt>
-                <dd className="mt-0.5 font-medium">{employee.isUser ? t.plans.yes : t.plans.no}</dd>
-              </div>
             </dl>
           )}
         </section>
 
-        {/* ── Coach profile ── */}
+        {/* ── System access (read-only; account creation happens on the Users page) ── */}
         <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
-            {t.classes.coachProfileTitle}
+            {t.employees.systemAccess}
           </p>
-          {!coachProfile && (
-            <p className="mt-2 text-sm text-foreground/60">{t.classes.notACoach}</p>
-          )}
-          {canEdit ? (
-            <form action={handleSaveCoachProfile} className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-1.5">
-                <label htmlFor="specializations" className="text-sm font-medium">
-                  {t.classes.specializations}
-                </label>
-                <input
-                  id="specializations"
-                  name="specializations"
-                  defaultValue={(coachProfile?.specializations ?? []).join(", ")}
-                  placeholder="CrossFit, HIIT"
-                  className={inputCls}
-                />
+          <dl className="mt-4 grid gap-3 text-sm">
+            <div>
+              <dt className="text-foreground/55">{t.employees.isUser}</dt>
+              <dd className="mt-0.5 font-medium">{employee.user ? t.plans.yes : t.plans.no}</dd>
+            </div>
+            {employee.user && (
+              <div>
+                <dt className="text-foreground/55">{t.users.username}</dt>
+                <dd className="mt-0.5 font-mono">{employee.user.username}</dd>
               </div>
-              <div className="grid gap-1.5">
-                <label htmlFor="certifications" className="text-sm font-medium">
-                  {t.classes.certifications}
-                </label>
-                <input
-                  id="certifications"
-                  name="certifications"
-                  defaultValue={(coachProfile?.certifications ?? []).join(", ")}
-                  placeholder="CF-L1"
-                  className={inputCls}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <button
-                  type="submit"
-                  className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
-                >
-                  {t.classes.saveCoachProfile}
-                </button>
-              </div>
-            </form>
-          ) : (
-            coachProfile && (
+            )}
+          </dl>
+        </section>
+
+        {/* ── Coach profile (read-only; editing happens in the form above) ── */}
+        {!canEdit && (
+          <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
+              {t.classes.coachProfileTitle}
+            </p>
+            {coachProfile ? (
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-foreground/55">{t.classes.specializations}</dt>
@@ -365,9 +375,11 @@ export default async function EmployeeDetailPage({ params }: Props) {
                   <dd className="mt-0.5 font-medium">{coachProfile.certifications.join(", ") || "—"}</dd>
                 </div>
               </dl>
-            )
-          )}
-        </section>
+            ) : (
+              <p className="mt-2 text-sm text-foreground/60">{t.classes.notACoach}</p>
+            )}
+          </section>
+        )}
 
         {/* ── System info + status toggle ── */}
         <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">

@@ -91,7 +91,14 @@ export class MembersController {
       member: await this.membersService.createMember(
         session.user.tenant.id,
         session.user.branch.id,
-        body,
+        {
+          ...body,
+          // Default attribution to the registering user's own employee
+          // record so API-created members are attributed too, not only
+          // form submissions where the UI pre-selects it.
+          registeredEmployeeId:
+            body.registeredEmployeeId ?? session.user.employeeId ?? undefined,
+        },
       ),
     };
   }

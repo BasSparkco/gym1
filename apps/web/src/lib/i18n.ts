@@ -316,6 +316,13 @@ export type Dict = {
     viewRoles: string;
     userId: string;
     tenant: string;
+    linkToEmployee: string;
+    linkToEmployeeHint: string;
+    noLinkableEmployees: string;
+    searchEmployee: string;
+    linkedEmployee: string;
+    notLinked: string;
+    editLink: string;
   };
   roles: {
     title: string;
@@ -362,6 +369,7 @@ export type Dict = {
     startDate: string;
     endDate: string;
     isUser: string;
+    isCoach: string;
   };
   notifications: {
     title: string;
@@ -890,6 +898,13 @@ const en: Dict = {
     viewRoles: "View roles and permissions →",
     userId: "User ID",
     tenant: "Tenant",
+    linkToEmployee: "Link to employee record",
+    linkToEmployeeHint: "Required — every account must be linked to an employee so their actions (e.g. member registrations) are attributed to them.",
+    noLinkableEmployees: "No employees available to link. Create an employee first.",
+    searchEmployee: "Search by name or employee number…",
+    linkedEmployee: "Linked employee",
+    notLinked: "Not linked to an employee",
+    editLink: "Change linked employee",
   },
   roles: {
     title: "Roles",
@@ -936,6 +951,7 @@ const en: Dict = {
     startDate: "Start date",
     endDate: "End date",
     isUser: "Has system user account",
+    isCoach: "This employee is a coach (can be booked for classes)",
   },
   notifications: {
     title: "Notifications",
@@ -1464,6 +1480,13 @@ const ar: Dict = {
     viewRoles: "عرض الأدوار والصلاحيات ←",
     userId: "معرف المستخدم",
     tenant: "المستأجر",
+    linkToEmployee: "ربط بسجل موظف",
+    linkToEmployeeHint: "مطلوب — يجب ربط كل حساب بموظف بحيث تُنسب إجراءاته (مثل تسجيل الأعضاء) إليه.",
+    noLinkableEmployees: "لا يوجد موظفون متاحون للربط. أنشئ موظفًا أولاً.",
+    searchEmployee: "ابحث بالاسم أو رقم الموظف…",
+    linkedEmployee: "الموظف المرتبط",
+    notLinked: "غير مرتبط بموظف",
+    editLink: "تغيير الموظف المرتبط",
   },
   roles: {
     title: "الأدوار",
@@ -1510,6 +1533,7 @@ const ar: Dict = {
     startDate: "تاريخ بدء العمل",
     endDate: "تاريخ انتهاء العمل",
     isUser: "لديه حساب مستخدم في النظام",
+    isCoach: "هذا الموظف مدرب (يمكن حجزه للحصص)",
   },
   notifications: {
     title: "الإشعارات",
@@ -2038,6 +2062,13 @@ const he: Dict = {
     viewRoles: "הצג תפקידים והרשאות ←",
     userId: "מזהה משתמש",
     tenant: "דייר",
+    linkToEmployee: "קישור לרשומת עובד",
+    linkToEmployeeHint: "שדה חובה — כל חשבון חייב להיות מקושר לעובד כך שפעולותיו (למשל רישום מנויים) ייוחסו לו.",
+    noLinkableEmployees: "אין עובדים זמינים לקישור. צור עובד קודם.",
+    searchEmployee: "חיפוש לפי שם או מספר עובד…",
+    linkedEmployee: "עובד מקושר",
+    notLinked: "לא מקושר לעובד",
+    editLink: "שינוי העובד המקושר",
   },
   roles: {
     title: "תפקידים",
@@ -2084,6 +2115,7 @@ const he: Dict = {
     startDate: "תאריך תחילת עבודה",
     endDate: "תאריך סיום עבודה",
     isUser: "בעל חשבון משתמש במערכת",
+    isCoach: "עובד זה הוא מאמן (ניתן לשבץ אותו לשיעורים)",
   },
   notifications: {
     title: "התראות",

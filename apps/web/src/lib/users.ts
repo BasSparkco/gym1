@@ -10,6 +10,7 @@ export type StaffUser = {
   username: string;
   name: string;
   role: UserRole;
+  employeeId: string | null;
   tenant: { id: string; name: string };
   branch: { id: string; name: string };
 };
@@ -68,6 +69,7 @@ export async function createUser(data: {
   password: string;
   branchId: string;
   branchName: string;
+  employeeId: string;
 }): Promise<StaffUser> {
   const response = await authedFetch("/users", {
     method: "POST",
@@ -85,6 +87,7 @@ export async function updateUser(
     branchId?: string;
     branchName?: string;
     password?: string;
+    employeeId?: string | null;
   }
 ): Promise<StaffUser> {
   const response = await authedFetch(`/users/${userId}`, {

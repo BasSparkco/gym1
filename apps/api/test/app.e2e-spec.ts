@@ -551,6 +551,7 @@ describe('API (e2e)', () => {
         password: 'manager123',
         branchId: 'Platinum Fitness',
         branchName: 'Ramallah Main Branch',
+        employeeId: 'emp-001',
       })
       .expect(201);
 

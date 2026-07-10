@@ -69,6 +69,11 @@ export default async function EmployeesPage() {
                 <p className="mt-0.5 text-sm text-foreground/45">
                   {t.employees.branch}: {branchMap.get(emp.branchId) ?? emp.branchId}
                 </p>
+                {emp.user && (
+                  <p className="mt-0.5 text-sm text-foreground/45">
+                    {t.users.username}: <span className="font-mono">{emp.user.username}</span>
+                  </p>
+                )}
               </div>
               <Link
                 href={`/app/employees/${emp.id}`}

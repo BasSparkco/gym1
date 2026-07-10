@@ -1,4 +1,5 @@
 import { listUsers } from "@/lib/users";
+import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import Link from "next/link";
@@ -6,7 +7,8 @@ import Link from "next/link";
 export default async function UsersPage() {
   const session = await requireSession();
   const t = await getT();
-  const users = await listUsers();
+  const [users, employees] = await Promise.all([listUsers(), listEmployees()]);
+  const employeeMap = new Map(employees.map((e) => [e.id, e.fullName]));
   const canCreate = session.role === "owner";
 
   return (
@@ -62,6 +64,14 @@ export default async function UsersPage() {
                 <p className="mt-1 text-sm text-foreground/55">{user.email}</p>
                 <p className="mt-0.5 text-sm text-foreground/45">
                   {t.users.homeBranch}: {user.branch.name}
+                </p>
+                <p className="mt-0.5 text-sm text-foreground/45">
+                  {t.users.linkedEmployee}:{" "}
+                  {user.employeeId ? (
+                    employeeMap.get(user.employeeId) ?? "—"
+                  ) : (
+                    <span className="font-medium text-red-600">{t.users.notLinked}</span>
+                  )}
                 </p>
               </div>
               {user.id !== session.id && (

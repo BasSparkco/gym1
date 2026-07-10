@@ -6,6 +6,7 @@ export type SessionUser = {
   username: string;
   name: string;
   role: UserRole;
+  employeeId: string | null;
   tenant: {
     id: string;
     name: string;

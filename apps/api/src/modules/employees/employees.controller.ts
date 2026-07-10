@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -26,7 +27,7 @@ type CreateEmployeeRequestBody = {
   workType?: 'fullTime' | 'partTime' | 'trainee';
   startDate?: string;
   endDate?: string;
-  isUser?: boolean;
+  coachProfile?: { specializations?: string[]; certifications?: string[] };
 };
 
 type UpdateEmployeeRequestBody = {
@@ -42,7 +43,6 @@ type UpdateEmployeeRequestBody = {
   workType?: 'fullTime' | 'partTime' | 'trainee';
   startDate?: string;
   endDate?: string;
-  isUser?: boolean;
 };
 
 @Controller('employees')
@@ -87,7 +87,7 @@ export class EmployeesController {
           workType: body.workType,
           startDate: body.startDate,
           endDate: body.endDate,
-          isUser: body.isUser,
+          coachProfile: body.coachProfile,
         },
       ),
     };
@@ -148,6 +148,20 @@ export class EmployeesController {
         body,
       ),
     };
+  }
+
+  @Delete(':employeeId/coach-profile')
+  async removeCoachProfile(
+    @Req() request: Request,
+    @Param('employeeId') employeeId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+    await this.employeesService.removeCoachProfile(
+      session.user.tenant.id,
+      employeeId,
+    );
+    return { ok: true };
   }
 
   @Patch(':employeeId')

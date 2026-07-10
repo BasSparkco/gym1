@@ -20,6 +20,7 @@ type CreateUserRequestBody = {
   password?: string;
   branchId?: string;
   branchName?: string;
+  employeeId?: string;
 };
 
 type UpdateUserRequestBody = {
@@ -28,6 +29,7 @@ type UpdateUserRequestBody = {
   branchId?: string;
   branchName?: string;
   password?: string;
+  employeeId?: string | null;
 };
 
 const MVP_ROLES = [
@@ -95,6 +97,7 @@ export class UsersController {
           password: body.password ?? '',
           branchId: body.branchId ?? session.user.branch.id,
           branchName: body.branchName ?? session.user.branch.name,
+          employeeId: body.employeeId ?? '',
         },
       ),
     };
