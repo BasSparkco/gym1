@@ -1,4 +1,8 @@
 import { getMembershipPlan } from "@/lib/membership-plans";
+import {
+  getEntitledProgramIds,
+  listTrainingPrograms,
+} from "@/lib/training-programs";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getActiveCurrencySymbol } from "@/lib/currency";
@@ -10,10 +14,15 @@ export default async function MembershipPlanPage({ params }: Props) {
   const { planId } = await params;
   const session = await requireSession();
   const t = await getT();
-  const [plan, currencySymbol] = await Promise.all([
+  const [plan, currencySymbol, entitledIds] = await Promise.all([
     getMembershipPlan(planId),
     getActiveCurrencySymbol(session.branch.id),
+    getEntitledProgramIds(planId),
   ]);
+  const entitledPrograms =
+    entitledIds === "all"
+      ? []
+      : (await listTrainingPrograms()).filter((p) => entitledIds.includes(p.id));
 
   const durationLabel = plan.planType === "duration"
     ? (() => {
@@ -78,6 +87,18 @@ export default async function MembershipPlanPage({ params }: Props) {
             <div>
               <dt className="text-foreground/55">{t.plans.branchAccess}</dt>
               <dd className="mt-0.5 font-medium">{plan.allowAllBranches ? t.plans.allBranches : t.plans.homeBranchOnly}</dd>
+            </div>
+            <div>
+              <dt className="text-foreground/55">{t.plans.programAccess}</dt>
+              <dd className="mt-0.5 font-medium">
+                {entitledIds === "all" ? (
+                  t.plans.allPrograms
+                ) : entitledPrograms.length === 0 ? (
+                  <span className="text-red-600">{t.plans.noProgramsSelected}</span>
+                ) : (
+                  entitledPrograms.map((p) => p.name).join(", ")
+                )}
+              </dd>
             </div>
           </dl>
         </article>

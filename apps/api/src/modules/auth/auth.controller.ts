@@ -7,7 +7,9 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 
@@ -22,6 +24,8 @@ export class AuthController {
 
   @Post('sign-in')
   @HttpCode(200)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async signIn(
     @Body() body: SignInRequestBody,
     @Res({ passthrough: true }) response: Response,

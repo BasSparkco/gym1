@@ -6,7 +6,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { requireRole } from '../../common/require-role';
 import { AuthService } from '../auth/auth.service';
+import type { SessionUser } from '../auth/auth.service';
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
@@ -24,13 +26,13 @@ export class ReportsController {
 
   @Get('active-memberships')
   async getActiveMemberships(@Req() request: Request) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getActiveMembershipsReport(session.user);
   }
 
   @Get('expired-memberships')
   async getExpiredMemberships(@Req() request: Request) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getExpiredMembershipsReport(session.user);
   }
 
@@ -40,7 +42,7 @@ export class ReportsController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
   ) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getVisitsReport(session.user, dateFrom, dateTo);
   }
 
@@ -50,7 +52,7 @@ export class ReportsController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
   ) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getPaymentsReport(
       session.user,
       dateFrom,
@@ -60,7 +62,7 @@ export class ReportsController {
 
   @Get('members-by-sex')
   async getMembersBySex(@Req() request: Request) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getMembersBySexReport(session.user);
   }
 
@@ -71,7 +73,7 @@ export class ReportsController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
   ) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getRegistrationsByEmployeeReport(
       session.user,
       employeeId,
@@ -86,7 +88,7 @@ export class ReportsController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
   ) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getPlanPerformanceReport(
       session.user,
       dateFrom,
@@ -96,7 +98,7 @@ export class ReportsController {
 
   @Get('membership-status-breakdown')
   async getMembershipStatusBreakdown(@Req() request: Request) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getMembershipStatusBreakdownReport(
       session.user,
     );
@@ -107,7 +109,7 @@ export class ReportsController {
     @Req() request: Request,
     @Query('days') days?: string,
   ) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getExpiringSoonReport(
       session.user,
       days ? Number(days) : undefined,
@@ -119,7 +121,7 @@ export class ReportsController {
     @Req() request: Request,
     @Query('days') days?: string,
   ) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getUpcomingBirthdaysReport(
       session.user,
       days ? Number(days) : undefined,
@@ -132,7 +134,7 @@ export class ReportsController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
   ) {
-    const session = await this.getRequiredSession(request.headers.cookie);
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
     return this.reportsService.getNewMembersGrowthReport(
       session.user,
       dateFrom,
@@ -140,12 +142,19 @@ export class ReportsController {
     );
   }
 
-  private async getRequiredSession(cookieHeader: string | undefined) {
+  private async getRequiredSession(
+    cookieHeader: string | undefined,
+    roles?: Array<SessionUser['role']>,
+  ) {
     const session =
       await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
 
     if (!session) {
       throw new UnauthorizedException('Authentication required.');
+    }
+
+    if (roles) {
+      requireRole(session.user, roles);
     }
 
     return session;

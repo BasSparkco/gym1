@@ -1,4 +1,4 @@
-import type { NotificationChannel } from '../../../data/operations-store';
+import type { NotificationChannel } from '../../../data/operations-seed';
 
 export type NotificationDeliveryInput = {
   channel: NotificationChannel;

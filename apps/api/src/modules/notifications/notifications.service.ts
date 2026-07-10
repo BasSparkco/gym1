@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { localDateString, toDateOnlyString } from '../../common/date';
-import { getDefaultTenantSettings, NotificationSettings } from '../../data/settings-store';
+import { getDefaultTenantSettings, NotificationSettings } from '../../data/settings-seed';
 import { NotificationDispatchService } from './notification-dispatch.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationChannel, NotificationEvent } from '../../generated/prisma/client';

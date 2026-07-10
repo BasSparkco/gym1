@@ -1,21 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { existsSync, mkdirSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import { PrismaPg } from '@prisma/adapter-pg';
 import Redis from 'ioredis';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import { addDays, localDateString } from '../src/common/date';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { resetPrismaTestData } from './prisma-test-utils';
 
-// Member photo uploads now go through MinIO, not this directory. This still
-// isolates the .local/ paths some not-yet-Prisma-converted code reads via
-// API_DATA_ROOT (e.g. operations-store.ts) from the real .local/ directory on
-// the host machine — nothing else reads/writes here.
-const testDataRoot = join(tmpdir(), `gym-e2e-${process.pid}`);
+// "Today" in the server's local timezone, plus relative offsets — tests that
+// exercise current-status behavior (active membership checks, today's
+// dashboard counts) must not hardcode absolute dates, or they start failing
+// as real time passes the fixture dates.
+const today = localDateString();
+const daysFromToday = (days: number) => addDays(today, days);
 
 describe('API (e2e)', () => {
   let app: INestApplication;
@@ -31,9 +30,6 @@ describe('API (e2e)', () => {
   }
 
   beforeEach(async () => {
-    process.env.API_DATA_ROOT = testDataRoot;
-    mkdirSync(testDataRoot, { recursive: true });
-
     await resetPrismaTestData(testPrisma, testRedis);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -53,10 +49,6 @@ describe('API (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (existsSync(testDataRoot)) {
-      rmSync(testDataRoot, { recursive: true, force: true });
-    }
-    delete process.env.API_DATA_ROOT;
     await testPrisma.$disconnect();
     testRedis.disconnect();
   });
@@ -167,11 +159,14 @@ describe('API (e2e)', () => {
       branchId: 'Platinum Fitness',
       role: 'front-desk',
     });
+    // Front-desk scope is the Platinum Fitness branch: 4 of the 5 seeded
+    // active memberships belong to members homed there. Seed visits/payments
+    // are in the past, so today's counters start at zero.
     expect(dashboardSummaryBody.cards).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           label: 'Active memberships',
-          value: '5',
+          value: '4',
         }),
         expect.objectContaining({
           label: "Today's check-ins",
@@ -179,7 +174,7 @@ describe('API (e2e)', () => {
         }),
         expect.objectContaining({
           label: 'Payments today',
-          value: '$0',
+          value: '₪0',
         }),
       ]),
     );
@@ -228,8 +223,8 @@ describe('API (e2e)', () => {
       .send({
         memberId: createdMemberBody.member.id,
         planId: 'plan-monthly-flex',
-        startDate: '2026-06-05',
-        endDate: '2026-06-12',
+        startDate: today,
+        endDate: daysFromToday(7),
         status: 'active',
         finalPrice: 130,
       })
@@ -306,7 +301,7 @@ describe('API (e2e)', () => {
       expect.arrayContaining([
         expect.objectContaining({
           label: 'Active memberships',
-          value: '6',
+          value: '5',
         }),
         expect.objectContaining({
           label: "Today's check-ins",
@@ -314,7 +309,7 @@ describe('API (e2e)', () => {
         }),
         expect.objectContaining({
           label: 'Payments today',
-          value: '$130',
+          value: '₪130',
         }),
       ]),
     );
@@ -348,9 +343,11 @@ describe('API (e2e)', () => {
       };
     };
 
+    // Member status is derived from having an active/frozen membership; a
+    // brand-new member has none yet.
     expect(createdMemberBody.member).toMatchObject({
       fullName: 'Nour Mansour',
-      status: 'active',
+      status: 'inactive',
     });
     expect(createdMemberBody.member.memberNumber).toMatch(/^MEM-\d{4}$/);
 
@@ -372,7 +369,7 @@ describe('API (e2e)', () => {
       id: createdMemberBody.member.id,
       fullName: 'Nour Mansour',
       memberNumber: createdMemberBody.member.memberNumber,
-      status: 'active',
+      status: 'inactive',
     });
 
     const updateMemberResponse = await request(getHttpServer())
@@ -665,7 +662,7 @@ describe('API (e2e)', () => {
       .send({
         memberId,
         planId: 'plan-monthly-flex',
-        startDate: '2026-06-05',
+        startDate: today,
         status: 'active',
       })
       .expect(201);
@@ -682,7 +679,7 @@ describe('API (e2e)', () => {
 
     expect(membershipBody.membership.memberId).toBe(memberId);
     expect(membershipBody.membership.status).toBe('active');
-    expect(membershipBody.membership.endDate).toBe('2026-07-05');
+    expect(membershipBody.membership.endDate).toBe(daysFromToday(30));
     expect(membershipBody.membership.finalPrice).toBe(120);
 
     const memberMembershipsResponse = await request(getHttpServer())
@@ -729,7 +726,7 @@ describe('API (e2e)', () => {
       .send({
         memberId,
         planId: 'plan-monthly-flex',
-        startDate: '2026-06-05',
+        startDate: today,
         status: 'active',
       })
       .expect(201);
@@ -740,7 +737,7 @@ describe('API (e2e)', () => {
       .send({
         memberId,
         planId: 'plan-ramallah-standard',
-        startDate: '2026-06-05',
+        startDate: today,
         status: 'active',
       })
       .expect(400);
@@ -978,7 +975,7 @@ describe('API (e2e)', () => {
       .send({
         memberId,
         planId: 'plan-ramallah-standard',
-        startDate: '2026-06-01',
+        startDate: today,
       })
       .expect(201);
 
@@ -995,6 +992,7 @@ describe('API (e2e)', () => {
       notificationsResponse.body as {
         notifications: Array<{
           memberId: string;
+          channel: string;
           event?: string;
           relatedId?: string;
           status: string;
@@ -1002,11 +1000,15 @@ describe('API (e2e)', () => {
       }
     ).notifications;
 
+    // The event fans out to every enabled channel; the member only has a
+    // phone on file, so assert on the whatsapp attempt specifically (the
+    // email one legitimately fails with no address).
     const raised = notifications.find(
       (n) =>
         n.memberId === memberId &&
         n.event === 'membershipActivated' &&
-        n.relatedId === membershipId,
+        n.relatedId === membershipId &&
+        n.channel === 'whatsapp',
     );
 
     expect(raised).toBeDefined();
@@ -1118,11 +1120,25 @@ describe('API (e2e)', () => {
   });
 
   it('returns active memberships report scoped to tenant', async () => {
-    const signInResponse = await request(getHttpServer())
+    // Reports (beyond the dashboard summary) are owner/manager-only.
+    const frontDeskSignIn = await request(getHttpServer())
       .post('/api/auth/sign-in')
       .send({
         identifier: 'frontdesk@sparkgym.local',
         password: 'frontdesk123',
+      })
+      .expect(200);
+
+    await request(getHttpServer())
+      .get('/api/reports/active-memberships')
+      .set('Cookie', frontDeskSignIn.get('Set-Cookie'))
+      .expect(403);
+
+    const signInResponse = await request(getHttpServer())
+      .post('/api/auth/sign-in')
+      .send({
+        identifier: 'owner@sparkgym.local',
+        password: 'owner123',
       })
       .expect(200);
 
@@ -1153,8 +1169,8 @@ describe('API (e2e)', () => {
     const signInResponse = await request(getHttpServer())
       .post('/api/auth/sign-in')
       .send({
-        identifier: 'frontdesk@sparkgym.local',
-        password: 'frontdesk123',
+        identifier: 'owner@sparkgym.local',
+        password: 'owner123',
       })
       .expect(200);
 

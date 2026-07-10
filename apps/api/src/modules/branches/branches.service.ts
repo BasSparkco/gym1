@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { BranchRecord } from '../../data/operations-store';
+import { BranchRecord } from '../../data/operations-seed';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isValidCurrencyCode } from '../../common/currencies';
 

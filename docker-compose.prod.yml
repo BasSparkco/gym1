@@ -63,6 +63,7 @@ services:
     restart: unless-stopped
     env_file: apps/api/.env
     environment:
+      NODE_ENV: "production"
       PORT: "3002"
       FRONTEND_ORIGIN: "https://${DOMAIN}"
       DATABASE_URL: "postgresql://gym:${POSTGRES_PASSWORD}@db:5432/gym?schema=public"
@@ -72,8 +73,6 @@ services:
       MINIO_USE_SSL: "false"
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - api-data:/app/.local
     depends_on:
       db:
         condition: service_healthy
@@ -118,7 +117,6 @@ services:
       - "traefik.http.services.gym-web.loadbalancer.server.port=3001"
 
 volumes:
-  api-data:
   postgres-data:
   redis-data:
   minio-data:

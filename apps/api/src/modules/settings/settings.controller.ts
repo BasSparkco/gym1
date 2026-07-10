@@ -13,7 +13,7 @@ import { SettingsService } from './settings.service';
 import type {
   NotificationSenderSettings,
   NotificationSettings,
-} from '../../data/settings-store';
+} from '../../data/settings-seed';
 
 type UpdateSettingsRequestBody = {
   defaultLanguage?: string;

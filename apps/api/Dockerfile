@@ -27,8 +27,8 @@ WORKDIR /app
 
 COPY --from=builder /api-prod .
 
-# .local/ is mounted as a Docker volume at runtime (upload storage only —
-# member profile pictures; data persistence now lives in Postgres).
+# All persistence is external: Postgres (data), Redis (sessions), MinIO
+# (member photos) — no volumes are mounted into this container.
 # prisma/schema.prisma + prisma/migrations/ are included by `pnpm deploy` from
 # the package directory. `prisma` ships as a runtime (not dev) dependency
 # specifically so `prisma migrate deploy` is available in this slim image.

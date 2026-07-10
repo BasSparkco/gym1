@@ -1,13 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-
-const API_ROOT_PATH = join(__dirname, '..', '..');
-const SETTINGS_SEED_PATH = join(API_ROOT_PATH, 'data', 'settings-seed.json');
-const SETTINGS_STORE_PATH = join(
-  API_ROOT_PATH,
-  '.local',
-  'settings-store.json',
-);
+/**
+ * Tenant-settings types plus the default settings a new tenant starts with
+ * (also used by the e2e test reset). The JSON-file store this module used to
+ * manage was replaced by Postgres/Prisma in July 2026; only the shared types
+ * and defaults remain.
+ */
 
 export type Language = 'en' | 'ar' | 'he';
 
@@ -58,10 +54,6 @@ export type TenantSettingsRecord = {
   reportingCurrencyCode: string;
 };
 
-type SettingsStoreData = {
-  tenants: TenantSettingsRecord[];
-};
-
 const defaultNotificationSettings: NotificationSettings = {
   membershipExpiring: {
     enabled: true,
@@ -78,38 +70,11 @@ const defaultNotificationSettings: NotificationSettings = {
   },
   membershipActivated: {
     enabled: true,
-    channels: { sms: false, whatsapp: false, email: true },
+    channels: { sms: false, whatsapp: true, email: true },
   },
 };
 
 const defaultNotificationSenders: NotificationSenderSettings = {};
-
-const defaultSettings: SettingsStoreData = {
-  tenants: [
-    {
-      tenantId: 'tenant-spark-gym',
-      defaultLanguage: 'en',
-      enabledLanguages: ['en', 'ar', 'he'],
-      notificationSettings: defaultNotificationSettings,
-      notificationSenders: defaultNotificationSenders,
-      dateFormat: 'dd/mm/yyyy',
-      checkOutTrackingEnabled: true,
-      ownerDataScope: 'all',
-      reportingCurrencyCode: 'ILS',
-    },
-  ],
-};
-
-export function readSettingsStore(): SettingsStoreData {
-  ensureSettingsStoreFile();
-  const raw = readFileSync(SETTINGS_STORE_PATH, 'utf8');
-  return JSON.parse(raw) as SettingsStoreData;
-}
-
-export function writeSettingsStore(store: SettingsStoreData) {
-  ensureSettingsStoreFile();
-  writeFileSync(SETTINGS_STORE_PATH, JSON.stringify(store, null, 2) + '\n');
-}
 
 export function getDefaultTenantSettings(
   tenantId: string,
@@ -125,29 +90,4 @@ export function getDefaultTenantSettings(
     ownerDataScope: 'all',
     reportingCurrencyCode: 'ILS',
   };
-}
-
-function ensureSettingsStoreFile() {
-  const dataDirectory = join(API_ROOT_PATH, 'data');
-  const localDirectory = join(API_ROOT_PATH, '.local');
-
-  if (!existsSync(dataDirectory)) {
-    mkdirSync(dataDirectory, { recursive: true });
-  }
-
-  if (!existsSync(localDirectory)) {
-    mkdirSync(localDirectory, { recursive: true });
-  }
-
-  if (!existsSync(SETTINGS_SEED_PATH)) {
-    writeFileSync(
-      SETTINGS_SEED_PATH,
-      JSON.stringify(defaultSettings, null, 2) + '\n',
-    );
-  }
-
-  if (!existsSync(SETTINGS_STORE_PATH)) {
-    const rawSeed = readFileSync(SETTINGS_SEED_PATH, 'utf8');
-    writeFileSync(SETTINGS_STORE_PATH, rawSeed);
-  }
 }

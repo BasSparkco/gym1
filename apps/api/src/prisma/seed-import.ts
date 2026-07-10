@@ -1,9 +1,8 @@
 /**
- * Shared "insert already-parsed JSON-store data into Prisma" logic, used by
- * both the one-time production cutover script
- * (src/scripts/migrate-json-to-postgres.ts) and the e2e test reset helper
- * (test/prisma-test-utils.ts), so the FK-order/field-mapping logic isn't
- * duplicated between the two.
+ * Inserts parsed seed data into Prisma in FK order. Originally shared with
+ * the one-time JSON-store -> Postgres cutover script (removed after the
+ * July 2026 migration burned in); now used only by the e2e test reset helper
+ * (test/prisma-test-utils.ts).
  */
 
 import { Prisma, PrismaClient } from '../generated/prisma/client';

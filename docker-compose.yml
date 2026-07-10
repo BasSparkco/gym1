@@ -70,8 +70,6 @@ services:
       MINIO_USE_SSL: "false"
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-gym_dev_minio_user}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-gym_dev_minio_password}
-    volumes:
-      - api-data:/app/.local
     depends_on:
       db:
         condition: service_healthy
@@ -126,7 +124,6 @@ services:
     entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done"
 
 volumes:
-  api-data:       # persistent upload storage (member profile pictures)
   postgres-data:  # Postgres data directory
   redis-data:     # Redis AOF persistence (auth sessions)
   minio-data:     # MinIO object storage (member photos)

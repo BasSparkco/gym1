@@ -168,6 +168,11 @@ export type Dict = {
     branchAccess: string;
     allBranches: string;
     homeBranchOnly: string;
+    programAccess: string;
+    allPrograms: string;
+    selectedProgramsOnly: string;
+    noProgramsYet: string;
+    noProgramsSelected: string;
     freezePolicy: string;
     freezeAllowed: string;
     freezeNotAllowed: string;
@@ -737,6 +742,11 @@ const en: Dict = {
     branchAccess: "Branch access",
     allBranches: "All branches",
     homeBranchOnly: "Home branch only",
+    programAccess: "Training program access",
+    allPrograms: "All programs",
+    selectedProgramsOnly: "Selected programs only",
+    noProgramsYet: "No training programs have been created yet.",
+    noProgramsSelected: "No programs selected — members on this plan cannot book any class.",
     freezePolicy: "Freeze policy",
     freezeAllowed: "Freeze allowed",
     freezeNotAllowed: "Freeze not allowed",
@@ -1306,6 +1316,11 @@ const ar: Dict = {
     branchAccess: "صلاحية الفروع",
     allBranches: "جميع الفروع",
     homeBranchOnly: "الفرع الرئيسي فقط",
+    programAccess: "الوصول إلى البرامج التدريبية",
+    allPrograms: "جميع البرامج",
+    selectedProgramsOnly: "برامج محددة فقط",
+    noProgramsYet: "لم يتم إنشاء أي برامج تدريبية بعد.",
+    noProgramsSelected: "لم يتم اختيار أي برنامج — لا يمكن لأعضاء هذه الخطة حجز أي حصة.",
     freezePolicy: "سياسة التجميد",
     freezeAllowed: "التجميد مسموح",
     freezeNotAllowed: "التجميد غير مسموح",
@@ -1875,6 +1890,11 @@ const he: Dict = {
     branchAccess: "גישה לסניף",
     allBranches: "כל הסניפים",
     homeBranchOnly: "סניף בית בלבד",
+    programAccess: "גישה לתוכניות אימון",
+    allPrograms: "כל התוכניות",
+    selectedProgramsOnly: "תוכניות נבחרות בלבד",
+    noProgramsYet: "עדיין לא נוצרו תוכניות אימון.",
+    noProgramsSelected: "לא נבחרו תוכניות — חברי תוכנית זו לא יוכלו להזמין שיעורים.",
     freezePolicy: "מדיניות הקפאה",
     freezeAllowed: "הקפאה מותרת",
     freezeNotAllowed: "הקפאה אינה מותרת",

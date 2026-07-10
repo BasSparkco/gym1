@@ -7,7 +7,7 @@ import {
   OwnerDataScope,
   TenantSettingsRecord,
   getDefaultTenantSettings,
-} from '../../data/settings-store';
+} from '../../data/settings-seed';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isValidCurrencyCode } from '../../common/currencies';

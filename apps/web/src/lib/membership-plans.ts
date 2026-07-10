@@ -13,6 +13,7 @@ export type MembershipPlan = {
   sessionCount?: number;
   price: number;
   allowAllBranches: boolean;
+  allowAllPrograms: boolean;
   freezeAllowed: boolean;
   freezeMaxDays?: number;
 };
@@ -78,6 +79,7 @@ export async function updateMembershipPlan(
     sessionCount: number;
     price: number;
     allowAllBranches: boolean;
+    allowAllPrograms: boolean;
     freezeAllowed: boolean;
     freezeMaxDays: number;
   }>

@@ -1,15 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-
-function getStorePaths() {
-  const root = process.env.API_DATA_ROOT ?? join(__dirname, '..', '..');
-  return {
-    seedPath: join(root, 'data', 'operations-seed.json'),
-    storePath: join(root, '.local', 'operations-store.json'),
-    dataDir: join(root, 'data'),
-    localDir: join(root, '.local'),
-  };
-}
+/**
+ * Record types for the operational data model plus the default seed used by
+ * the e2e test reset (test/prisma-test-utils.ts). The JSON-file store this
+ * module used to manage was replaced by Postgres/Prisma in July 2026; only
+ * the shared types and seed data remain.
+ */
+import { addDays, localDateString } from '../common/date';
 
 export type BranchRecord = {
   id: string;
@@ -175,8 +170,13 @@ export type OperationsStoreData = {
   notifications: NotificationRecord[];
 };
 
+// Seed dates are computed relative to "today" at module load so the e2e
+// suite's current-status assertions (active memberships, expiry) never drift
+// as real time passes the fixture dates.
+const seedToday = localDateString();
+
 export const defaultOperationsSeed: OperationsStoreData = {
-  reportingDate: '2026-06-05',
+  reportingDate: seedToday,
   gates: [],
   branches: [
     {
@@ -318,8 +318,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-001',
       memberId: 'member-001',
       planId: 'plan-monthly-flex',
-      startDate: '2026-06-01',
-      endDate: '2027-06-01',
+      startDate: addDays(seedToday, -30),
+      endDate: addDays(seedToday, 335),
       status: 'active',
       finalPrice: 120,
     },
@@ -327,8 +327,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-002',
       memberId: 'member-002',
       planId: 'plan-ramallah-standard',
-      startDate: '2026-06-01',
-      endDate: '2027-06-01',
+      startDate: addDays(seedToday, -30),
+      endDate: addDays(seedToday, 335),
       status: 'active',
       finalPrice: 95,
     },
@@ -336,8 +336,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-003',
       memberId: 'member-003',
       planId: 'plan-monthly-flex',
-      startDate: '2026-06-01',
-      endDate: '2027-06-01',
+      startDate: addDays(seedToday, -30),
+      endDate: addDays(seedToday, 335),
       status: 'active',
       finalPrice: 110,
     },
@@ -345,8 +345,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-004',
       memberId: 'member-004',
       planId: 'plan-ramallah-standard',
-      startDate: '2026-06-01',
-      endDate: '2027-06-01',
+      startDate: addDays(seedToday, -30),
+      endDate: addDays(seedToday, 335),
       status: 'active',
       finalPrice: 85,
     },
@@ -354,8 +354,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-005',
       memberId: 'member-005',
       planId: 'plan-monthly-flex',
-      startDate: '2026-06-01',
-      endDate: '2027-06-01',
+      startDate: addDays(seedToday, -30),
+      endDate: addDays(seedToday, 335),
       status: 'active',
       finalPrice: 140,
     },
@@ -363,8 +363,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-006',
       memberId: 'member-006',
       planId: 'plan-other-monthly',
-      startDate: '2026-06-01',
-      endDate: '2027-06-01',
+      startDate: addDays(seedToday, -30),
+      endDate: addDays(seedToday, 335),
       status: 'active',
       finalPrice: 150,
     },
@@ -372,8 +372,8 @@ export const defaultOperationsSeed: OperationsStoreData = {
       id: 'membership-007',
       memberId: 'member-003',
       planId: 'plan-monthly-flex',
-      startDate: '2026-04-01',
-      endDate: '2026-04-30',
+      startDate: addDays(seedToday, -95),
+      endDate: addDays(seedToday, -65),
       status: 'expired',
       finalPrice: 90,
     },
@@ -554,140 +554,3 @@ export const defaultOperationsSeed: OperationsStoreData = {
     },
   ],
 };
-
-export function readOperationsStore() {
-  ensureOperationsStoreFile();
-
-  const { storePath } = getStorePaths();
-  const rawStore = readFileSync(storePath, 'utf8');
-  const parsedStore = JSON.parse(rawStore) as OperationsStoreData;
-  const normalizedStore = normalizeOperationsStore(parsedStore);
-
-  if (JSON.stringify(parsedStore) !== JSON.stringify(normalizedStore)) {
-    writeOperationsStore(normalizedStore);
-  }
-
-  return normalizedStore;
-}
-
-export function writeOperationsStore(store: OperationsStoreData) {
-  ensureOperationsStoreFile();
-  const { storePath } = getStorePaths();
-  writeFileSync(storePath, JSON.stringify(store, null, 2) + '\n');
-}
-
-function ensureOperationsStoreFile() {
-  const { seedPath, storePath, dataDir, localDir } = getStorePaths();
-
-  if (!existsSync(dataDir)) {
-    mkdirSync(dataDir, { recursive: true });
-  }
-
-  if (!existsSync(localDir)) {
-    mkdirSync(localDir, { recursive: true });
-  }
-
-  if (!existsSync(seedPath)) {
-    writeFileSync(
-      seedPath,
-      JSON.stringify(defaultOperationsSeed, null, 2) + '\n',
-    );
-  }
-
-  if (!existsSync(storePath)) {
-    const rawSeed = readFileSync(seedPath, 'utf8');
-    const parsedSeed = normalizeOperationsStore(
-      JSON.parse(rawSeed) as OperationsStoreData,
-    );
-
-    writeFileSync(storePath, JSON.stringify(parsedSeed, null, 2) + '\n');
-  }
-}
-
-function normalizeOperationsStore(store: OperationsStoreData) {
-  const tenantCounters = new Map<string, number>();
-  const usedMemberNumbers = new Map<string, Set<string>>();
-
-  for (const member of store.members) {
-    const match = member.memberNumber?.match(/^MEM-(\d{4})$/);
-
-    if (!match) {
-      continue;
-    }
-
-    const usedNumbers = getOrCreateTenantSet(
-      usedMemberNumbers,
-      member.tenantId,
-    );
-    usedNumbers.add(member.memberNumber);
-    tenantCounters.set(
-      member.tenantId,
-      Math.max(tenantCounters.get(member.tenantId) ?? 0, Number(match[1])),
-    );
-  }
-
-  return {
-    ...store,
-    notifications: store.notifications ?? [],
-    freezes: store.freezes ?? [],
-    gates: store.gates ?? [],
-    employees: store.employees ?? [],
-    branches: store.branches.map((branch) => ({
-      ...branch,
-      status: branch.status ?? 'active',
-    })),
-    visits: store.visits.map((visit) => ({
-      ...visit,
-      checkOutTime: visit.checkOutTime ?? null,
-    })),
-    membershipPlans: store.membershipPlans.map((plan) => ({
-      ...plan,
-      planType: plan.planType ?? 'duration',
-      price: plan.price ?? 0,
-      freezeAllowed: plan.freezeAllowed ?? false,
-    })),
-    members: store.members.map((member) => {
-      const usedNumbers = getOrCreateTenantSet(
-        usedMemberNumbers,
-        member.tenantId,
-      );
-      const isValidMemberNumber =
-        typeof member.memberNumber === 'string' &&
-        /^MEM-\d{4}$/.test(member.memberNumber);
-
-      if (isValidMemberNumber && usedNumbers.has(member.memberNumber)) {
-        return member;
-      }
-
-      const nextSequence = (tenantCounters.get(member.tenantId) ?? 0) + 1;
-      const nextMemberNumber = formatMemberNumber(nextSequence);
-
-      tenantCounters.set(member.tenantId, nextSequence);
-      usedNumbers.add(nextMemberNumber);
-
-      return {
-        ...member,
-        memberNumber: nextMemberNumber,
-      };
-    }),
-  };
-}
-
-function getOrCreateTenantSet(
-  usedMemberNumbers: Map<string, Set<string>>,
-  tenantId: string,
-) {
-  const existingSet = usedMemberNumbers.get(tenantId);
-
-  if (existingSet) {
-    return existingSet;
-  }
-
-  const nextSet = new Set<string>();
-  usedMemberNumbers.set(tenantId, nextSet);
-  return nextSet;
-}
-
-function formatMemberNumber(sequence: number) {
-  return `MEM-${String(sequence).padStart(4, '0')}`;
-}

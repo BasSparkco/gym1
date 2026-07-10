@@ -1,6 +1,11 @@
 "use server";
 
 import { getMembershipPlan, updateMembershipPlan } from "@/lib/membership-plans";
+import {
+  getEntitledProgramIds,
+  listTrainingPrograms,
+  setEntitledProgramIds,
+} from "@/lib/training-programs";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import Link from "next/link";
@@ -12,11 +17,18 @@ export default async function EditMembershipPlanPage({ params }: Props) {
   const { planId } = await params;
   await requireSession();
   const t = await getT();
-  const plan = await getMembershipPlan(planId);
+  const [plan, programs, entitledIds] = await Promise.all([
+    getMembershipPlan(planId),
+    listTrainingPrograms(),
+    getEntitledProgramIds(planId),
+  ]);
+  const activePrograms = programs.filter((p) => p.active);
+  const entitledSet = new Set(entitledIds === "all" ? [] : entitledIds);
 
   async function handleUpdate(formData: FormData) {
     "use server";
     const planType = formData.get("planType") as "duration" | "session";
+    const allowAllPrograms = formData.get("allowAllPrograms") === "true";
     await updateMembershipPlan(planId, {
       name: (formData.get("name") as string) || undefined,
       planType,
@@ -24,11 +36,18 @@ export default async function EditMembershipPlanPage({ params }: Props) {
       sessionCount: planType === "session" ? Number(formData.get("sessionCount")) : undefined,
       price: Number(formData.get("price")) || 0,
       allowAllBranches: formData.get("allowAllBranches") === "true",
+      allowAllPrograms,
       freezeAllowed: formData.get("freezeAllowed") === "true",
       freezeMaxDays: formData.get("freezeAllowed") === "true" && formData.get("freezeMaxDays")
         ? Number(formData.get("freezeMaxDays"))
         : undefined,
     });
+    if (!allowAllPrograms) {
+      await setEntitledProgramIds(
+        planId,
+        formData.getAll("programIds").map(String),
+      );
+    }
     redirect(`/app/membership-plans/${planId}`);
   }
 
@@ -149,6 +168,37 @@ export default async function EditMembershipPlanPage({ params }: Props) {
                 <option value="true">{t.plans.freezeAllowed}</option>
               </select>
             </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="allowAllPrograms" className="text-sm font-medium">{t.plans.programAccess}</label>
+            <select
+              id="allowAllPrograms"
+              name="allowAllPrograms"
+              defaultValue={plan.allowAllPrograms ? "true" : "false"}
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            >
+              <option value="true">{t.plans.allPrograms}</option>
+              <option value="false">{t.plans.selectedProgramsOnly}</option>
+            </select>
+            {activePrograms.length === 0 ? (
+              <p className="mt-1 text-sm text-foreground/55">{t.plans.noProgramsYet}</p>
+            ) : (
+              <div className="mt-1 grid gap-2 rounded-2xl border border-line bg-white px-4 py-3 sm:grid-cols-2">
+                {activePrograms.map((program) => (
+                  <label key={program.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name="programIds"
+                      value={program.id}
+                      defaultChecked={entitledSet.has(program.id)}
+                      className="h-4 w-4 rounded border-line accent-brand"
+                    />
+                    <span>{program.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid gap-1.5">

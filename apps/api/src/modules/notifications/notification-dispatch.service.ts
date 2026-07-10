@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { getDefaultTenantSettings, NotificationSenderSettings } from '../../data/settings-store';
+import { getDefaultTenantSettings, NotificationSenderSettings } from '../../data/settings-seed';
 import { ConsoleNotificationProvider } from './providers/console-notification.provider';
 import type { NotificationProvider } from './providers/notification-provider.interface';
 import { SparkcoNotificationProvider } from './providers/sparkco-notification.provider';

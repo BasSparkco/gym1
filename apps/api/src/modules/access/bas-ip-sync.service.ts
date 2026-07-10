@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { memberIdToUuid } from '../../common/qr';
-import type { GateRecord } from '../../data/operations-store';
+import type { GateRecord } from '../../data/operations-seed';
 
 type DeviceConfig = {
   deviceUrl: string;
