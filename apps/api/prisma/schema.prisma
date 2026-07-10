@@ -2,9 +2,15 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  // Pinned: without this, generate infers the import extension from the
+  // surrounding project. Inside the Docker builder, the generate postinstall
+  // runs before tsconfig.json is copied in, and the inference picked ".ts" —
+  // producing a client that crashes at runtime with "Cannot find module
+  // './internal/class.ts'" (2026-07-10 outage).
+  importFileExtension = "js"
 }
 
 datasource db {
