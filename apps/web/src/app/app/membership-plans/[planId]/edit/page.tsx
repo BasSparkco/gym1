@@ -8,8 +8,10 @@ import {
 } from "@/lib/training-programs";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 type Props = { params: Promise<{ planId: string }> };
 
@@ -53,15 +55,13 @@ export default async function EditMembershipPlanPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.membershipPlans}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.plans.editPlan}</h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">{plan.name}</p>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.membershipPlans}
+        title={t.plans.editPlan}
+        description={plan.name}
+      />
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleUpdate} className="grid gap-5">
           <div className="grid gap-1.5">
             <label htmlFor="name" className="text-sm font-medium">
@@ -217,18 +217,12 @@ export default async function EditMembershipPlanPage({ params }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<Save className="h-4 w-4" strokeWidth={2} />}>
               {t.actions.saveChanges}
-            </button>
-            <Link
-              href={`/app/membership-plans/${planId}`}
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href={`/app/membership-plans/${planId}`} variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>

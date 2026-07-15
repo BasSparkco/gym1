@@ -1,20 +1,28 @@
-import { listMembers } from "@/lib/members";
+import { listMembers, getMemberPhotoUrl } from "@/lib/members";
 import { listAllMemberships } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { formatDate } from "@/lib/date-format";
-import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PhoneNumber } from "@/components/phone-number";
+import type { BadgeTone } from "@/components/ui/badge";
+import { UserPlus, Users, UserCheck, CalendarClock, PencilLine } from "lucide-react";
 
 type SearchParams = { q?: string; ms?: string };
 
-const membershipStatusColors: Record<string, string> = {
-  active: "bg-green-100 text-green-700",
-  frozen: "bg-blue-100 text-blue-700",
-  expired: "bg-gray-100 text-gray-500",
-  cancelled: "bg-red-100 text-red-600",
-  draft: "bg-yellow-100 text-yellow-700",
+const membershipTone: Record<string, BadgeTone> = {
+  active: "success",
+  frozen: "info",
+  expired: "neutral",
+  cancelled: "danger",
+  draft: "warning",
 };
 
 const membershipPriority: Record<string, number> = {
@@ -146,43 +154,40 @@ export default async function MembersPage({
   return (
     <div className="grid gap-6">
       {/* Header */}
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.members}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {t.members.title}
-          </h1>
-        </div>
-        <Link
-          href="/app/members/new"
-          className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-        >
-          {t.members.newMember}
-        </Link>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.members}
+        title={t.members.title}
+        actions={
+          <Button href="/app/members/new" variant="primary" icon={<UserPlus className="h-4 w-4" strokeWidth={2} />}>
+            {t.members.newMember}
+          </Button>
+        }
+      />
 
       {/* Stats */}
       <section className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-[1.5rem] border border-line bg-surface px-5 py-4">
-          <p className="text-3xl font-semibold">{allMembers.length}</p>
-          <p className="mt-1 text-sm text-foreground/60">{t.members.totalMembers}</p>
-        </div>
-        <div className="rounded-[1.5rem] border border-line bg-surface px-5 py-4">
-          <p className="text-3xl font-semibold text-green-600">
-            {activeMembershipCount}
-          </p>
-          <p className="mt-1 text-sm text-foreground/60">{t.members.activeMemberships}</p>
-        </div>
-        <div className="rounded-[1.5rem] border border-line bg-surface px-5 py-4">
-          <p
-            className={`text-3xl font-semibold ${expiringSoonCount > 0 ? "text-amber-600" : "text-foreground"}`}
-          >
-            {expiringSoonCount}
-          </p>
-          <p className="mt-1 text-sm text-foreground/60">{t.members.expiringIn30Days}</p>
-        </div>
+        <StatCard
+          icon={<Users className="h-4 w-4" strokeWidth={2} />}
+          label={t.members.totalMembers}
+          value={allMembers.length}
+          delay={1}
+        />
+        <StatCard
+          icon={<UserCheck className="h-4 w-4" strokeWidth={2} />}
+          label={t.members.activeMemberships}
+          value={<span className="text-green-600">{activeMembershipCount}</span>}
+          delay={2}
+        />
+        <StatCard
+          icon={<CalendarClock className="h-4 w-4" strokeWidth={2} />}
+          label={t.members.expiringIn30Days}
+          value={
+            <span className={expiringSoonCount > 0 ? "text-amber-600" : "text-foreground"}>
+              {expiringSoonCount}
+            </span>
+          }
+          delay={3}
+        />
       </section>
 
       {/* Filter tabs */}
@@ -195,10 +200,10 @@ export default async function MembersPage({
               key={tab.key ?? "all"}
               href={filterUrl(tab.key)}
               className={[
-                "rounded-full px-4 py-1.5 text-sm font-medium transition",
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? activeColor
-                  : "border border-line bg-white hover:border-brand hover:text-brand",
+                  ? `${activeColor} shadow-sm`
+                  : "border border-line bg-white hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm",
               ].join(" ")}
             >
               {tab.label}
@@ -219,26 +224,36 @@ export default async function MembersPage({
       {/* Members list */}
       <section className="grid gap-3">
         {members.length === 0 && (
-          <div className="rounded-[2rem] border border-line bg-surface px-6 py-10 text-center text-sm text-foreground/60">
-            {t.members.noMembers}
-          </div>
+          <EmptyState icon={<Users className="h-5 w-5" strokeWidth={2} />} title={t.members.noMembers} />
         )}
-        {members.map((member) => {
+        {members.map((member, index) => {
           const primaryMs = membershipMap.get(member.id);
           const plan = primaryMs ? planMap.get(primaryMs.planId) : undefined;
           const avatar = initials(member.fullName);
+          const photoUrl = getMemberPhotoUrl(member.pictureUrl);
 
           return (
-            <article
+            <Card
               key={member.id}
-              className="rounded-[1.75rem] border border-line bg-surface px-6 py-5"
+              hoverable
+              animate
+              delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand">
-                    {avatar}
-                  </div>
+                  {photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photoUrl}
+                      alt=""
+                      className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-brand/10"
+                    />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand/20 to-brand/5 text-sm font-semibold text-brand ring-1 ring-brand/10">
+                      {avatar}
+                    </div>
+                  )}
 
                   <div>
                     {/* Name + number + member status */}
@@ -249,24 +264,15 @@ export default async function MembersPage({
                       <span className="font-mono text-xs text-foreground/50">
                         {member.memberNumber}
                       </span>
-                      <span
-                        className={[
-                          "rounded-full px-2 py-0.5 text-xs font-medium",
-                          member.status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500",
-                        ].join(" ")}
-                      >
-                        {member.status === "active"
-                          ? t.status.active
-                          : t.status.inactive}
-                      </span>
+                      <Badge tone={member.status === "active" ? "success" : "neutral"}>
+                        {member.status === "active" ? t.status.active : t.status.inactive}
+                      </Badge>
                     </div>
 
                     {/* Phone */}
                     {member.phone && (
                       <p className="mt-0.5 text-sm text-foreground/55">
-                        {member.phone}
+                        <PhoneNumber value={member.phone} />
                       </p>
                     )}
 
@@ -282,17 +288,9 @@ export default async function MembersPage({
                             {formatDate(primaryMs.endDate, dateFormat)}
                           </span>
                         )}
-                        <span
-                          className={[
-                            "rounded-full px-2 py-0.5 font-medium",
-                            membershipStatusColors[primaryMs.status] ??
-                              "bg-gray-100 text-gray-500",
-                          ].join(" ")}
-                        >
-                          {t.status[
-                            primaryMs.status as keyof typeof t.status
-                          ] ?? primaryMs.status}
-                        </span>
+                        <Badge tone={membershipTone[primaryMs.status] ?? "neutral"}>
+                          {t.status[primaryMs.status as keyof typeof t.status] ?? primaryMs.status}
+                        </Badge>
                       </div>
                     ) : (
                       <p className="mt-1 text-xs text-foreground/40">
@@ -304,21 +302,20 @@ export default async function MembersPage({
 
                 {/* Actions */}
                 <div className="flex gap-2 sm:shrink-0">
-                  <Link
-                    href={`/app/members/${member.id}`}
-                    className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand"
-                  >
+                  <Button href={`/app/members/${member.id}`} variant="secondary" size="sm">
                     {t.members.profile}
-                  </Link>
-                  <Link
+                  </Button>
+                  <Button
                     href={`/app/members/${member.id}/edit`}
-                    className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand"
+                    variant="secondary"
+                    size="sm"
+                    icon={<PencilLine className="h-3.5 w-3.5" strokeWidth={2} />}
                   >
                     {t.actions.edit}
-                  </Link>
+                  </Button>
                 </div>
               </div>
-            </article>
+            </Card>
           );
         })}
       </section>

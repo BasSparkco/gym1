@@ -3,9 +3,14 @@
 import { listEmployees } from "@/lib/employees";
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
-import Link from "next/link";
+import { getT, formatDict } from "@/lib/i18n";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { UserPlus, Users } from "lucide-react";
 
 export default async function EmployeesPage() {
   const session = await requireSession();
@@ -21,49 +26,35 @@ export default async function EmployeesPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.employees.title}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.employees.title}</h1>
-          <p className="mt-2 text-sm leading-7 text-foreground/70">
-            {activeCount} active · {employees.length} total in {session.tenant.name}.
-          </p>
-        </div>
-        <Link
-          href="/app/employees/new"
-          className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-        >
-          {t.employees.newEmployee}
-        </Link>
-      </section>
+      <PageHeader
+        eyebrow={t.employees.title}
+        title={t.employees.title}
+        description={formatDict(t.employees.listDescription, { active: activeCount, total: employees.length, tenant: session.tenant.name })}
+        actions={
+          <Button href="/app/employees/new" variant="primary" icon={<UserPlus className="h-4 w-4" strokeWidth={2} />}>
+            {t.employees.newEmployee}
+          </Button>
+        }
+      />
 
       <section className="grid gap-3">
         {employees.length === 0 && (
-          <div className="rounded-[2rem] border border-line bg-surface px-6 py-10 text-center text-sm text-foreground/60">
-            {t.employees.noEmployees}
-          </div>
+          <EmptyState icon={<Users className="h-5 w-5" strokeWidth={2} />} title={t.employees.noEmployees} />
         )}
-        {employees.map((emp) => (
-          <article
+        {employees.map((emp, index) => (
+          <Card
             key={emp.id}
-            className="rounded-[1.75rem] border border-line bg-surface px-6 py-5"
+            hoverable
+            animate
+            delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-semibold tracking-tight">{emp.fullName}</h2>
-                  <span
-                    className={[
-                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      emp.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500",
-                    ].join(" ")}
-                  >
+                  <Badge tone={emp.status === "active" ? "success" : "neutral"}>
                     {emp.status === "active" ? t.employees.active : t.employees.inactive}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="mt-1 text-sm text-foreground/55 font-mono">{emp.employeeNumber}</p>
                 <p className="mt-0.5 text-sm text-foreground/45">
@@ -75,14 +66,11 @@ export default async function EmployeesPage() {
                   </p>
                 )}
               </div>
-              <Link
-                href={`/app/employees/${emp.id}`}
-                className="shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand"
-              >
+              <Button href={`/app/employees/${emp.id}`} variant="secondary" size="sm" className="shrink-0">
                 {t.actions.view}
-              </Link>
+              </Button>
             </div>
-          </article>
+          </Card>
         ))}
       </section>
     </div>

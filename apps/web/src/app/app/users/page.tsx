@@ -1,8 +1,20 @@
 import { listUsers } from "@/lib/users";
 import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import type { BadgeTone } from "@/components/ui/badge";
+import { UserPlus, ShieldCheck } from "lucide-react";
+
+const roleTone: Record<string, BadgeTone> = {
+  owner: "brand",
+  manager: "accent",
+};
 
 export default async function UsersPage() {
   const session = await requireSession();
@@ -13,53 +25,35 @@ export default async function UsersPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.usersRoles}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.users.staffUsers}</h1>
-          <p className="mt-2 text-sm leading-7 text-foreground/70">
-            {users.length} staff account{users.length !== 1 ? "s" : ""} in {session.tenant.name}.
-          </p>
-        </div>
-        {canCreate && (
-          <Link
-            href="/app/users/new"
-            className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-          >
-            {t.users.newUser}
-          </Link>
-        )}
-      </section>
+      <PageHeader
+        eyebrow={t.nav.usersRoles}
+        title={t.users.staffUsers}
+        description={formatDict(t.users.listDescription, { count: users.length, plural: users.length !== 1 ? "s" : "", tenant: session.tenant.name })}
+        actions={
+          canCreate && (
+            <Button href="/app/users/new" variant="primary" icon={<UserPlus className="h-4 w-4" strokeWidth={2} />}>
+              {t.users.newUser}
+            </Button>
+          )
+        }
+      />
 
       <section className="grid gap-3">
         {users.length === 0 && (
-          <div className="rounded-[2rem] border border-line bg-surface px-6 py-10 text-center text-sm text-foreground/60">
-            {t.users.noUsers}
-          </div>
+          <EmptyState icon={<ShieldCheck className="h-5 w-5" strokeWidth={2} />} title={t.users.noUsers} />
         )}
-        {users.map((user) => (
-          <article
+        {users.map((user, index) => (
+          <Card
             key={user.id}
-            className="rounded-[1.75rem] border border-line bg-surface px-6 py-5"
+            hoverable
+            animate
+            delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-semibold tracking-tight">{user.name}</h2>
-                  <span
-                    className={[
-                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      user.role === "owner"
-                        ? "bg-brand/10 text-brand"
-                        : user.role === "manager"
-                        ? "bg-accent/10 text-accent"
-                        : "bg-gray-100 text-gray-600",
-                    ].join(" ")}
-                  >
-                    {user.role}
-                  </span>
+                  <Badge tone={roleTone[user.role] ?? "neutral"}>{user.role}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-foreground/55">{user.email}</p>
                 <p className="mt-0.5 text-sm text-foreground/45">
@@ -75,15 +69,12 @@ export default async function UsersPage() {
                 </p>
               </div>
               {user.id !== session.id && (
-                <Link
-                  href={`/app/users/${user.id}`}
-                  className="shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand"
-                >
+                <Button href={`/app/users/${user.id}`} variant="secondary" size="sm" className="shrink-0">
                   {t.actions.view}
-                </Link>
+                </Button>
               )}
             </div>
-          </article>
+          </Card>
         ))}
       </section>
 

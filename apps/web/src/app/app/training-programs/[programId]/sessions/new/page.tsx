@@ -6,8 +6,10 @@ import { listBranches } from "@/lib/branches";
 import { listCoaches } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 type Props = {
   params: Promise<{ programId: string }>;
@@ -59,14 +61,9 @@ export default async function NewClassSessionPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {program.name}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.classes.newSession}</h1>
-      </section>
+      <PageHeader eyebrow={program.name} title={t.classes.newSession} />
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <label htmlFor="branchId" className="text-sm font-medium">
@@ -128,18 +125,12 @@ export default async function NewClassSessionPage({ params }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2 sm:col-span-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<PlusCircle className="h-4 w-4" strokeWidth={2} />}>
               {t.classes.newSession}
-            </button>
-            <Link
-              href={`/app/training-programs/${programId}`}
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href={`/app/training-programs/${programId}`} variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>

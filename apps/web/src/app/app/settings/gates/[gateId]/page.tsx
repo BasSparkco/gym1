@@ -4,7 +4,9 @@ import { listGates, updateGate, deleteGate } from "@/lib/gates";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Save, Trash2, ChevronLeft } from "lucide-react";
 
 type Props = {
   params: Promise<{ gateId: string }>;
@@ -48,18 +50,15 @@ export default async function EditGatePage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <Link
-          href="/app/settings/gates"
-          className="inline-flex items-center gap-1.5 text-sm text-foreground/50 hover:text-brand"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          {t.settings.gatesTitle}
-        </Link>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">{gate.name}</h1>
-      </section>
+      <PageHeader
+        eyebrow={t.settings.gatesTitle}
+        title={gate.name}
+        actions={
+          <Button href="/app/settings/gates" variant="secondary" icon={<ChevronLeft className="h-4 w-4" strokeWidth={2} />}>
+            {t.settings.gatesTitle}
+          </Button>
+        }
+      />
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleUpdate} className="grid gap-5">
@@ -168,18 +167,12 @@ export default async function EditGatePage({ params }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<Save className="h-4 w-4" strokeWidth={2} />}>
               {t.settings.gateUpdate}
-            </button>
-            <Link
-              href="/app/settings/gates"
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href="/app/settings/gates" variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>
@@ -192,12 +185,9 @@ export default async function EditGatePage({ params }: Props) {
           </p>
           <p className="mt-2 text-sm text-red-700">{t.settings.gateDeleteConfirm}</p>
           <form action={handleDelete} className="mt-4">
-            <button
-              type="submit"
-              className="rounded-full border border-red-400 bg-white px-6 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-500 hover:text-white"
-            >
+            <Button type="submit" variant="danger" icon={<Trash2 className="h-4 w-4" strokeWidth={2} />}>
               {t.settings.gateDelete}
-            </button>
+            </Button>
           </form>
         </section>
       )}

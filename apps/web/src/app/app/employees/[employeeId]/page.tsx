@@ -13,8 +13,13 @@ import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getCurrencySymbol } from "@/lib/currencies";
 import DateInput from "@/components/date-input";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { PhoneNumber } from "@/components/phone-number";
+import { Save, Ban, CheckCircle2 } from "lucide-react";
 
 type Props = {
   params: Promise<{ employeeId: string }>;
@@ -93,37 +98,27 @@ export default async function EmployeeDetailPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.employees.title}
-          </p>
-          <div className="mt-2 flex items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight">{employee.fullName}</h1>
-            <span
-              className={[
-                "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                employee.status === "active"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-500",
-              ].join(" ")}
-            >
+      <PageHeader
+        eyebrow={t.employees.title}
+        title={
+          <span className="flex items-center gap-3">
+            {employee.fullName}
+            <Badge tone={employee.status === "active" ? "success" : "neutral"}>
               {employee.status === "active" ? t.employees.active : t.employees.inactive}
-            </span>
-          </div>
-          <p className="mt-1 font-mono text-sm text-foreground/60">{employee.employeeNumber}</p>
-        </div>
-        <Link
-          href="/app/employees"
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.employees.allEmployees}
-        </Link>
-      </section>
+            </Badge>
+          </span>
+        }
+        description={<span className="font-mono">{employee.employeeNumber}</span>}
+        actions={
+          <Button href="/app/employees" variant="secondary">
+            {t.employees.allEmployees}
+          </Button>
+        }
+      />
 
       <div className="grid gap-6">
         {/* ── Personal & Employment details ── */}
-        <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+        <Card animate delay={1}>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
             {t.employees.employeeDetails}
           </p>
@@ -259,12 +254,9 @@ export default async function EmployeeDetailPage({ params }: Props) {
               </div>
 
               <div className="flex gap-3 pt-1">
-                <button
-                  type="submit"
-                  className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
-                >
+                <Button type="submit" variant="primary" size="sm" icon={<Save className="h-3.5 w-3.5" strokeWidth={2} />}>
                   {t.actions.save}
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
@@ -282,7 +274,9 @@ export default async function EmployeeDetailPage({ params }: Props) {
               {employee.phone && (
                 <div>
                   <dt className="text-foreground/55">{t.employees.phone}</dt>
-                  <dd className="mt-0.5 font-medium">{employee.phone}</dd>
+                  <dd className="mt-0.5 font-medium">
+                    <PhoneNumber value={employee.phone} />
+                  </dd>
                 </div>
               )}
               {employee.sex && (
@@ -337,10 +331,10 @@ export default async function EmployeeDetailPage({ params }: Props) {
               )}
             </dl>
           )}
-        </section>
+        </Card>
 
         {/* ── System access (read-only; account creation happens on the Users page) ── */}
-        <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+        <Card animate delay={2}>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
             {t.employees.systemAccess}
           </p>
@@ -356,11 +350,11 @@ export default async function EmployeeDetailPage({ params }: Props) {
               </div>
             )}
           </dl>
-        </section>
+        </Card>
 
         {/* ── Coach profile (read-only; editing happens in the form above) ── */}
         {!canEdit && (
-          <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+          <Card animate delay={3}>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
               {t.classes.coachProfileTitle}
             </p>
@@ -378,11 +372,11 @@ export default async function EmployeeDetailPage({ params }: Props) {
             ) : (
               <p className="mt-2 text-sm text-foreground/60">{t.classes.notACoach}</p>
             )}
-          </section>
+          </Card>
         )}
 
         {/* ── System info + status toggle ── */}
-        <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+        <Card animate delay={canEdit ? 3 : 4}>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">System</p>
           <dl className="mt-4 grid gap-3 text-sm">
             <div>
@@ -403,20 +397,23 @@ export default async function EmployeeDetailPage({ params }: Props) {
 
           {canEdit && (
             <form action={handleToggleStatus} className="mt-5">
-              <button
+              <Button
                 type="submit"
-                className={[
-                  "rounded-full border px-4 py-2 text-sm font-medium transition",
-                  employee.status === "active"
-                    ? "border-red-200 text-red-600 hover:bg-red-50"
-                    : "border-green-200 text-green-700 hover:bg-green-50",
-                ].join(" ")}
+                variant={employee.status === "active" ? "danger" : "secondary"}
+                size="sm"
+                icon={
+                  employee.status === "active" ? (
+                    <Ban className="h-3.5 w-3.5" strokeWidth={2} />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} />
+                  )
+                }
               >
                 {employee.status === "active" ? t.employees.deactivate : t.employees.reactivate}
-              </button>
+              </Button>
             </form>
           )}
-        </section>
+        </Card>
       </div>
     </div>
   );

@@ -14,6 +14,8 @@ import {
   getNewMembersGrowthReport,
 } from "@/lib/reports";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
 
 export default async function ReportsPage() {
   await requireSession();
@@ -49,89 +51,88 @@ export default async function ReportsPage() {
     {
       href: "/app/reports/active-memberships",
       title: t.reports.activeMemberships,
-      description: "Members with currently active memberships in this branch scope.",
+      description: t.reports.activeMembershipsCardDescription,
       count: active.total,
     },
     {
       href: "/app/reports/expired-memberships",
       title: t.reports.expiredMemberships,
-      description: "Memberships that have expired or reached their end date.",
+      description: t.reports.expiredMembershipsCardDescription,
       count: expired.total,
     },
     {
       href: "/app/reports/visits",
       title: t.reports.visits,
-      description: "Check-in records for today by default; filterable by date range.",
+      description: t.reports.visitsCardDescription,
       count: visits.total,
     },
     {
       href: "/app/reports/payments",
       title: t.reports.payments,
-      description: "Payment records for today by default; filterable by date range.",
+      description: t.reports.paymentsCardDescription,
       count: payments.total,
     },
     {
       href: "/app/reports/members-by-sex",
       title: t.reports.membersBySex,
-      description: "Member headcount broken down by gender.",
+      description: t.reports.membersBySexCardDescription,
       count: membersBySex.total,
     },
     {
       href: "/app/reports/registrations-by-employee",
       title: t.reports.registrationsByEmployee,
-      description: "New members registered per employee, filterable by staff member and date.",
+      description: t.reports.registrationsByEmployeeCardDescription,
       count: registrationsByEmployee.total,
     },
     {
       href: "/app/reports/plan-performance",
       title: t.reports.planPerformance,
-      description: "Memberships sold and revenue generated per plan this month.",
+      description: t.reports.planPerformanceCardDescription,
       count: planPerformance.total,
     },
     {
       href: "/app/reports/membership-status",
       title: t.reports.membershipStatusBreakdown,
-      description: "Counts of active, frozen, expired, and cancelled memberships.",
+      description: t.reports.membershipStatusCardDescription,
       count: membershipStatus.total,
     },
     {
       href: "/app/reports/expiring-soon",
       title: t.reports.expiringSoon,
-      description: "Active memberships ending within the next 7 days — for renewal outreach.",
+      description: t.reports.expiringSoonCardDescription,
       count: expiringSoon.total,
     },
     {
       href: "/app/reports/upcoming-birthdays",
       title: t.reports.upcomingBirthdays,
-      description: "Members with a birthday in the next 30 days.",
+      description: t.reports.upcomingBirthdaysCardDescription,
       count: upcomingBirthdays.total,
     },
     {
       href: "/app/reports/new-members-growth",
       title: t.reports.newMembersGrowth,
-      description: "New member joins per day this month.",
+      description: t.reports.newMembersGrowthCardDescription,
       count: newMembersGrowth.total,
     },
   ];
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.reports}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.reports.title}</h1>
-        <p className="mt-2 text-sm text-foreground/60">
-          Operational reports for daily review. All data is scoped to your tenant and branch.
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.reports}
+        title={t.reports.title}
+        description={t.reports.indexDescription}
+      />
 
       <section className="grid gap-3 sm:grid-cols-2">
-        {reports.map((report) => (
-          <Link
+        {reports.map((report, index) => (
+          <Card
             key={report.href}
+            as={Link}
             href={report.href}
-            className="rounded-[1.75rem] border border-line bg-surface px-6 py-5 transition hover:border-brand hover:shadow-sm"
+            hoverable
+            animate
+            delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
           >
             <div className="flex items-start justify-between gap-4">
               <p className="font-semibold text-foreground">{report.title}</p>
@@ -141,7 +142,7 @@ export default async function ReportsPage() {
             </div>
             <p className="mt-1 text-sm text-foreground/55">{report.description}</p>
             <p className="mt-4 text-xs font-medium text-brand">{t.reports.viewReport}</p>
-          </Link>
+          </Card>
         ))}
       </section>
     </div>

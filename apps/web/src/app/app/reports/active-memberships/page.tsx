@@ -1,10 +1,14 @@
 import { getActiveMembershipsReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 export default async function ActiveMembershipsReportPage() {
   await requireSession();
@@ -19,25 +23,18 @@ export default async function ActiveMembershipsReportPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.reports}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.reports.activeMemberships}</h1>
-          <p className="mt-2 text-sm text-foreground/60">
-            {total} active membership{total !== 1 ? "s" : ""} as of {asOfDate}.
-          </p>
-        </div>
-        <Link
-          href="/app/reports"
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.reports.allReports}
-        </Link>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.reports}
+        title={t.reports.activeMemberships}
+        description={formatDict(t.reports.activeMembershipsDescription, { total, plural: total !== 1 ? "s" : "", asOfDate })}
+        actions={
+          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+            {t.reports.allReports}
+          </Button>
+        }
+      />
 
-      <section className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+      <Card animate delay={1}>
         {rows.length === 0 ? (
           <p className="text-sm text-foreground/40">{t.reports.noActiveMemberships}</p>
         ) : (
@@ -54,7 +51,7 @@ export default async function ActiveMembershipsReportPage() {
               </thead>
               <tbody className="divide-y divide-line">
                 {rows.map((row) => (
-                  <tr key={row.membershipId} className="py-3">
+                  <tr key={row.membershipId} className="py-3 transition-colors hover:bg-black/[0.02]">
                     <td className="py-3 pr-4">
                       <Link
                         href={`/app/members/${row.memberId}`}
@@ -78,7 +75,7 @@ export default async function ActiveMembershipsReportPage() {
             </table>
           </div>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

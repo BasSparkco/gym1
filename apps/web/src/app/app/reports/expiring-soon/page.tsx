@@ -1,10 +1,14 @@
 import { getExpiringSoonReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Filter } from "lucide-react";
 
 type Props = { searchParams: Promise<{ days?: string }> };
 
@@ -23,23 +27,16 @@ export default async function ExpiringSoonReportPage({ searchParams }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.reports}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.reports.expiringSoon}</h1>
-          <p className="mt-2 text-sm text-foreground/60">
-            {report.total} membership{report.total !== 1 ? "s" : ""} expiring within {report.days} days of {report.asOfDate}.
-          </p>
-        </div>
-        <Link
-          href="/app/reports"
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.reports.allReports}
-        </Link>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.reports}
+        title={t.reports.expiringSoon}
+        description={formatDict(t.reports.expiringSoonDescription, { total: report.total, plural: report.total !== 1 ? "s" : "", days: report.days, asOfDate: report.asOfDate })}
+        actions={
+          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+            {t.reports.allReports}
+          </Button>
+        }
+      />
 
       <form className="flex flex-wrap items-end gap-3 rounded-[1.75rem] border border-line bg-surface px-6 py-5">
         <label className="grid gap-1 text-sm">
@@ -54,15 +51,12 @@ export default async function ExpiringSoonReportPage({ searchParams }: Props) {
             <option value="30">30</option>
           </select>
         </label>
-        <button
-          type="submit"
-          className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
-        >
+        <Button type="submit" variant="primary" size="md" icon={<Filter className="h-4 w-4" strokeWidth={2} />}>
           {t.reports.applyFilter}
-        </button>
+        </Button>
       </form>
 
-      <section className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+      <Card animate delay={1}>
         {report.rows.length === 0 ? (
           <p className="text-sm text-foreground/40">{t.reports.noResults}</p>
         ) : (
@@ -78,7 +72,7 @@ export default async function ExpiringSoonReportPage({ searchParams }: Props) {
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => (
-                  <tr key={row.membershipId} className="py-3">
+                  <tr key={row.membershipId} className="py-3 transition-colors hover:bg-black/[0.02]">
                     <td className="py-3 pr-4">
                       <Link
                         href={`/app/members/${row.memberId}`}
@@ -101,7 +95,7 @@ export default async function ExpiringSoonReportPage({ searchParams }: Props) {
             </table>
           </div>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

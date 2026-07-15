@@ -3,8 +3,10 @@
 import { createMembershipPlan } from "@/lib/membership-plans";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 export default async function NewMembershipPlanPage() {
   await requireSession();
@@ -30,17 +32,13 @@ export default async function NewMembershipPlanPage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.membershipPlans}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.plans.newPlan}</h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">
-          Define the plan type, duration or sessions, pricing, and access rules.
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.membershipPlans}
+        title={t.plans.newPlan}
+        description="Define the plan type, duration or sessions, pricing, and access rules."
+      />
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-5">
           <div className="grid gap-1.5">
             <label htmlFor="name" className="text-sm font-medium">
@@ -169,18 +167,12 @@ export default async function NewMembershipPlanPage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<PlusCircle className="h-4 w-4" strokeWidth={2} />}>
               {t.plans.createPlan}
-            </button>
-            <Link
-              href="/app/membership-plans"
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href="/app/membership-plans" variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>

@@ -6,7 +6,10 @@ import {
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getActiveCurrencySymbol } from "@/lib/currency";
-import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PencilLine } from "lucide-react";
 
 type Props = { params: Promise<{ planId: string }> };
 
@@ -34,34 +37,28 @@ export default async function MembershipPlanPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.membershipPlans}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{plan.name}</h1>
-          <p className="mt-2 text-sm leading-7 text-foreground/70">
-            {plan.planType === "duration" ? t.plans.durationBased : t.plans.sessionBased}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href={`/app/membership-plans/${plan.id}/edit`}
-            className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-          >
-            {t.actions.edit}
-          </Link>
-          <Link
-            href="/app/membership-plans"
-            className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-          >
-            {t.plans.allPlans}
-          </Link>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.membershipPlans}
+        title={plan.name}
+        description={plan.planType === "duration" ? t.plans.durationBased : t.plans.sessionBased}
+        actions={
+          <>
+            <Button
+              href={`/app/membership-plans/${plan.id}/edit`}
+              variant="primary"
+              icon={<PencilLine className="h-4 w-4" strokeWidth={2} />}
+            >
+              {t.actions.edit}
+            </Button>
+            <Button href="/app/membership-plans" variant="secondary">
+              {t.plans.allPlans}
+            </Button>
+          </>
+        }
+      />
 
       <section className="grid gap-4 md:grid-cols-2">
-        <article className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+        <Card hoverable animate delay={1}>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">{t.plans.planDetails}</p>
           <dl className="mt-4 grid gap-3 text-sm">
             <div>
@@ -101,9 +98,9 @@ export default async function MembershipPlanPage({ params }: Props) {
               </dd>
             </div>
           </dl>
-        </article>
+        </Card>
 
-        <article className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+        <Card hoverable animate delay={2}>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">{t.plans.freezePolicy}</p>
           <dl className="mt-4 grid gap-3 text-sm">
             <div>
@@ -119,10 +116,10 @@ export default async function MembershipPlanPage({ params }: Props) {
               </div>
             )}
           </dl>
-        </article>
+        </Card>
       </section>
 
-      <section className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+      <Card animate delay={3}>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">System</p>
         <dl className="mt-4 grid gap-3 text-sm">
           <div>
@@ -134,7 +131,7 @@ export default async function MembershipPlanPage({ params }: Props) {
             <dd className="mt-0.5 font-mono text-xs text-foreground/70">{plan.tenantId}</dd>
           </div>
         </dl>
-      </section>
+      </Card>
     </div>
   );
 }

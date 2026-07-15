@@ -10,6 +10,11 @@ import { getActiveCurrencySymbol } from "@/lib/currency";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import RenewFormFields from "./renew-form-fields";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { RefreshCw } from "lucide-react";
 
 type Props = { params: Promise<{ memberId: string }> };
 
@@ -60,15 +65,11 @@ export default async function RenewMembershipPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.members}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          {t.memberships.renew} — {member.fullName}
-        </h1>
-        <p className="mt-1 text-sm text-foreground/50">{member.memberNumber}</p>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.members}
+        title={`${t.memberships.renew} — ${member.fullName}`}
+        description={member.memberNumber}
+      />
 
       {!currentMembership && (
         <section className="rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-sm">
@@ -84,7 +85,7 @@ export default async function RenewMembershipPage({ params }: Props) {
 
       {currentMembership && (
         <>
-          <section className="rounded-2xl border border-line bg-white px-5 py-4">
+          <Card>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
               {t.memberships.currentMembership}
             </p>
@@ -104,22 +105,15 @@ export default async function RenewMembershipPage({ params }: Props) {
               <div>
                 <dt className="text-foreground/55">{t.members.statusLabel}</dt>
                 <dd className="mt-0.5">
-                  <span
-                    className={[
-                      "rounded-full px-2 py-0.5 text-xs font-medium",
-                      currentMembership.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500",
-                    ].join(" ")}
-                  >
+                  <Badge tone={currentMembership.status === "active" ? "success" : "neutral"}>
                     {currentMembership.status}
-                  </span>
+                  </Badge>
                 </dd>
               </div>
             </dl>
-          </section>
+          </Card>
 
-          <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+          <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
             <form action={handleRenew} className="grid gap-5">
               <RenewFormFields
                 plans={plans}
@@ -140,18 +134,12 @@ export default async function RenewMembershipPage({ params }: Props) {
               />
 
               <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-                >
+                <Button type="submit" variant="primary" icon={<RefreshCw className="h-4 w-4" strokeWidth={2} />}>
                   {t.memberships.renew}
-                </button>
-                <Link
-                  href={`/app/members/${memberId}`}
-                  className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-                >
+                </Button>
+                <Button href={`/app/members/${memberId}`} variant="secondary">
                   {t.actions.cancel}
-                </Link>
+                </Button>
               </div>
             </form>
           </section>

@@ -12,6 +12,9 @@ import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 const EVENTS = [
   "membershipExpiring",
@@ -97,38 +100,32 @@ export default async function NotificationSettingsPage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.settings.title} · {t.nav.notifications}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          {t.settings.notificationsTitle}
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">
-          {t.settings.notificationsDescription}
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={`${t.settings.title} · ${t.nav.notifications}`}
+        title={t.settings.notificationsTitle}
+        description={t.settings.notificationsDescription}
+      />
 
       {/* Sub-nav */}
       <nav className="flex gap-2 flex-wrap">
         <Link
           href="/app/settings/branch"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.branches.title}
         </Link>
         <Link
           href="/app/settings/options"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.settings.options}
         </Link>
-        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white">
+        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white shadow-sm">
           {t.nav.notifications}
         </span>
         <Link
           href="/app/settings/gates"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.settings.gates}
         </Link>
@@ -235,12 +232,9 @@ export default async function NotificationSettingsPage() {
         })}
 
         <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-          >
+          <Button type="submit" variant="primary" icon={<Save className="h-4 w-4" strokeWidth={2} />}>
             {t.settings.saveNotificationSettings}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

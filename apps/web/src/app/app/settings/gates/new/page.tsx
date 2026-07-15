@@ -4,7 +4,9 @@ import { createGate } from "@/lib/gates";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { DoorOpen } from "lucide-react";
 
 export default async function NewGatePage() {
   const session = await requireSession();
@@ -33,14 +35,7 @@ export default async function NewGatePage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.settings.gatesTitle}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          {t.settings.gateAddButton}
-        </h1>
-      </section>
+      <PageHeader eyebrow={t.settings.gatesTitle} title={t.settings.gateAddButton} />
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-5">
@@ -148,18 +143,12 @@ export default async function NewGatePage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<DoorOpen className="h-4 w-4" strokeWidth={2} />}>
               {t.settings.gateCreate}
-            </button>
-            <Link
-              href="/app/settings/gates"
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href="/app/settings/gates" variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>

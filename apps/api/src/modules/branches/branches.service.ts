@@ -117,6 +117,19 @@ export class BranchesService {
     });
   }
 
+  async updateBranchLogo(
+    tenantId: string,
+    branchId: string,
+    logoUrl: string | null,
+  ) {
+    await this.getBranchForTenant(tenantId, branchId);
+
+    return this.prisma.branch.update({
+      where: { id: branchId },
+      data: { logoUrl },
+    });
+  }
+
   private normalizeCurrencyCode(code: string | undefined): string | undefined {
     const trimmed = code?.trim().toUpperCase();
 

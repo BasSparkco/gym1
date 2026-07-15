@@ -15,6 +15,7 @@ export type Branch = {
   /** ISO 4217 currency code (e.g. 'ILS'). */
   operatingCurrencyCode: string;
   status: "active" | "inactive";
+  logoUrl?: string | null;
 };
 
 async function getCookieHeader() {

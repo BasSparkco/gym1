@@ -2,19 +2,23 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   DateFormat,
   Language,
+  LogoMode,
   NotificationSenderSettings,
   NotificationSettings,
   OwnerDataScope,
   TenantSettingsRecord,
   getDefaultTenantSettings,
 } from '../../data/settings-seed';
-import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isValidCurrencyCode } from '../../common/currencies';
 
 const VALID_LANGUAGES = new Set<Language>(['en', 'ar', 'he']);
 const VALID_DATE_FORMATS = new Set<DateFormat>(['dd/mm/yyyy', 'mm/dd/yyyy']);
-const VALID_OWNER_DATA_SCOPES = new Set<OwnerDataScope>(['all', 'activeBranch']);
+const VALID_OWNER_DATA_SCOPES = new Set<OwnerDataScope>([
+  'all',
+  'activeBranch',
+]);
+const VALID_LOGO_MODES = new Set<LogoMode>(['shared', 'perBranch']);
 
 export type UpdateSettingsInput = {
   defaultLanguage?: string;
@@ -25,15 +29,14 @@ export type UpdateSettingsInput = {
   checkOutTrackingEnabled?: boolean;
   ownerDataScope?: string;
   reportingCurrencyCode?: string;
+  logoMode?: string;
 };
 
 @Injectable()
 export class SettingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSettingsForTenant(
-    tenantId: string,
-  ): Promise<TenantSettingsRecord> {
+  async getSettingsForTenant(tenantId: string): Promise<TenantSettingsRecord> {
     const found = await this.prisma.tenantSettings.findUnique({
       where: { tenantId },
     });
@@ -60,6 +63,8 @@ export class SettingsService {
         (found.ownerDataScope as OwnerDataScope) ?? defaults.ownerDataScope,
       reportingCurrencyCode:
         found.reportingCurrencyCode ?? defaults.reportingCurrencyCode,
+      logoMode: found.logoMode ?? defaults.logoMode,
+      logoUrl: found.logoUrl ?? defaults.logoUrl,
     };
   }
 
@@ -126,6 +131,11 @@ export class SettingsService {
 
     const reportingCurrencyCode = rawReportingCurrencyCode;
 
+    const rawLogoMode = input.logoMode ?? current.logoMode;
+    const logoMode = VALID_LOGO_MODES.has(rawLogoMode as LogoMode)
+      ? (rawLogoMode as LogoMode)
+      : current.logoMode;
+
     const next: TenantSettingsRecord = {
       tenantId,
       defaultLanguage,
@@ -136,6 +146,8 @@ export class SettingsService {
       checkOutTrackingEnabled,
       ownerDataScope,
       reportingCurrencyCode,
+      logoMode,
+      logoUrl: current.logoUrl,
     };
 
     await this.prisma.tenantSettings.upsert({
@@ -144,26 +156,55 @@ export class SettingsService {
         tenantId,
         defaultLanguage,
         enabledLanguages,
-        notificationSettings: notificationSettings as Prisma.InputJsonValue,
-        notificationSenders: notificationSenders as Prisma.InputJsonValue,
+        notificationSettings: notificationSettings,
+        notificationSenders: notificationSenders,
         dateFormat,
         checkOutTrackingEnabled,
         ownerDataScope,
         reportingCurrencyCode,
+        logoMode,
       },
       update: {
         defaultLanguage,
         enabledLanguages,
-        notificationSettings: notificationSettings as Prisma.InputJsonValue,
-        notificationSenders: notificationSenders as Prisma.InputJsonValue,
+        notificationSettings: notificationSettings,
+        notificationSenders: notificationSenders,
         dateFormat,
         checkOutTrackingEnabled,
         ownerDataScope,
         reportingCurrencyCode,
+        logoMode,
       },
     });
 
     return next;
+  }
+
+  async updateTenantLogo(
+    tenantId: string,
+    logoUrl: string | null,
+  ): Promise<TenantSettingsRecord> {
+    const current = await this.getSettingsForTenant(tenantId);
+
+    await this.prisma.tenantSettings.upsert({
+      where: { tenantId },
+      create: {
+        tenantId,
+        defaultLanguage: current.defaultLanguage,
+        enabledLanguages: current.enabledLanguages,
+        notificationSettings: current.notificationSettings,
+        notificationSenders: current.notificationSenders,
+        dateFormat: current.dateFormat,
+        checkOutTrackingEnabled: current.checkOutTrackingEnabled,
+        ownerDataScope: current.ownerDataScope,
+        reportingCurrencyCode: current.reportingCurrencyCode,
+        logoMode: current.logoMode,
+        logoUrl,
+      },
+      update: { logoUrl },
+    });
+
+    return { ...current, logoUrl };
   }
 
   private normalizeNotificationSenders(

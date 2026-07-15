@@ -2,10 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { MessageCircle } from "lucide-react";
+import type { Dict } from "@/lib/i18n";
 
 type Status = "idle" | "connecting" | "waiting_qr" | "reconnecting" | "connected" | "error";
 
-export default function WhatsAppCard({ branchId, canManage }: { branchId: string; canManage: boolean }) {
+export default function WhatsAppCard({
+  branchId,
+  canManage,
+  t,
+}: {
+  branchId: string;
+  canManage: boolean;
+  t: Dict;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -103,7 +116,7 @@ export default function WhatsAppCard({ branchId, canManage }: { branchId: string
       const res = await fetch(base, { method: "PUT" });
       if (!res.ok) {
         const body = (await res.json()) as { message?: string };
-        setErrorMsg(body.message ?? "Failed to start session.");
+        setErrorMsg(body.message ?? t.settings.whatsappGenericError);
         setStatus("error");
         return;
       }
@@ -117,7 +130,7 @@ export default function WhatsAppCard({ branchId, canManage }: { branchId: string
   }
 
   async function handleDisconnect() {
-    if (!confirm("Disconnect WhatsApp for this branch?")) return;
+    if (!confirm(t.settings.whatsappDisconnectConfirm)) return;
     stopPolling();
     prevStatusRef.current = null;
     try {
@@ -130,29 +143,29 @@ export default function WhatsAppCard({ branchId, canManage }: { branchId: string
   }
 
   return (
-    <article className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">WhatsApp</p>
+    <Card hoverable animate delay={2}>
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">{t.settings.whatsapp}</p>
 
       <div className="mt-4">
         {status === "error" && (
           <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {errorMsg ?? "An error occurred."}
+            {errorMsg ?? t.settings.whatsappGenericError}
           </div>
         )}
 
         {(status === "idle" || status === "error") && (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-foreground/70">
-              No WhatsApp session linked to this branch. Connect a number so members receive notifications from this branch&apos;s own phone.
-            </p>
+            <p className="text-sm text-foreground/70">{t.settings.whatsappDescription}</p>
             {canManage && (
               <div>
-                <button
+                <Button
                   onClick={() => void handleConnect()}
-                  className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
+                  variant="primary"
+                  size="sm"
+                  icon={<MessageCircle className="h-3.5 w-3.5" strokeWidth={2} />}
                 >
-                  Connect WhatsApp
-                </button>
+                  {t.settings.whatsappConnectButton}
+                </Button>
               </div>
             )}
           </div>
@@ -161,7 +174,7 @@ export default function WhatsAppCard({ branchId, canManage }: { branchId: string
         {status === "connecting" && (
           <div className="flex items-center gap-3">
             <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-brand" />
-            <p className="text-sm text-foreground/70">Starting session — QR will appear shortly…</p>
+            <p className="text-sm text-foreground/70">{t.settings.whatsappStarting}</p>
           </div>
         )}
 
@@ -169,7 +182,7 @@ export default function WhatsAppCard({ branchId, canManage }: { branchId: string
         {status === "reconnecting" && (
           <div className="flex items-center gap-3">
             <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-yellow-400" />
-            <p className="text-sm text-foreground/70">Device disconnected — waiting for new QR code…</p>
+            <p className="text-sm text-foreground/70">{t.settings.whatsappReconnecting}</p>
           </div>
         )}
 
@@ -181,45 +194,37 @@ export default function WhatsAppCard({ branchId, canManage }: { branchId: string
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={qrDataUrl} alt="WhatsApp QR code" width={240} height={240} />
                 </div>
-                <p className="max-w-sm text-sm text-foreground/70">
-                  Open WhatsApp → <strong>Linked Devices</strong> → <strong>Link a device</strong> → scan.
-                </p>
-                <p className="text-xs text-foreground/40">Refreshes every 3 seconds.</p>
+                <p className="max-w-sm text-sm text-foreground/70">{t.settings.whatsappScanInstruction}</p>
+                <p className="text-xs text-foreground/40">{t.settings.whatsappRefreshHint}</p>
               </>
             ) : (
               <div className="flex items-center gap-3">
                 <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-brand" />
-                <p className="text-sm text-foreground/70">Starting session — QR will appear shortly…</p>
+                <p className="text-sm text-foreground/70">{t.settings.whatsappStarting}</p>
               </div>
             )}
             {canManage && (
-              <button
-                onClick={() => void handleDisconnect()}
-                className="rounded-full border border-line px-4 py-2 text-sm text-foreground/60 transition hover:border-red-300 hover:text-red-600"
-              >
-                Cancel
-              </button>
+              <Button onClick={() => void handleDisconnect()} variant="ghost" size="sm">
+                {t.actions.cancel}
+              </Button>
             )}
           </div>
         )}
 
         {status === "connected" && (
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700">
+            <Badge tone="success">
               <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-              Connected
-            </span>
+              {t.settings.whatsappConnected}
+            </Badge>
             {canManage && (
-              <button
-                onClick={() => void handleDisconnect()}
-                className="rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-              >
-                Disconnect
-              </button>
+              <Button onClick={() => void handleDisconnect()} variant="danger" size="sm">
+                {t.settings.whatsappDisconnect}
+              </Button>
             )}
           </div>
         )}
       </div>
-    </article>
+    </Card>
   );
 }

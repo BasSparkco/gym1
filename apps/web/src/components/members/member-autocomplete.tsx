@@ -15,6 +15,8 @@ type Props = {
   onEnterWithoutSelection?: (query: string) => void;
   autoFocus?: boolean;
   inputClassName?: string;
+  icon?: React.ReactNode;
+  containerClassName?: string;
 };
 
 export function MemberAutocomplete({
@@ -23,6 +25,8 @@ export function MemberAutocomplete({
   onEnterWithoutSelection,
   autoFocus,
   inputClassName,
+  icon,
+  containerClassName,
 }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MemberResult[]>([]);
@@ -91,7 +95,12 @@ export function MemberAutocomplete({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={containerClassName ?? "relative"}>
+      {icon && (
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40">
+          {icon}
+        </span>
+      )}
       <input
         type="text"
         value={query}
@@ -108,7 +117,7 @@ export function MemberAutocomplete({
       />
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-2xl border border-line bg-white shadow-lg">
+        <div className="animate-fade-in-up absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-line bg-white shadow-[0_20px_50px_-12px_rgba(86,57,28,0.25)]">
           {results.map((member, i) => (
             <button
               key={member.id}
@@ -118,7 +127,7 @@ export function MemberAutocomplete({
                 select(member);
               }}
               className={[
-                "flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition",
+                "flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-150",
                 i === activeIndex
                   ? "bg-brand/10 text-brand"
                   : "hover:bg-brand/5",

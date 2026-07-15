@@ -5,12 +5,24 @@ import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import type { BadgeTone } from "@/components/ui/badge";
+import { History, DoorOpen } from "lucide-react";
 
 type Period = "today" | "week" | "month" | "all";
 type Presence = "all" | "inside" | "out";
 
 const PERIODS: Period[] = ["today", "week", "month", "all"];
 const PRESENCES: Presence[] = ["all", "inside", "out"];
+
+const accessMethodTone: Record<string, BadgeTone> = {
+  qr: "info",
+  manual: "neutral",
+};
 
 function filterByPeriod(
   visits: Awaited<ReturnType<typeof listVisits>>,
@@ -88,27 +100,22 @@ export default async function VisitsPage(props: {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.visits}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {t.visits.title}
-          </h1>
-          <p className="mt-2 text-sm text-foreground/60">
+      <PageHeader
+        eyebrow={t.nav.visits}
+        title={t.visits.title}
+        description={
+          <>
             {filtered.length} visit{filtered.length !== 1 ? "s" : ""} &middot;{" "}
             {periodLabel[period]}
             {presence !== "all" && <> &middot; {presenceLabel[presence]}</>}
-          </p>
-        </div>
-        <Link
-          href="/app/check-in"
-          className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-        >
-          {t.nav.checkIn}
-        </Link>
-      </section>
+          </>
+        }
+        actions={
+          <Button href="/app/check-in" variant="primary" icon={<DoorOpen className="h-4 w-4" strokeWidth={2} />}>
+            {t.nav.checkIn}
+          </Button>
+        }
+      />
 
       {/* Period filter */}
       <nav className="flex gap-2 flex-wrap">
@@ -117,7 +124,7 @@ export default async function VisitsPage(props: {
           return isActive ? (
             <span
               key={p}
-              className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white"
+              className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white shadow-sm"
             >
               {periodLabel[p]}
             </span>
@@ -125,7 +132,7 @@ export default async function VisitsPage(props: {
             <Link
               key={p}
               href={`/app/visits?period=${p}&presence=${presence}`}
-              className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+              className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
             >
               {periodLabel[p]}
             </Link>
@@ -142,7 +149,7 @@ export default async function VisitsPage(props: {
             <span
               key={pr}
               className={[
-                "rounded-full px-4 py-1.5 text-sm font-medium",
+                "rounded-full px-4 py-1.5 text-sm font-medium shadow-sm",
                 pr === "inside"
                   ? "bg-green-600 text-white"
                   : pr === "out"
@@ -157,7 +164,7 @@ export default async function VisitsPage(props: {
             <Link
               key={pr}
               href={`/app/visits?period=${period}&presence=${pr}`}
-              className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+              className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
             >
               {pr === "inside" && <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500 align-middle" />}
               {presenceLabel[pr]}
@@ -167,77 +174,63 @@ export default async function VisitsPage(props: {
       </nav>
       )}
 
-      <section className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
-        {allSorted.length === 0 ? (
-          <p className="text-sm text-foreground/40">{t.visits.noVisits}</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-sm text-foreground/40">{t.visits.noVisitsForPeriod}</p>
-        ) : (
-          <div className="grid gap-2">
-            {filtered.map((visit) => {
-              const member = memberMap.get(visit.memberId);
-              const localTime = formatDateTime(visit.checkInTime, dateFormat);
+      {allSorted.length === 0 ? (
+        <EmptyState icon={<History className="h-5 w-5" strokeWidth={2} />} title={t.visits.noVisits} />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon={<History className="h-5 w-5" strokeWidth={2} />} title={t.visits.noVisitsForPeriod} />
+      ) : (
+        <section className="grid gap-3">
+          {filtered.map((visit, index) => {
+            const member = memberMap.get(visit.memberId);
+            const localTime = formatDateTime(visit.checkInTime, dateFormat);
 
-              return (
-                <Link
-                  key={visit.id}
-                  href={`/app/visits/${visit.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white px-5 py-3.5 text-sm transition hover:border-brand hover:text-brand"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand text-xs font-bold uppercase">
-                      {member ? member.fullName[0] : "?"}
-                    </div>
-                    <div>
-                      <p className="font-medium">
-                        {member ? member.fullName : visit.memberId}
+            return (
+              <Card
+                key={visit.id}
+                as={Link}
+                href={`/app/visits/${visit.id}`}
+                hoverable
+                animate
+                delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+                className="flex flex-wrap items-center justify-between gap-3 !px-5 !py-3.5 text-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand text-xs font-bold uppercase">
+                    {member ? member.fullName[0] : "?"}
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      {member ? member.fullName : visit.memberId}
+                    </p>
+                    {member && (
+                      <p className="font-mono text-xs text-foreground/50">
+                        {member.memberNumber}
                       </p>
-                      {member && (
-                        <p className="font-mono text-xs text-foreground/50">
-                          {member.memberNumber}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-foreground/60">
-                    {checkOutEnabled && (
-                    <span
-                      className={[
-                        "rounded-full px-2 py-0.5 text-xs font-medium",
-                        visit.checkOutTime === null
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500",
-                      ].join(" ")}
-                    >
-                      {visit.checkOutTime === null
-                        ? t.visits.inside
-                        : t.visits.checkedOut}
-                    </span>
                     )}
-                    <span
-                      className={[
-                        "rounded-full px-2 py-0.5 text-xs font-medium",
-                        visit.accessMethod === "qr"
-                          ? "bg-blue-100 text-blue-700"
-                          : visit.accessMethod === "rfid"
-                            ? "bg-violet-100 text-violet-700"
-                            : "bg-gray-100 text-gray-600",
-                      ].join(" ")}
-                    >
-                      {visit.accessMethod === "qr"
-                        ? t.visits.qrScan
-                        : visit.accessMethod === "rfid"
-                          ? "RFID"
-                          : t.visits.manualEntry}
-                    </span>
-                    <span className="text-xs">{localTime}</span>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                </div>
+                <div className="flex items-center gap-3 text-foreground/60">
+                  {checkOutEnabled && (
+                    <Badge tone={visit.checkOutTime === null ? "success" : "neutral"}>
+                      {visit.checkOutTime === null ? t.visits.inside : t.visits.checkedOut}
+                    </Badge>
+                  )}
+                  {visit.accessMethod === "rfid" ? (
+                    <Badge tone="neutral" className="!bg-violet-100 !text-violet-700">
+                      RFID
+                    </Badge>
+                  ) : (
+                    <Badge tone={accessMethodTone[visit.accessMethod] ?? "neutral"}>
+                      {visit.accessMethod === "qr" ? t.visits.qrScan : t.visits.manualEntry}
+                    </Badge>
+                  )}
+                  <span className="text-xs">{localTime}</span>
+                </div>
+              </Card>
+            );
+          })}
+        </section>
+      )}
     </div>
   );
 }

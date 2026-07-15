@@ -12,8 +12,13 @@ import { listCoaches } from "@/lib/employees";
 import { listMembers } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeTone } from "@/components/ui/badge";
+import { CalendarCheck, XCircle } from "lucide-react";
 
 type Props = {
   params: Promise<{ programId: string; sessionId: string }>;
@@ -26,6 +31,13 @@ const bookingStatusLabelKey = {
   noShow: "bookingNoShow",
   cancelled: "bookingCancelled",
 } as const;
+
+const bookingStatusTone: Record<string, BadgeTone> = {
+  booked: "success",
+  waitlisted: "warning",
+  attended: "info",
+  noShow: "neutral",
+};
 
 export default async function ClassSessionDetailPage({ params }: Props) {
   const { programId, sessionId } = await params;
@@ -82,35 +94,32 @@ export default async function ClassSessionDetailPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {program.name}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.classes.sessionDetails}</h1>
-          <p className="mt-2 text-sm leading-7 text-foreground/70">
+      <PageHeader
+        eyebrow={program.name}
+        title={t.classes.sessionDetails}
+        description={
+          <>
             {classSession.date} · {classSession.startTime.slice(11, 16)}–{classSession.endTime.slice(11, 16)} ·{" "}
             {branchMap.get(classSession.branchId) ?? classSession.branchId}
             {classSession.room ? ` · ${classSession.room}` : ""}
             {classSession.coachId ? ` · ${coachMap.get(classSession.coachId) ?? classSession.coachId}` : ""}
-          </p>
-        </div>
-        <Link
-          href={`/app/training-programs/${programId}`}
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {program.name}
-        </Link>
-      </section>
+          </>
+        }
+        actions={
+          <Button href={`/app/training-programs/${programId}`} variant="secondary">
+            {program.name}
+          </Button>
+        }
+      />
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <Card animate delay={1}>
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
             {t.classes.bookingsTitle}
           </p>
-          <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-medium">
+          <Badge tone="outline">
             {classSession.bookedCount}/{classSession.capacity} {t.classes.bookedCount.toLowerCase()}
-          </span>
+          </Badge>
         </div>
 
         <div className="mt-4 grid gap-2">
@@ -129,28 +138,15 @@ export default async function ClassSessionDetailPage({ params }: Props) {
                   <p className="text-xs text-foreground/50">{member?.memberNumber}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span
-                    className={[
-                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      booking.status === "booked" && "bg-green-100 text-green-700",
-                      booking.status === "waitlisted" && "bg-amber-100 text-amber-700",
-                      booking.status === "attended" && "bg-blue-100 text-blue-700",
-                      booking.status === "noShow" && "bg-gray-100 text-gray-500",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
+                  <Badge tone={bookingStatusTone[booking.status] ?? "neutral"}>
                     {t.classes[bookingStatusLabelKey[booking.status]]}
-                  </span>
+                  </Badge>
                   {(booking.status === "booked" || booking.status === "waitlisted") && (
                     <form action={handleCancelBooking}>
                       <input type="hidden" name="bookingId" value={booking.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50"
-                      >
+                      <Button type="submit" variant="danger" size="sm">
                         {t.classes.cancelBooking}
-                      </button>
+                      </Button>
                     </form>
                   )}
                 </div>
@@ -170,24 +166,18 @@ export default async function ClassSessionDetailPage({ params }: Props) {
                 ))}
               </select>
             </div>
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<CalendarCheck className="h-4 w-4" strokeWidth={2} />}>
               {t.classes.book}
-            </button>
+            </Button>
           </form>
         )}
-      </section>
+      </Card>
 
       {canManage && classSession.status === "scheduled" && (
         <form action={handleCancelSession}>
-          <button
-            type="submit"
-            className="rounded-full border border-red-200 px-5 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
-          >
+          <Button type="submit" variant="danger" icon={<XCircle className="h-4 w-4" strokeWidth={2} />}>
             {t.classes.cancelSession}
-          </button>
+          </Button>
         </form>
       )}
     </div>

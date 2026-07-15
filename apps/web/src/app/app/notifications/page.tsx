@@ -1,10 +1,16 @@
 import { listNotifications } from "@/lib/notifications";
 import { listMembers } from "@/lib/members";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import type { BadgeTone } from "@/components/ui/badge";
+import { Bell } from "lucide-react";
 
 const channelLabel: Record<string, string> = {
   sms: "SMS",
@@ -12,16 +18,16 @@ const channelLabel: Record<string, string> = {
   email: "Email",
 };
 
-const channelColors: Record<string, string> = {
-  sms: "bg-blue-100 text-blue-700",
-  whatsapp: "bg-green-100 text-green-700",
-  email: "bg-purple-100 text-purple-700",
+const channelTone: Record<string, BadgeTone> = {
+  sms: "info",
+  whatsapp: "success",
+  email: "brand",
 };
 
-const statusColors: Record<string, string> = {
-  sent: "bg-green-100 text-green-700",
-  pending: "bg-yellow-100 text-yellow-700",
-  failed: "bg-red-100 text-red-700",
+const statusTone: Record<string, BadgeTone> = {
+  sent: "success",
+  pending: "warning",
+  failed: "danger",
 };
 
 export default async function NotificationsPage() {
@@ -39,69 +45,55 @@ export default async function NotificationsPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.notifications}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.notifications.title}</h1>
-          <p className="mt-2 text-sm text-foreground/60">
-            {notifications.length} notification{notifications.length !== 1 ? "s" : ""} in history.
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.notifications}
+        title={t.notifications.title}
+        description={formatDict(t.notifications.listDescription, { count: notifications.length, plural: notifications.length !== 1 ? "s" : "" })}
+      />
 
-      <section className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
-        {notifications.length === 0 ? (
-          <p className="text-sm text-foreground/40">{t.notifications.noNotifications}</p>
-        ) : (
-          <div className="grid gap-2">
-            {notifications.map((notif) => {
-              const member = memberMap.get(notif.memberId);
-              const localTime = formatDateTime(notif.createdAt, dateFormat);
+      {notifications.length === 0 ? (
+        <EmptyState icon={<Bell className="h-5 w-5" strokeWidth={2} />} title={t.notifications.noNotifications} />
+      ) : (
+        <section className="grid gap-3">
+          {notifications.map((notif, index) => {
+            const member = memberMap.get(notif.memberId);
+            const localTime = formatDateTime(notif.createdAt, dateFormat);
 
-              return (
-                <Link
-                  key={notif.id}
-                  href={`/app/notifications/${notif.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white px-5 py-3.5 text-sm transition hover:border-brand hover:text-brand"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand text-xs font-bold uppercase">
-                      {member ? member.fullName[0] : "?"}
-                    </div>
-                    <div>
-                      <p className="font-medium">{notif.subject}</p>
-                      <p className="text-xs text-foreground/50">
-                        {member ? member.fullName : notif.memberId}
-                      </p>
-                    </div>
+            return (
+              <Card
+                key={notif.id}
+                as={Link}
+                href={`/app/notifications/${notif.id}`}
+                hoverable
+                animate
+                delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+                className="flex flex-wrap items-center justify-between gap-3 !px-5 !py-3.5 text-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand text-xs font-bold uppercase">
+                    {member ? member.fullName[0] : "?"}
                   </div>
-                  <div className="flex items-center gap-3 text-foreground/60">
-                    <span
-                      className={[
-                        "rounded-full px-2 py-0.5 text-xs font-medium",
-                        channelColors[notif.channel] ?? "bg-gray-100 text-gray-600",
-                      ].join(" ")}
-                    >
-                      {channelLabel[notif.channel] ?? notif.channel}
-                    </span>
-                    <span
-                      className={[
-                        "rounded-full px-2 py-0.5 text-xs font-medium",
-                        statusColors[notif.status] ?? "bg-gray-100 text-gray-600",
-                      ].join(" ")}
-                    >
-                      {notif.status}
-                    </span>
-                    <span className="text-xs">{localTime}</span>
+                  <div>
+                    <p className="font-medium">{notif.subject}</p>
+                    <p className="text-xs text-foreground/50">
+                      {member ? member.fullName : notif.memberId}
+                    </p>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                </div>
+                <div className="flex items-center gap-3 text-foreground/60">
+                  <Badge tone={channelTone[notif.channel] ?? "neutral"}>
+                    {channelLabel[notif.channel] ?? notif.channel}
+                  </Badge>
+                  <Badge tone={statusTone[notif.status] ?? "neutral"}>
+                    {notif.status}
+                  </Badge>
+                  <span className="text-xs">{localTime}</span>
+                </div>
+              </Card>
+            );
+          })}
+        </section>
+      )}
     </div>
   );
 }

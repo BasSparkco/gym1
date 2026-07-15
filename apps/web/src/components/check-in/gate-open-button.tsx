@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle2, Loader2, Lock, XCircle } from "lucide-react";
 
 type Props = {
   label: string;
@@ -46,38 +47,27 @@ export function GateOpenButton({ label, successLabel, failLabel, gateId }: Props
         onClick={handleClick}
         disabled={isLoading}
         className={[
-          "flex items-center gap-2 rounded-full px-6 py-3 text-base font-semibold transition",
+          "flex items-center gap-2 rounded-full px-6 py-3 text-base font-semibold shadow-sm transition-all duration-200 disabled:pointer-events-none disabled:opacity-60",
           state === "ok"
             ? "bg-green-500 text-white"
             : state === "fail"
               ? "bg-red-500 text-white"
-              : "border-2 border-brand bg-white text-brand hover:bg-brand hover:text-white disabled:opacity-60",
+              : "border-2 border-brand bg-white text-brand hover:-translate-y-0.5 hover:bg-brand hover:text-white hover:shadow-md active:translate-y-0",
         ].join(" ")}
       >
         {isLoading ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.2} />
         ) : state === "ok" ? (
-          <span className="text-lg">✓</span>
+          <CheckCircle2 className="h-5 w-5" strokeWidth={2.2} />
         ) : state === "fail" ? (
-          <span className="text-lg">✕</span>
+          <XCircle className="h-5 w-5" strokeWidth={2.2} />
         ) : (
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2.2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-          </svg>
+          <Lock className="h-4 w-4" strokeWidth={2.2} />
         )}
         {state === "ok" ? successLabel : state === "fail" ? failLabel : label}
       </button>
       {state === "fail" && failReason && failReason !== failLabel && (
-        <p className="text-xs text-red-600">{failReason}</p>
+        <p className="animate-fade-in-up text-xs text-red-600">{failReason}</p>
       )}
     </div>
   );

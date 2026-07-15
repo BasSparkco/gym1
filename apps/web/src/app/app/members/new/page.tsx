@@ -7,8 +7,11 @@ import { listEmployees } from "@/lib/employees";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import DateInput from "@/components/date-input";
-import Link from "next/link";
+import NewMemberPhotoCapture from "@/components/members/new-member-photo-capture";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { UserPlus } from "lucide-react";
 
 export default async function NewMemberPage() {
   const session = await requireSession();
@@ -48,41 +51,24 @@ export default async function NewMemberPage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.members}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.members.newMember}</h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">
-          Register a new member. Full name is required.
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.members}
+        title={t.members.newMember}
+        description="Register a new member. Full name is required."
+      />
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up stagger-1 rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-6" encType="multipart/form-data">
 
           {/* Photo */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand mb-4">{t.members.photo}</p>
-            <div className="flex items-center gap-4">
-              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-dashed border-line bg-white text-foreground/30 text-3xl flex-shrink-0">
-                👤
-              </div>
-              <div className="grid gap-1.5">
-                <label htmlFor="picture" className="cursor-pointer rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand inline-block">
-                  {t.members.uploadPhoto}
-                </label>
-                <input
-                  id="picture"
-                  name="picture"
-                  type="file"
-                  accept="image/*"
-                  capture="user"
-                  className="hidden"
-                />
-                <p className="text-xs text-foreground/50">JPG, PNG or WEBP — max 5 MB. On mobile, tap to use camera or choose a file.</p>
-              </div>
-            </div>
+            <NewMemberPhotoCapture
+              uploadPhotoLabel={t.members.uploadPhoto}
+              changePhotoLabel={t.members.changePhoto}
+              takePhotoLabel={t.members.takePhoto}
+              helpText="JPG, PNG or WEBP — max 5 MB. Use a connected USB camera, your device's camera, or choose a file."
+            />
           </div>
 
           {/* Basic Info */}
@@ -212,18 +198,12 @@ export default async function NewMemberPage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<UserPlus className="h-4 w-4" strokeWidth={2} />}>
               {t.members.newMember}
-            </button>
-            <Link
-              href="/app/members"
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href="/app/members" variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>

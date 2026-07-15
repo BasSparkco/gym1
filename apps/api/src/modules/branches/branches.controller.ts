@@ -2,16 +2,22 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
   Req,
   UnauthorizedException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
+import { extname } from 'node:path';
 import { requireRole } from '../../common/require-role';
 import { AuthService } from '../auth/auth.service';
+import { MinioService } from '../../minio/minio.service';
 import { BranchesService } from './branches.service';
 
 type CreateBranchRequestBody = {
@@ -37,6 +43,7 @@ export class BranchesController {
   constructor(
     private readonly authService: AuthService,
     private readonly branchesService: BranchesService,
+    private readonly minioService: MinioService,
   ) {}
 
   @Get()
@@ -67,7 +74,10 @@ export class BranchesController {
   }
 
   @Get(':branchId')
-  async getBranch(@Req() request: Request, @Param('branchId') branchId: string) {
+  async getBranch(
+    @Req() request: Request,
+    @Param('branchId') branchId: string,
+  ) {
     const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
@@ -102,6 +112,57 @@ export class BranchesController {
     }
 
     return { branch };
+  }
+
+  // Uses memory storage (default) — file is uploaded to MinIO object storage,
+  // same pattern as MembersController.uploadMemberPhoto.
+  @Post(':branchId/logo')
+  @UseInterceptors(
+    FileInterceptor('logo', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
+  async uploadBranchLogo(
+    @Req() request: Request,
+    @Param('branchId') branchId: string,
+    @UploadedFile()
+    file: { originalname: string; buffer: Buffer; mimetype: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+
+    const ext = extname(file.originalname) || '.png';
+    const filename = `logo-branch-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
+    await this.minioService.client.putObject(
+      this.minioService.getBucket(),
+      filename,
+      file.buffer,
+      file.buffer.length,
+      { 'Content-Type': file.mimetype },
+    );
+
+    return {
+      branch: await this.branchesService.updateBranchLogo(
+        session.user.tenant.id,
+        branchId,
+        `/api/uploads/logos/${filename}`,
+      ),
+    };
+  }
+
+  @Delete(':branchId/logo')
+  async removeBranchLogo(
+    @Req() request: Request,
+    @Param('branchId') branchId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+
+    return {
+      branch: await this.branchesService.updateBranchLogo(
+        session.user.tenant.id,
+        branchId,
+        null,
+      ),
+    };
   }
 
   @Post('switch')

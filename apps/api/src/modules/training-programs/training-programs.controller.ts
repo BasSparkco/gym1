@@ -122,6 +122,37 @@ export class TrainingProgramsController {
     };
   }
 
+  @Get(':programId/members')
+  async getEnrolledMembers(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return {
+      memberIds: await this.trainingProgramsService.listEnrolledMemberIds(
+        session.user.tenant.id,
+        programId,
+      ),
+    };
+  }
+
+  @Patch(':programId/members')
+  async setEnrolledMembers(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+    @Body() body: { memberIds?: string[] },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+    return {
+      memberIds: await this.trainingProgramsService.setEnrolledMembers(
+        session.user.tenant.id,
+        programId,
+        body.memberIds ?? [],
+      ),
+    };
+  }
+
   private async getRequiredSession(cookieHeader: string | undefined) {
     const session =
       await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);

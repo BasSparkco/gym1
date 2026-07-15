@@ -59,6 +59,10 @@ export const defaultNotificationSenders: NotificationSenderSettings = {};
 
 export type OwnerDataScope = "all" | "activeBranch";
 
+/** Whether the tenant shows one logo across all branches, or lets each
+ * branch have its own. */
+export type LogoMode = "shared" | "perBranch";
+
 export type TenantSettings = {
   tenantId: string;
   defaultLanguage: Language;
@@ -70,6 +74,8 @@ export type TenantSettings = {
   ownerDataScope: OwnerDataScope;
   /** ISO 4217 currency code (e.g. 'ILS'). */
   reportingCurrencyCode: string;
+  logoMode: LogoMode;
+  logoUrl: string | null;
 };
 
 export const LANGUAGE_LABELS: Record<Language, string> = {
@@ -106,6 +112,12 @@ async function authedFetch(path: string, init?: RequestInit) {
   return response;
 }
 
+export function getLogoUrl(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl) return null;
+  const apiRoot = apiBaseUrl.replace(/\/api$/, "");
+  return `${apiRoot}${logoUrl}`;
+}
+
 export async function getSettings(): Promise<TenantSettings> {
   const response = await authedFetch("/settings");
   const payload = (await response.json()) as { settings: TenantSettings };
@@ -121,6 +133,7 @@ export async function updateSettings(data: {
   checkOutTrackingEnabled?: boolean;
   ownerDataScope?: OwnerDataScope;
   reportingCurrencyCode?: string;
+  logoMode?: LogoMode;
 }): Promise<TenantSettings> {
   const response = await authedFetch("/settings", {
     method: "PATCH",

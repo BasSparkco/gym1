@@ -6,6 +6,10 @@ import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { RefreshCw } from "lucide-react";
 
 export default async function BranchSettingsPage() {
   const session = await requireSession();
@@ -29,39 +33,32 @@ export default async function BranchSettingsPage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.settings.title} · {t.branches.title}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          Active branch
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">
-          Select which branch you are currently operating from. This controls
-          which members and visits you see across the application.
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={`${t.settings.title} · ${t.branches.title}`}
+        title={t.settings.activeBranchTitle}
+        description={t.settings.activeBranchDescription}
+      />
 
       {/* Sub-nav */}
       <nav className="flex gap-2 flex-wrap">
-        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white">
+        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white shadow-sm">
           {t.branches.title}
         </span>
         <Link
           href="/app/settings/options"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.settings.options}
         </Link>
         <Link
           href="/app/settings/notifications"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.nav.notifications}
         </Link>
         <Link
           href="/app/settings/gates"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.settings.gates}
         </Link>
@@ -69,7 +66,7 @@ export default async function BranchSettingsPage() {
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
-          Current branch
+          {t.settings.currentBranch}
         </p>
         <p className="mt-2 text-lg font-semibold">{session.branch.name}</p>
         <p className="mt-0.5 text-xs font-mono text-foreground/40">
@@ -79,19 +76,18 @@ export default async function BranchSettingsPage() {
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
-          Switch branch
+          {t.settings.switchBranch}
         </p>
 
         {activeBranches.length <= 1 ? (
           <p className="mt-4 text-sm text-foreground/50">
-            No other active branches to switch to.{" "}
+            {t.settings.noOtherBranches}{" "}
             <Link
               href="/app/branches/new"
               className="text-brand hover:underline"
             >
-              Create a branch
-            </Link>{" "}
-            first.
+              {t.settings.createABranch}
+            </Link>
           </p>
         ) : (
           <div className="mt-4 grid gap-2">
@@ -120,18 +116,13 @@ export default async function BranchSettingsPage() {
                     )}
                   </div>
                   {isCurrent ? (
-                    <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
-                      Current
-                    </span>
+                    <Badge tone="brand">{t.settings.current}</Badge>
                   ) : (
                     <form action={handleSwitch}>
                       <input type="hidden" name="branchId" value={branch.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-                      >
-                        Switch
-                      </button>
+                      <Button type="submit" variant="secondary" size="sm" icon={<RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />}>
+                        {t.settings.switchAction}
+                      </Button>
                     </form>
                   )}
                 </div>

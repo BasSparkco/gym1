@@ -5,8 +5,12 @@ import { listMembershipsForMember } from "@/lib/memberships";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { PrintButton } from "@/components/members/print-button";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Download, MessageCircle } from "lucide-react";
 
 type Props = {
   params: Promise<{ memberId: string }>;
@@ -38,36 +42,29 @@ export default async function MemberQrPage({ params, searchParams }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.members}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {t.members.qrCode}
-          </h1>
-          <p className="mt-1 text-sm text-foreground/60">{member.fullName}</p>
-        </div>
-        <Link
-          href={`/app/members/${member.id}`}
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.actions.back}
-        </Link>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.members}
+        title={t.members.qrCode}
+        description={member.fullName}
+        actions={
+          <Button href={`/app/members/${member.id}`} variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+            {t.actions.back}
+          </Button>
+        }
+      />
 
       {sent && (
-        <div className="rounded-2xl bg-green-50 border border-green-200 px-5 py-4 text-sm text-green-800 font-medium">
+        <div className="animate-scale-in rounded-2xl bg-green-50 border border-green-200 px-5 py-4 text-sm text-green-800 font-medium">
           {t.members.qrSentSuccess}
         </div>
       )}
       {error && (
-        <div className="rounded-2xl bg-red-50 border border-red-200 px-5 py-4 text-sm text-red-700">
+        <div className="animate-scale-in rounded-2xl bg-red-50 border border-red-200 px-5 py-4 text-sm text-red-700">
           {t.members.qrSentFailed} {decodeURIComponent(error)}
         </div>
       )}
 
-      <section className="flex flex-col items-center gap-6 rounded-[2rem] border border-line bg-surface px-8 py-10 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <Card animate className="flex flex-col items-center gap-6 px-8 py-10">
         {/* QR code fetched from API — uses device-generated PNG (UUID content) */}
         <div className="rounded-2xl border border-line bg-white p-4 shadow-sm">
           <img
@@ -85,10 +82,10 @@ export default async function MemberQrPage({ params, searchParams }: Props) {
             {member.memberNumber}
           </p>
           {activeMembership && (
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+            <Badge tone="success" className="mt-2">
               <span className="size-1.5 rounded-full bg-green-500" />
               {t.status.active} · {activeMembership.plan?.name ?? activeMembership.planId}
-            </p>
+            </Badge>
           )}
         </div>
 
@@ -103,22 +100,24 @@ export default async function MemberQrPage({ params, searchParams }: Props) {
             <form action={handleSendQr}>
               <button
                 type="submit"
-                className="rounded-full bg-green-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
+                className="inline-flex items-center gap-2 rounded-full bg-green-600 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-green-700 hover:shadow-md active:translate-y-0"
               >
+                <MessageCircle className="h-4 w-4" strokeWidth={2} />
                 {t.members.sendQrWhatsApp}
               </button>
             </form>
           )}
 
-          <a
+          <Button
             href={`/api/members/${member.id}/qrcode`}
             download="gym-qr.png"
-            className="rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+            variant="secondary"
+            icon={<Download className="h-4 w-4" strokeWidth={2} />}
           >
             Download
-          </a>
+          </Button>
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

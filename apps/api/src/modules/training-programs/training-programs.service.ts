@@ -193,6 +193,49 @@ export class TrainingProgramsService {
     return this.listEntitledProgramIds(planId);
   }
 
+  /** Members with a standing enrollment in this program (independent of any
+   * specific ClassSession booking). */
+  async listEnrolledMemberIds(
+    tenantId: string,
+    programId: string,
+  ): Promise<string[]> {
+    await this.getProgramForTenant(tenantId, programId);
+    const links = await this.prisma.programEnrollment.findMany({
+      where: { programId },
+      select: { memberId: true },
+    });
+    return links.map((l) => l.memberId);
+  }
+
+  async setEnrolledMembers(
+    tenantId: string,
+    programId: string,
+    memberIds: string[],
+  ) {
+    await this.getProgramForTenant(tenantId, programId);
+
+    const uniqueIds = Array.from(new Set(memberIds));
+    const members = await this.prisma.member.findMany({
+      where: { id: { in: uniqueIds }, tenantId },
+      select: { id: true },
+    });
+
+    if (members.length !== uniqueIds.length) {
+      throw new BadRequestException(
+        'One or more members are invalid for this tenant.',
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.programEnrollment.deleteMany({ where: { programId } }),
+      this.prisma.programEnrollment.createMany({
+        data: uniqueIds.map((memberId) => ({ programId, memberId })),
+      }),
+    ]);
+
+    return this.listEnrolledMemberIds(tenantId, programId);
+  }
+
   private async assertBranchInTenant(tenantId: string, branchId: string) {
     const branch = await this.prisma.branch.findFirst({
       where: { id: branchId, tenantId },

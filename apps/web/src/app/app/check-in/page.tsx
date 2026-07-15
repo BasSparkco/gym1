@@ -7,6 +7,9 @@ import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { CheckInMemberPicker } from "@/components/check-in/member-picker";
 import { GateOpenButton } from "@/components/check-in/gate-open-button";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, DoorOpen, XCircle } from "lucide-react";
 
 type Props = {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -52,46 +55,39 @@ export default async function CheckInPage({ searchParams }: Props) {
   return (
     <div className="grid gap-6">
       {/* Header */}
-      <section className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.checkIn}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Manual Check-In</h1>
-          <p className="mt-2 text-sm text-foreground/60">
-            Staff override — use this when a member has forgotten or lost their access card.
-            Search by name or member number.
-          </p>
-        </div>
-
-        {/* Gate open buttons — one per enabled gate, or legacy single button */}
-        <div className="mt-2 flex shrink-0 flex-wrap gap-3">
-          {enabledGates.length > 0 ? (
-            enabledGates.map((gate) => (
+      <PageHeader
+        eyebrow={t.nav.checkIn}
+        title={t.checkIn.manualTitle}
+        description={t.checkIn.manualDescription}
+        actions={
+          <>
+            {enabledGates.length > 0 ? (
+              enabledGates.map((gate) => (
+                <GateOpenButton
+                  key={gate.id}
+                  gateId={gate.id}
+                  label={gate.name}
+                  successLabel={t.checkIn.gateOpened}
+                  failLabel={t.checkIn.gateOpenFailed}
+                />
+              ))
+            ) : (
               <GateOpenButton
-                key={gate.id}
-                gateId={gate.id}
-                label={gate.name}
+                label={t.checkIn.openGate}
                 successLabel={t.checkIn.gateOpened}
                 failLabel={t.checkIn.gateOpenFailed}
               />
-            ))
-          ) : (
-            <GateOpenButton
-              label={t.checkIn.openGate}
-              successLabel={t.checkIn.gateOpened}
-              failLabel={t.checkIn.gateOpenFailed}
-            />
-          )}
-        </div>
-      </section>
+            )}
+          </>
+        }
+      />
 
       {/* Result banner */}
       {granted && (
-        <section className="rounded-[2rem] border-2 border-green-300 bg-green-50 px-6 py-5">
+        <section className="animate-scale-in rounded-[2rem] border-2 border-green-300 bg-green-50 px-6 py-5">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-xl font-bold">
-              ✓
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-500 text-white shadow-[0_8px_20px_-6px_rgba(34,197,94,0.6)]">
+              <CheckCircle2 className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
               <p className="text-lg font-semibold text-green-800">{t.checkIn.accessGranted}</p>
@@ -109,10 +105,10 @@ export default async function CheckInPage({ searchParams }: Props) {
       )}
 
       {denied && (
-        <section className="rounded-[2rem] border-2 border-red-200 bg-red-50 px-6 py-5">
+        <section className="animate-scale-in rounded-[2rem] border-2 border-red-200 bg-red-50 px-6 py-5">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500 text-white text-xl font-bold">
-              ✕
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_8px_20px_-6px_rgba(239,68,68,0.6)]">
+              <XCircle className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
               <p className="text-lg font-semibold text-red-800">{t.checkIn.accessDenied}</p>
@@ -126,7 +122,7 @@ export default async function CheckInPage({ searchParams }: Props) {
       )}
 
       {/* Check-in form */}
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCheckIn} className="grid gap-4">
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">
@@ -139,12 +135,9 @@ export default async function CheckInPage({ searchParams }: Props) {
             />
           </div>
 
-          <button
-            type="submit"
-            className="rounded-full bg-brand px-8 py-3 text-base font-semibold text-white transition hover:bg-brand/90"
-          >
+          <Button type="submit" variant="primary" size="lg" icon={<DoorOpen className="h-5 w-5" strokeWidth={2} />} className="w-fit">
             {t.checkIn.checkInButton}
-          </button>
+          </Button>
         </form>
       </section>
     </div>

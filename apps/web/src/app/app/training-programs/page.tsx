@@ -4,9 +4,14 @@ import { listTrainingPrograms } from "@/lib/training-programs";
 import { listBranches } from "@/lib/branches";
 import { listCoaches } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
-import Link from "next/link";
+import { getT, formatDict } from "@/lib/i18n";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CalendarCheck, PlusCircle } from "lucide-react";
 
 export default async function TrainingProgramsPage() {
   const session = await requireSession();
@@ -28,51 +33,41 @@ export default async function TrainingProgramsPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.classes.title}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.classes.programsTitle}</h1>
-          <p className="mt-2 text-sm leading-7 text-foreground/70">
-            {programs.length} {t.classes.programsTitle.toLowerCase()} in {session.tenant.name}.
-          </p>
-        </div>
-        {canManage && (
-          <Link
-            href="/app/training-programs/new"
-            className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-          >
-            {t.classes.newProgram}
-          </Link>
-        )}
-      </section>
+      <PageHeader
+        eyebrow={t.classes.title}
+        title={t.classes.programsTitle}
+        description={formatDict(t.classes.listDescription, { count: programs.length, plural: programs.length !== 1 ? "s" : "", tenant: session.tenant.name })}
+        actions={
+          canManage && (
+            <Button
+              href="/app/training-programs/new"
+              variant="primary"
+              icon={<PlusCircle className="h-4 w-4" strokeWidth={2} />}
+            >
+              {t.classes.newProgram}
+            </Button>
+          )
+        }
+      />
 
       <section className="grid gap-3">
         {programs.length === 0 && (
-          <div className="rounded-[2rem] border border-line bg-surface px-6 py-10 text-center text-sm text-foreground/60">
-            {t.classes.noPrograms}
-          </div>
+          <EmptyState icon={<CalendarCheck className="h-5 w-5" strokeWidth={2} />} title={t.classes.noPrograms} />
         )}
-        {programs.map((program) => (
-          <article
+        {programs.map((program, index) => (
+          <Card
             key={program.id}
-            className="rounded-[1.75rem] border border-line bg-surface px-6 py-5"
+            hoverable
+            animate
+            delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-semibold tracking-tight">{program.name}</h2>
-                  <span
-                    className={[
-                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      program.active
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500",
-                    ].join(" ")}
-                  >
+                  <Badge tone={program.active ? "success" : "neutral"}>
                     {program.active ? t.status.active : t.status.inactive}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="mt-1 text-sm text-foreground/45">
                   {program.branchId
@@ -85,14 +80,11 @@ export default async function TrainingProgramsPage() {
                   </p>
                 )}
               </div>
-              <Link
-                href={`/app/training-programs/${program.id}`}
-                className="shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand"
-              >
+              <Button href={`/app/training-programs/${program.id}`} variant="secondary" size="sm">
                 {t.actions.view}
-              </Link>
+              </Button>
             </div>
-          </article>
+          </Card>
         ))}
       </section>
     </div>

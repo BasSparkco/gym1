@@ -1,13 +1,24 @@
 "use server";
 
-import { getTrainingProgram, updateTrainingProgram } from "@/lib/training-programs";
+import {
+  getTrainingProgram,
+  updateTrainingProgram,
+  getEnrolledMemberIds,
+  setEnrolledMemberIds,
+} from "@/lib/training-programs";
 import { listClassSessions } from "@/lib/class-sessions";
 import { listBranches } from "@/lib/branches";
 import { listCoaches } from "@/lib/employees";
+import { listMembers } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
-import Link from "next/link";
+import MemberChecklist from "@/components/members/member-checklist";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { PlusCircle } from "lucide-react";
 
 type Props = {
   params: Promise<{ programId: string }>;
@@ -24,11 +35,13 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
 
   const canManage = session.role === "owner" || session.role === "manager";
 
-  const [program, sessions, branches, coaches] = await Promise.all([
+  const [program, sessions, branches, coaches, members, enrolledMemberIds] = await Promise.all([
     getTrainingProgram(programId),
     listClassSessions({ programId }),
     listBranches(),
     listCoaches(),
+    listMembers(),
+    getEnrolledMemberIds(programId),
   ]);
 
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
@@ -51,6 +64,12 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
     redirect(`/app/training-programs/${programId}`);
   }
 
+  async function handleSetMembers(formData: FormData) {
+    "use server";
+    await setEnrolledMemberIds(programId, formData.getAll("memberIds").map(String));
+    redirect(`/app/training-programs/${programId}`);
+  }
+
   const inputCls =
     "rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
   const selectCls = inputCls;
@@ -61,22 +80,17 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.classes.title}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{program.name}</h1>
-        </div>
-        <Link
-          href="/app/training-programs"
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.classes.allPrograms}
-        </Link>
-      </section>
+      <PageHeader
+        eyebrow={t.classes.title}
+        title={program.name}
+        actions={
+          <Button href="/app/training-programs" variant="secondary">
+            {t.classes.allPrograms}
+          </Button>
+        }
+      />
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <Card animate delay={1}>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
           {t.classes.programDetails}
         </p>
@@ -127,12 +141,9 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
             </div>
 
             <div className="flex gap-3 pt-2 sm:col-span-2">
-              <button
-                type="submit"
-                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
-              >
+              <Button type="submit" variant="primary" size="sm">
                 {t.actions.save}
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
@@ -151,20 +162,72 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
             )}
           </dl>
         )}
-      </section>
+      </Card>
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <Card animate delay={2}>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
+          {t.classes.enrolledMembersTitle}
+        </p>
+        <p className="mt-1 text-sm text-foreground/60">{t.classes.enrolledMembersHint}</p>
+
+        {canManage ? (
+          <form action={handleSetMembers} className="mt-4 grid gap-4">
+            <MemberChecklist
+              name="memberIds"
+              members={members.map((m) => ({
+                id: m.id,
+                fullName: m.fullName,
+                memberNumber: m.memberNumber,
+                status: m.status,
+              }))}
+              defaultSelectedIds={enrolledMemberIds}
+              searchPlaceholder={t.classes.searchMembersPlaceholder}
+              noMatchesLabel={t.classes.noMembersFound}
+              selectedCountTemplate={t.classes.membersSelectedCount}
+              showSelectedOnlyLabel={t.classes.showSelectedOnly}
+              inactiveLabel={t.status.inactive}
+            />
+            <div>
+              <Button type="submit" variant="primary" size="sm">
+                {t.classes.saveMembers}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-4 grid gap-2">
+            {enrolledMemberIds.length === 0 && (
+              <p className="text-sm text-foreground/60">{t.classes.noMembersEnrolled}</p>
+            )}
+            {members
+              .filter((m) => enrolledMemberIds.includes(m.id))
+              .sort((a, b) => a.fullName.localeCompare(b.fullName))
+              .map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-white px-4 py-2.5 text-sm"
+                >
+                  <span>{m.fullName}</span>
+                  <span className="font-mono text-xs text-foreground/50">{m.memberNumber}</span>
+                </div>
+              ))}
+          </div>
+        )}
+      </Card>
+
+      <Card animate delay={3}>
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
             {t.classes.sessionsTitle}
           </p>
           {canManage && (
-            <Link
+            <Button
               href={`/app/training-programs/${programId}/sessions/new`}
-              className="shrink-0 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
+              variant="primary"
+              size="sm"
+              icon={<PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />}
             >
               {t.classes.newSession}
-            </Link>
+            </Button>
           )}
         </div>
 
@@ -175,7 +238,7 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
           {upcoming.map((s) => (
             <article
               key={s.id}
-              className="flex flex-col gap-2 rounded-2xl border border-line bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-2 rounded-2xl border border-line bg-white px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-[0_16px_36px_-16px_rgba(86,57,28,0.22)] sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="font-medium">
@@ -188,20 +251,17 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-medium">
+                <Badge tone="outline">
                   {s.bookedCount}/{s.capacity} {t.classes.bookedCount.toLowerCase()}
-                </span>
-                <Link
-                  href={`/app/training-programs/${programId}/sessions/${s.id}`}
-                  className="shrink-0 rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-                >
+                </Badge>
+                <Button href={`/app/training-programs/${programId}/sessions/${s.id}`} variant="secondary" size="sm">
                   {t.classes.viewSession}
-                </Link>
+                </Button>
               </div>
             </article>
           ))}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

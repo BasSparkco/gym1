@@ -94,6 +94,24 @@ export async function updateTrainingProgram(
   return payload.program;
 }
 
+export async function getEnrolledMemberIds(programId: string): Promise<string[]> {
+  const response = await authedFetch(`/training-programs/${programId}/members`);
+  const payload = (await response.json()) as { memberIds: string[] };
+  return payload.memberIds;
+}
+
+export async function setEnrolledMemberIds(
+  programId: string,
+  memberIds: string[],
+): Promise<string[]> {
+  const response = await authedFetch(`/training-programs/${programId}/members`, {
+    method: "PATCH",
+    body: JSON.stringify({ memberIds }),
+  });
+  const payload = (await response.json()) as { memberIds: string[] };
+  return payload.memberIds;
+}
+
 export async function getEntitledProgramIds(planId: string): Promise<string[] | "all"> {
   const response = await authedFetch(`/training-programs/plans/${planId}/entitled-programs`);
   const payload = (await response.json()) as { programIds: string[] | "all" };

@@ -6,8 +6,12 @@ import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { formatDateTime } from "@/lib/date-format";
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { History, LogOut } from "lucide-react";
 
 type Props = { params: Promise<{ visitId: string }> };
 
@@ -39,24 +43,19 @@ export default async function VisitDetailPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.visits}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.visits.visitDetail}</h1>
-          <p className="mt-1 font-mono text-sm text-foreground/50">{visit.id}</p>
-        </div>
-        <Link
-          href="/app/visits"
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.visits.allVisits}
-        </Link>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.visits}
+        title={t.visits.visitDetail}
+        description={<span className="font-mono text-xs text-foreground/50">{visit.id}</span>}
+        actions={
+          <Button href="/app/visits" variant="secondary" icon={<History className="h-4 w-4" strokeWidth={2} />}>
+            {t.visits.allVisits}
+          </Button>
+        }
+      />
 
       <section className="grid gap-4 md:grid-cols-2">
-        <article className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+        <Card animate delay={1}>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">{t.visits.visitInfo}</p>
           <dl className="mt-4 grid gap-3 text-sm">
             <div>
@@ -71,12 +70,9 @@ export default async function VisitDetailPage({ params }: Props) {
                   <span className="font-medium">{localCheckOutTime}</span>
                 ) : (
                   <form action={handleCheckOut}>
-                    <button
-                      type="submit"
-                      className="rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-brand/90"
-                    >
+                    <Button type="submit" variant="primary" size="sm" icon={<LogOut className="h-3.5 w-3.5" strokeWidth={2} />}>
                       {t.visits.checkOut}
-                    </button>
+                    </Button>
                   </form>
                 )}
               </dd>
@@ -85,22 +81,15 @@ export default async function VisitDetailPage({ params }: Props) {
             <div>
               <dt className="text-foreground/55">{t.visits.accessMethod}</dt>
               <dd className="mt-0.5">
-                <span
-                  className={[
-                    "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    visit.accessMethod === "qr"
-                      ? "bg-blue-100 text-blue-700"
-                      : visit.accessMethod === "rfid"
-                        ? "bg-violet-100 text-violet-700"
-                        : "bg-gray-100 text-gray-600",
-                  ].join(" ")}
-                >
-                  {visit.accessMethod === "qr"
-                    ? t.visits.qrScan
-                    : visit.accessMethod === "rfid"
-                      ? "RFID"
-                      : t.visits.manualEntry}
-                </span>
+                {visit.accessMethod === "rfid" ? (
+                  <Badge tone="neutral" className="!bg-violet-100 !text-violet-700">
+                    RFID
+                  </Badge>
+                ) : (
+                  <Badge tone={visit.accessMethod === "qr" ? "info" : "neutral"}>
+                    {visit.accessMethod === "qr" ? t.visits.qrScan : t.visits.manualEntry}
+                  </Badge>
+                )}
               </dd>
             </div>
             <div>
@@ -108,9 +97,9 @@ export default async function VisitDetailPage({ params }: Props) {
               <dd className="mt-0.5 font-mono text-xs text-foreground/70">{visit.branchId}</dd>
             </div>
           </dl>
-        </article>
+        </Card>
 
-        <article className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+        <Card animate delay={2}>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">{t.visits.member}</p>
           {member ? (
             <dl className="mt-4 grid gap-3 text-sm">
@@ -125,16 +114,9 @@ export default async function VisitDetailPage({ params }: Props) {
               <div>
                 <dt className="text-foreground/55">{t.members.statusLabel}</dt>
                 <dd className="mt-0.5">
-                  <span
-                    className={[
-                      "rounded-full px-2 py-0.5 text-xs font-medium",
-                      member.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500",
-                    ].join(" ")}
-                  >
+                  <Badge tone={member.status === "active" ? "success" : "neutral"}>
                     {member.status === "active" ? t.status.active : t.status.inactive}
-                  </span>
+                  </Badge>
                 </dd>
               </div>
             </dl>
@@ -143,15 +125,12 @@ export default async function VisitDetailPage({ params }: Props) {
           )}
           {member && (
             <div className="mt-4">
-              <Link
-                href={`/app/members/${member.id}`}
-                className="text-xs font-medium text-brand hover:underline"
-              >
+              <Button href={`/app/members/${member.id}`} variant="secondary" size="sm">
                 {t.visits.viewMemberProfile}
-              </Link>
+              </Button>
             </div>
           )}
-        </article>
+        </Card>
       </section>
     </div>
   );

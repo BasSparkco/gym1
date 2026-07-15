@@ -24,6 +24,11 @@ enum BranchStatus {
   inactive
 }
 
+enum LogoMode {
+  shared
+  perBranch
+}
+
 enum EmployeeStatus {
   active
   inactive
@@ -149,6 +154,7 @@ model Branch {
   countryCode           String?
   operatingCurrencyCode String       @default("ILS")
   status                BranchStatus @default(active)
+  logoUrl               String?
 
   employees        Employee[]
   gates            Gate[]
@@ -264,6 +270,7 @@ model Member {
   payments      Payment[]
   notifications Notification[]
   classBookings ClassBooking[]
+  programEnrollments ProgramEnrollment[]
 
   @@unique([tenantId, memberNumber])
   @@unique([tenantId, rfidTag])
@@ -355,9 +362,24 @@ model TrainingProgram {
 
   classSessions    ClassSession[]
   entitledForPlans MembershipPlanProgram[]
+  enrolledMembers  ProgramEnrollment[]
 
   @@index([tenantId])
   @@index([branchId])
+}
+
+// Standing enrollment of a member in a training program, independent of any
+// specific ClassSession booking (a member can be "in CrossFit" without being
+// booked into a particular class time).
+model ProgramEnrollment {
+  memberId   String
+  member     Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programId  String
+  program    TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime        @default(now())
+
+  @@id([programId, memberId])
+  @@index([memberId])
 }
 
 model ClassSession {
@@ -478,6 +500,8 @@ model TenantSettings {
   checkOutTrackingEnabled Boolean  @default(true)
   ownerDataScope          String   @default("all")
   reportingCurrencyCode   String   @default("ILS")
+  logoMode                LogoMode @default(shared)
+  logoUrl                 String?
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

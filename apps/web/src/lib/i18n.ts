@@ -3,6 +3,10 @@ import { cookies } from "next/headers";
 
 export type Lang = "en" | "ar" | "he";
 
+export function formatDict(template: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce((acc, [key, value]) => acc.replaceAll(`{${key}}`, String(value)), template);
+}
+
 export type Dict = {
   nav: {
     dashboard: string;
@@ -152,9 +156,25 @@ export type Dict = {
     memberCountPlural: string;
     matchingFilters: string;
     total: string;
+    identityTitle: string;
+    contactTitle: string;
+    physicalProfileTitle: string;
+    memberSince: string;
+    age: string;
+    ageYears: string;
+    bmi: string;
+    daysLeftSingular: string;
+    daysLeftPlural: string;
+    noEmergencyContactLong: string;
+    addEmergencyContact: string;
+    noMembershipsYet: string;
+    rfidTagLabel: string;
+    heightStat: string;
+    weightStat: string;
   };
   plans: {
     title: string;
+    listDescription: string;
     newPlan: string;
     editPlan: string;
     planName: string;
@@ -238,6 +258,8 @@ export type Dict = {
   checkIn: {
     title: string;
     description: string;
+    manualTitle: string;
+    manualDescription: string;
     memberNumber: string;
     searchPlaceholder: string;
     selectedMember: string;
@@ -281,6 +303,7 @@ export type Dict = {
   };
   branches: {
     title: string;
+    listDescription: string;
     newBranch: string;
     editBranch: string;
     allBranches: string;
@@ -297,9 +320,12 @@ export type Dict = {
     tenantId: string;
     createBranch: string;
     editBranchBtn: string;
+    branchLogo: string;
+    branchLogoHelp: string;
   };
   users: {
     title: string;
+    listDescription: string;
     staffUsers: string;
     newUser: string;
     newStaffUser: string;
@@ -335,6 +361,7 @@ export type Dict = {
   };
   employees: {
     title: string;
+    listDescription: string;
     allEmployees: string;
     newEmployee: string;
     newStaffEmployee: string;
@@ -373,6 +400,7 @@ export type Dict = {
   };
   notifications: {
     title: string;
+    listDescription: string;
     allNotifications: string;
     notificationDetail: string;
     notificationInfo: string;
@@ -390,6 +418,26 @@ export type Dict = {
   reports: {
     title: string;
     allReports: string;
+    indexDescription: string;
+    activeMembershipsCardDescription: string;
+    expiredMembershipsCardDescription: string;
+    visitsCardDescription: string;
+    paymentsCardDescription: string;
+    membersBySexCardDescription: string;
+    registrationsByEmployeeCardDescription: string;
+    planPerformanceCardDescription: string;
+    membershipStatusCardDescription: string;
+    expiringSoonCardDescription: string;
+    upcomingBirthdaysCardDescription: string;
+    newMembersGrowthCardDescription: string;
+    activeMembershipsDescription: string;
+    expiredMembershipsDescription: string;
+    visitsDescription: string;
+    membersBySexDescription: string;
+    membershipStatusDescription: string;
+    expiringSoonDescription: string;
+    upcomingBirthdaysDescription: string;
+    newMembersGrowthDescription: string;
     activeMemberships: string;
     expiredMemberships: string;
     visits: string;
@@ -451,6 +499,14 @@ export type Dict = {
     availableLanguagesHelp: string;
     saveLanguageSettings: string;
     supportedLanguages: string;
+    activeBranchTitle: string;
+    activeBranchDescription: string;
+    currentBranch: string;
+    switchBranch: string;
+    noOtherBranches: string;
+    createABranch: string;
+    current: string;
+    switchAction: string;
     rightToLeft: string;
     leftToRight: string;
     defaultBadge: string;
@@ -509,6 +565,21 @@ export type Dict = {
     whatsappScanInstruction: string;
     whatsappStarting: string;
     whatsappNotConfigured: string;
+    whatsappReconnecting: string;
+    whatsappRefreshHint: string;
+    whatsappGenericError: string;
+    logoSectionTitle: string;
+    logoSectionHelp: string;
+    logoModeLabel: string;
+    logoModeShared: string;
+    logoModeSharedHelp: string;
+    logoModePerBranch: string;
+    logoModePerBranchHelp: string;
+    logoUpload: string;
+    logoChange: string;
+    logoRemove: string;
+    logoUploading: string;
+    logoUploadError: string;
     gates: string;
     gatesTitle: string;
     gatesDescription: string;
@@ -536,6 +607,7 @@ export type Dict = {
   classes: {
     title: string;
     programsTitle: string;
+    listDescription: string;
     newProgram: string;
     noPrograms: string;
     programName: string;
@@ -582,6 +654,14 @@ export type Dict = {
     certifications: string;
     saveCoachProfile: string;
     notACoach: string;
+    enrolledMembersTitle: string;
+    enrolledMembersHint: string;
+    searchMembersPlaceholder: string;
+    noMembersFound: string;
+    noMembersEnrolled: string;
+    membersSelectedCount: string;
+    showSelectedOnly: string;
+    saveMembers: string;
   };
 };
 
@@ -734,9 +814,25 @@ const en: Dict = {
     memberCountPlural: "members",
     matchingFilters: "matching filters",
     total: "total",
+    identityTitle: "Identity",
+    contactTitle: "Contact",
+    physicalProfileTitle: "Physical profile",
+    memberSince: "Member since",
+    age: "Age",
+    ageYears: "{count} yrs",
+    bmi: "BMI",
+    daysLeftSingular: "{count} day left",
+    daysLeftPlural: "{count} days left",
+    noEmergencyContactLong: "No emergency contact on file. Every member should have one before their first session.",
+    addEmergencyContact: "Add emergency contact",
+    noMembershipsYet: "No memberships yet.",
+    rfidTagLabel: "RFID tag",
+    heightStat: "Height",
+    weightStat: "Weight",
   },
   plans: {
     title: "Membership plans",
+    listDescription: "{count} plan{plural} configured for this tenant.",
     newPlan: "New plan",
     editPlan: "Edit plan",
     planName: "Plan name",
@@ -820,6 +916,8 @@ const en: Dict = {
   checkIn: {
     title: "Check-In",
     description: "Search by name or member number to record a visit.",
+    manualTitle: "Manual Check-In",
+    manualDescription: "Staff override — use this when a member has forgotten or lost their access card. Search by name or member number.",
     memberNumber: "Member number",
     searchPlaceholder: "Search by name or member number…",
     selectedMember: "Selected member",
@@ -863,6 +961,7 @@ const en: Dict = {
   },
   branches: {
     title: "Branches",
+    listDescription: "{count} branch{plural} in {tenant}.",
     newBranch: "New branch",
     editBranch: "Edit branch",
     allBranches: "All branches",
@@ -879,9 +978,12 @@ const en: Dict = {
     tenantId: "Tenant ID",
     createBranch: "Create branch",
     editBranchBtn: "Edit branch",
+    branchLogo: "Branch logo",
+    branchLogoHelp: "Shown on this branch's page and in the branches list when per-branch logos are enabled.",
   },
   users: {
     title: "Users & Roles",
+    listDescription: "{count} staff account{plural} in {tenant}.",
     staffUsers: "Staff users",
     newUser: "New user",
     newStaffUser: "New staff user",
@@ -917,6 +1019,7 @@ const en: Dict = {
   },
   employees: {
     title: "Employees",
+    listDescription: "{active} active · {total} total in {tenant}.",
     allEmployees: "All employees",
     newEmployee: "New employee",
     newStaffEmployee: "New staff employee",
@@ -955,6 +1058,7 @@ const en: Dict = {
   },
   notifications: {
     title: "Notifications",
+    listDescription: "{count} notification{plural} in history.",
     allNotifications: "All notifications",
     notificationDetail: "Notification detail",
     notificationInfo: "Notification info",
@@ -972,6 +1076,26 @@ const en: Dict = {
   reports: {
     title: "Reports",
     allReports: "All reports",
+    indexDescription: "Operational reports for daily review. All data is scoped to your tenant and branch.",
+    activeMembershipsCardDescription: "Members with currently active memberships in this branch scope.",
+    expiredMembershipsCardDescription: "Memberships that have expired or reached their end date.",
+    visitsCardDescription: "Check-in records for today by default; filterable by date range.",
+    paymentsCardDescription: "Payment records for today by default; filterable by date range.",
+    membersBySexCardDescription: "Member headcount broken down by gender.",
+    registrationsByEmployeeCardDescription: "New members registered per employee, filterable by staff member and date.",
+    planPerformanceCardDescription: "Memberships sold and revenue generated per plan this month.",
+    membershipStatusCardDescription: "Counts of active, frozen, expired, and cancelled memberships.",
+    expiringSoonCardDescription: "Active memberships ending within the next 7 days — for renewal outreach.",
+    upcomingBirthdaysCardDescription: "Members with a birthday in the next 30 days.",
+    newMembersGrowthCardDescription: "New member joins per day this month.",
+    activeMembershipsDescription: "{total} active membership{plural} as of {asOfDate}.",
+    expiredMembershipsDescription: "{total} expired membership{plural} as of {asOfDate}.",
+    visitsDescription: "{total} visit{plural} from {dateFrom} to {dateTo}.",
+    membersBySexDescription: "{total} member{plural} as of {asOfDate} ({activeTotal} active).",
+    membershipStatusDescription: "{total} membership{plural} as of {asOfDate}.",
+    expiringSoonDescription: "{total} membership{plural} expiring within {days} days of {asOfDate}.",
+    upcomingBirthdaysDescription: "{total} member{plural} with a birthday in the next {days} days.",
+    newMembersGrowthDescription: "{total} new member{plural} joined from {dateFrom} to {dateTo}.",
     activeMemberships: "Active Memberships",
     expiredMemberships: "Expired Memberships",
     visits: "Visits",
@@ -1033,6 +1157,14 @@ const en: Dict = {
     availableLanguagesHelp: "Choose which languages appear in the language picker. At least one must remain enabled. The default language cannot be disabled.",
     saveLanguageSettings: "Save language settings",
     supportedLanguages: "Supported languages",
+    activeBranchTitle: "Active branch",
+    activeBranchDescription: "Select which branch you are currently operating from. This controls which members and visits you see across the application.",
+    currentBranch: "Current branch",
+    switchBranch: "Switch branch",
+    noOtherBranches: "No other active branches to switch to.",
+    createABranch: "Create a branch",
+    current: "Current",
+    switchAction: "Switch",
     rightToLeft: "Right-to-left",
     leftToRight: "Left-to-right",
     defaultBadge: "Default",
@@ -1091,6 +1223,21 @@ const en: Dict = {
     whatsappScanInstruction: "Open WhatsApp on your phone → Linked Devices → Link a device → scan this QR code.",
     whatsappStarting: "Starting WhatsApp session — QR will appear shortly…",
     whatsappNotConfigured: "SparkCo API key is not configured on this server.",
+    whatsappReconnecting: "Device disconnected — waiting for new QR code…",
+    whatsappRefreshHint: "Refreshes every 3 seconds.",
+    whatsappGenericError: "An error occurred.",
+    logoSectionTitle: "Logo",
+    logoSectionHelp: "Choose whether all branches share one logo, or each branch has its own.",
+    logoModeLabel: "Logo mode",
+    logoModeShared: "Same logo for all branches",
+    logoModeSharedHelp: "Upload one logo used everywhere across the tenant.",
+    logoModePerBranch: "Each branch has its own logo",
+    logoModePerBranchHelp: "Upload a logo per branch from the branch's edit page.",
+    logoUpload: "Upload logo",
+    logoChange: "Change logo",
+    logoRemove: "Remove",
+    logoUploading: "Uploading…",
+    logoUploadError: "Failed to upload logo. Please try again.",
     gates: "Smart Gates",
     gatesTitle: "Smart Gates",
     gatesDescription: "Configure the electronic gates installed at this branch. Each gate connects to a BAS-IP device and can be restricted to a specific gender.",
@@ -1118,6 +1265,7 @@ const en: Dict = {
   classes: {
     title: "Training Programs & Classes",
     programsTitle: "Training Programs",
+    listDescription: "{count} training program{plural} in {tenant}.",
     newProgram: "New Program",
     noPrograms: "No training programs yet.",
     programName: "Program name",
@@ -1164,6 +1312,14 @@ const en: Dict = {
     certifications: "Certifications (comma-separated)",
     saveCoachProfile: "Save coach profile",
     notACoach: "This employee has no coach profile yet — add specializations to make them bookable as a coach.",
+    enrolledMembersTitle: "Registered Members",
+    enrolledMembersHint: "Check the members registered in this training program. A member can be registered in more than one program.",
+    searchMembersPlaceholder: "Search members by name or number…",
+    noMembersFound: "No members match your search.",
+    noMembersEnrolled: "No members registered yet.",
+    membersSelectedCount: "{count} member(s) selected",
+    showSelectedOnly: "Show selected only",
+    saveMembers: "Save members",
   },
 };
 
@@ -1316,9 +1472,25 @@ const ar: Dict = {
     memberCountPlural: "أعضاء",
     matchingFilters: "مطابقين للفلاتر",
     total: "الإجمالي",
+    identityTitle: "الهوية",
+    contactTitle: "التواصل",
+    physicalProfileTitle: "المعلومات الجسدية",
+    memberSince: "عضو منذ",
+    age: "العمر",
+    ageYears: "{count} سنة",
+    bmi: "مؤشر كتلة الجسم",
+    daysLeftSingular: "يوم واحد متبقٍ",
+    daysLeftPlural: "{count} أيام متبقية",
+    noEmergencyContactLong: "لا توجد جهة اتصال للطوارئ. يجب أن يكون لكل عضو جهة اتصال قبل جلسته الأولى.",
+    addEmergencyContact: "إضافة جهة اتصال للطوارئ",
+    noMembershipsYet: "لا توجد اشتراكات بعد.",
+    rfidTagLabel: "علامة RFID",
+    heightStat: "الطول",
+    weightStat: "الوزن",
   },
   plans: {
     title: "خطط الاشتراك",
+    listDescription: "{count} خطة مُعدّة لهذا الحساب.",
     newPlan: "خطة جديدة",
     editPlan: "تعديل الخطة",
     planName: "اسم الخطة",
@@ -1402,6 +1574,8 @@ const ar: Dict = {
   checkIn: {
     title: "تسجيل الدخول",
     description: "ابحث بالاسم أو رقم العضو لتسجيل زيارة.",
+    manualTitle: "تسجيل دخول يدوي",
+    manualDescription: "تجاوز يقوم به الموظف — استخدم هذا عندما ينسى العضو بطاقة الدخول أو يفقدها. ابحث بالاسم أو رقم العضو.",
     memberNumber: "رقم العضو",
     searchPlaceholder: "ابحث بالاسم أو رقم العضو…",
     selectedMember: "العضو المختار",
@@ -1445,6 +1619,7 @@ const ar: Dict = {
   },
   branches: {
     title: "الفروع",
+    listDescription: "{count} فرع في {tenant}.",
     newBranch: "فرع جديد",
     editBranch: "تعديل الفرع",
     allBranches: "جميع الفروع",
@@ -1461,9 +1636,12 @@ const ar: Dict = {
     tenantId: "معرف المستأجر",
     createBranch: "إنشاء فرع",
     editBranchBtn: "تعديل الفرع",
+    branchLogo: "شعار الفرع",
+    branchLogoHelp: "يظهر في صفحة هذا الفرع وفي قائمة الفروع عند تفعيل شعار مستقل لكل فرع.",
   },
   users: {
     title: "المستخدمون والأدوار",
+    listDescription: "{count} حساب موظف في {tenant}.",
     staffUsers: "موظفو النظام",
     newUser: "مستخدم جديد",
     newStaffUser: "موظف جديد",
@@ -1499,6 +1677,7 @@ const ar: Dict = {
   },
   employees: {
     title: "الموظفون",
+    listDescription: "{active} نشط · {total} إجمالي في {tenant}.",
     allEmployees: "جميع الموظفين",
     newEmployee: "موظف جديد",
     newStaffEmployee: "موظف جديد",
@@ -1537,6 +1716,7 @@ const ar: Dict = {
   },
   notifications: {
     title: "الإشعارات",
+    listDescription: "{count} إشعار في السجل.",
     allNotifications: "جميع الإشعارات",
     notificationDetail: "تفاصيل الإشعار",
     notificationInfo: "معلومات الإشعار",
@@ -1554,6 +1734,26 @@ const ar: Dict = {
   reports: {
     title: "التقارير",
     allReports: "جميع التقارير",
+    indexDescription: "تقارير تشغيلية للمراجعة اليومية. جميع البيانات مرتبطة بحسابك وفرعك.",
+    activeMembershipsCardDescription: "الأعضاء ذوو الاشتراكات النشطة حاليًا ضمن نطاق هذا الفرع.",
+    expiredMembershipsCardDescription: "الاشتراكات التي انتهت أو بلغت تاريخ انتهائها.",
+    visitsCardDescription: "سجلات تسجيل الدخول لليوم افتراضيًا؛ قابلة للتصفية حسب الفترة الزمنية.",
+    paymentsCardDescription: "سجلات الدفع لليوم افتراضيًا؛ قابلة للتصفية حسب الفترة الزمنية.",
+    membersBySexCardDescription: "عدد الأعضاء مقسّمًا حسب الجنس.",
+    registrationsByEmployeeCardDescription: "الأعضاء الجدد المسجَّلون لكل موظف، قابل للتصفية حسب الموظف والتاريخ.",
+    planPerformanceCardDescription: "الاشتراكات المُباعة والإيرادات المحقّقة لكل خطة هذا الشهر.",
+    membershipStatusCardDescription: "أعداد الاشتراكات النشطة والمجمَّدة والمنتهية والملغاة.",
+    expiringSoonCardDescription: "الاشتراكات النشطة التي تنتهي خلال 7 أيام القادمة — للتواصل بشأن التجديد.",
+    upcomingBirthdaysCardDescription: "الأعضاء الذين لديهم عيد ميلاد خلال الـ 30 يومًا القادمة.",
+    newMembersGrowthCardDescription: "عدد الأعضاء الجدد المنضمين يوميًا هذا الشهر.",
+    activeMembershipsDescription: "{total} اشتراك نشط اعتبارًا من {asOfDate}.",
+    expiredMembershipsDescription: "{total} اشتراك منتهٍ اعتبارًا من {asOfDate}.",
+    visitsDescription: "{total} زيارة من {dateFrom} إلى {dateTo}.",
+    membersBySexDescription: "{total} عضو اعتبارًا من {asOfDate} ({activeTotal} نشط).",
+    membershipStatusDescription: "{total} اشتراك اعتبارًا من {asOfDate}.",
+    expiringSoonDescription: "{total} اشتراك ينتهي خلال {days} يومًا من {asOfDate}.",
+    upcomingBirthdaysDescription: "{total} عضو عيد ميلاده خلال {days} يومًا القادمة.",
+    newMembersGrowthDescription: "{total} عضو جديد انضم من {dateFrom} إلى {dateTo}.",
     activeMemberships: "الاشتراكات النشطة",
     expiredMemberships: "الاشتراكات المنتهية",
     visits: "الزيارات",
@@ -1615,6 +1815,14 @@ const ar: Dict = {
     availableLanguagesHelp: "اختر اللغات التي تظهر في منتقي اللغة. يجب تمكين لغة واحدة على الأقل. لا يمكن تعطيل اللغة الافتراضية.",
     saveLanguageSettings: "حفظ إعدادات اللغة",
     supportedLanguages: "اللغات المدعومة",
+    activeBranchTitle: "الفرع النشط",
+    activeBranchDescription: "اختر الفرع الذي تعمل منه حاليًا. يتحكم هذا في الأعضاء والزيارات التي تراها في التطبيق.",
+    currentBranch: "الفرع الحالي",
+    switchBranch: "تبديل الفرع",
+    noOtherBranches: "لا توجد فروع نشطة أخرى للتبديل إليها.",
+    createABranch: "إنشاء فرع",
+    current: "الحالي",
+    switchAction: "تبديل",
     rightToLeft: "من اليمين إلى اليسار",
     leftToRight: "من اليسار إلى اليمين",
     defaultBadge: "افتراضي",
@@ -1673,6 +1881,21 @@ const ar: Dict = {
     whatsappScanInstruction: "افتح واتساب على هاتفك ← الأجهزة المرتبطة ← ربط جهاز ← امسح رمز QR.",
     whatsappStarting: "جارٍ بدء جلسة واتساب — سيظهر رمز QR قريباً…",
     whatsappNotConfigured: "مفتاح SparkCo API غير مُعدّ على هذا الخادم.",
+    whatsappReconnecting: "تم فصل الجهاز — بانتظار رمز QR جديد…",
+    whatsappRefreshHint: "يتم التحديث كل 3 ثوانٍ.",
+    whatsappGenericError: "حدث خطأ ما.",
+    logoSectionTitle: "الشعار",
+    logoSectionHelp: "اختر ما إذا كانت جميع الفروع تشترك في شعار واحد، أو أن لكل فرع شعاره الخاص.",
+    logoModeLabel: "وضع الشعار",
+    logoModeShared: "نفس الشعار لجميع الفروع",
+    logoModeSharedHelp: "ارفع شعاراً واحداً يُستخدم في كل مكان ضمن الحساب.",
+    logoModePerBranch: "لكل فرع شعاره الخاص",
+    logoModePerBranchHelp: "ارفع شعاراً لكل فرع من صفحة تعديل الفرع.",
+    logoUpload: "رفع شعار",
+    logoChange: "تغيير الشعار",
+    logoRemove: "إزالة",
+    logoUploading: "جارٍ الرفع…",
+    logoUploadError: "فشل رفع الشعار. يرجى المحاولة مرة أخرى.",
     gates: "البوابات الذكية",
     gatesTitle: "البوابات الذكية",
     gatesDescription: "إعداد البوابات الإلكترونية المثبتة في هذا الفرع. كل بوابة تتصل بجهاز BAS-IP ويمكن تخصيصها لجنس معين.",
@@ -1700,6 +1923,7 @@ const ar: Dict = {
   classes: {
     title: "البرامج التدريبية والحصص",
     programsTitle: "البرامج التدريبية",
+    listDescription: "{count} برنامج تدريبي في {tenant}.",
     newProgram: "برنامج جديد",
     noPrograms: "لا توجد برامج تدريبية بعد.",
     programName: "اسم البرنامج",
@@ -1746,6 +1970,14 @@ const ar: Dict = {
     certifications: "الشهادات (مفصولة بفواصل)",
     saveCoachProfile: "حفظ ملف المدرب",
     notACoach: "لا يملك هذا الموظف ملف مدرب بعد — أضف التخصصات لجعله قابلاً للحجز كمدرب.",
+    enrolledMembersTitle: "الأعضاء المسجلون",
+    enrolledMembersHint: "حدد الأعضاء المسجلين في هذا البرنامج التدريبي. يمكن أن يكون العضو مسجلاً في أكثر من برنامج.",
+    searchMembersPlaceholder: "ابحث عن عضو بالاسم أو الرقم…",
+    noMembersFound: "لا يوجد أعضاء مطابقون لبحثك.",
+    noMembersEnrolled: "لا يوجد أعضاء مسجلون بعد.",
+    membersSelectedCount: "تم اختيار {count} عضو",
+    showSelectedOnly: "عرض المحددين فقط",
+    saveMembers: "حفظ الأعضاء",
   },
 };
 
@@ -1898,9 +2130,25 @@ const he: Dict = {
     memberCountPlural: "חברים",
     matchingFilters: "תואמים לסינון",
     total: "סה\"כ",
+    identityTitle: "זהות",
+    contactTitle: "פרטי קשר",
+    physicalProfileTitle: "פרופיל גופני",
+    memberSince: "חבר מאז",
+    age: "גיל",
+    ageYears: "{count} שנים",
+    bmi: "BMI",
+    daysLeftSingular: "יום אחד נותר",
+    daysLeftPlural: "{count} ימים נותרו",
+    noEmergencyContactLong: "אין איש קשר לשעת חירום בתיק. לכל חבר כדאי שיהיה איש קשר כזה לפני האימון הראשון.",
+    addEmergencyContact: "הוסף איש קשר לשעת חירום",
+    noMembershipsYet: "אין עדיין מנויים.",
+    rfidTagLabel: "תג RFID",
+    heightStat: "גובה",
+    weightStat: "משקל",
   },
   plans: {
     title: "תוכניות מנוי",
+    listDescription: "{count} תוכניות מוגדרות עבור חשבון זה.",
     newPlan: "תוכנית חדשה",
     editPlan: "ערוך תוכנית",
     planName: "שם תוכנית",
@@ -1984,6 +2232,8 @@ const he: Dict = {
   checkIn: {
     title: "כניסה",
     description: "חפש לפי שם או מספר חבר לרישום ביקור.",
+    manualTitle: "כניסה ידנית",
+    manualDescription: "עקיפה על ידי הצוות — השתמש בזה כאשר חבר שכח או איבד את כרטיס הכניסה שלו. חפש לפי שם או מספר חבר.",
     memberNumber: "מספר חבר",
     searchPlaceholder: "חפש לפי שם או מספר חבר…",
     selectedMember: "חבר נבחר",
@@ -2027,6 +2277,7 @@ const he: Dict = {
   },
   branches: {
     title: "סניפים",
+    listDescription: "{count} סניפים ב-{tenant}.",
     newBranch: "סניף חדש",
     editBranch: "ערוך סניף",
     allBranches: "כל הסניפים",
@@ -2043,9 +2294,12 @@ const he: Dict = {
     tenantId: "מזהה דייר",
     createBranch: "צור סניף",
     editBranchBtn: "ערוך סניף",
+    branchLogo: "לוגו הסניף",
+    branchLogoHelp: "מוצג בדף הסניף וברשימת הסניפים כאשר מופעל לוגו נפרד לכל סניף.",
   },
   users: {
     title: "משתמשים ותפקידים",
+    listDescription: "{count} חשבונות צוות ב-{tenant}.",
     staffUsers: "משתמשי צוות",
     newUser: "משתמש חדש",
     newStaffUser: "איש צוות חדש",
@@ -2081,6 +2335,7 @@ const he: Dict = {
   },
   employees: {
     title: "עובדים",
+    listDescription: "{active} פעילים · {total} סה\"כ ב-{tenant}.",
     allEmployees: "כל העובדים",
     newEmployee: "עובד חדש",
     newStaffEmployee: "עובד צוות חדש",
@@ -2119,6 +2374,7 @@ const he: Dict = {
   },
   notifications: {
     title: "התראות",
+    listDescription: "{count} התראות בהיסטוריה.",
     allNotifications: "כל ההתראות",
     notificationDetail: "פרטי התראה",
     notificationInfo: "מידע על התראה",
@@ -2136,6 +2392,26 @@ const he: Dict = {
   reports: {
     title: "דוחות",
     allReports: "כל הדוחות",
+    indexDescription: "דוחות תפעוליים לסקירה יומית. כל הנתונים מוגבלים לחשבון ולסניף שלך.",
+    activeMembershipsCardDescription: "חברים בעלי מנויים פעילים כרגע בטווח הסניף הזה.",
+    expiredMembershipsCardDescription: "מנויים שפג תוקפם או הגיעו לתאריך הסיום שלהם.",
+    visitsCardDescription: "רישומי כניסה להיום כברירת מחדל; ניתן לסנן לפי טווח תאריכים.",
+    paymentsCardDescription: "רישומי תשלום להיום כברירת מחדל; ניתן לסנן לפי טווח תאריכים.",
+    membersBySexCardDescription: "מספר החברים מפולח לפי מגדר.",
+    registrationsByEmployeeCardDescription: "חברים חדשים שנרשמו לכל עובד, ניתן לסנן לפי עובד ותאריך.",
+    planPerformanceCardDescription: "מנויים שנמכרו והכנסות שנוצרו לכל תוכנית החודש.",
+    membershipStatusCardDescription: "מספר המנויים הפעילים, המוקפאים, שפג תוקפם והמבוטלים.",
+    expiringSoonCardDescription: "מנויים פעילים שיפוגו בתוך 7 הימים הקרובים — לצורך פנייה לחידוש.",
+    upcomingBirthdaysCardDescription: "חברים עם יום הולדת בתוך 30 הימים הקרובים.",
+    newMembersGrowthCardDescription: "הצטרפויות חברים חדשים ליום החודש הזה.",
+    activeMembershipsDescription: "{total} מנויים פעילים נכון לתאריך {asOfDate}.",
+    expiredMembershipsDescription: "{total} מנויים שפג תוקפם נכון לתאריך {asOfDate}.",
+    visitsDescription: "{total} ביקורים מ-{dateFrom} עד {dateTo}.",
+    membersBySexDescription: "{total} חברים נכון לתאריך {asOfDate} ({activeTotal} פעילים).",
+    membershipStatusDescription: "{total} מנויים נכון לתאריך {asOfDate}.",
+    expiringSoonDescription: "{total} מנויים שפגים תוך {days} ימים מתאריך {asOfDate}.",
+    upcomingBirthdaysDescription: "{total} חברים חוגגים יום הולדת ב-{days} הימים הקרובים.",
+    newMembersGrowthDescription: "{total} חברים חדשים הצטרפו מ-{dateFrom} עד {dateTo}.",
     activeMemberships: "מנויים פעילים",
     expiredMemberships: "מנויים שפג תוקפם",
     visits: "ביקורים",
@@ -2197,6 +2473,14 @@ const he: Dict = {
     availableLanguagesHelp: "בחר אילו שפות מופיעות בבורר השפות. לפחות שפה אחת חייבת להישאר מופעלת. לא ניתן להשבית את שפת ברירת המחדל.",
     saveLanguageSettings: "שמור הגדרות שפה",
     supportedLanguages: "שפות נתמכות",
+    activeBranchTitle: "הסניף הפעיל",
+    activeBranchDescription: "בחר מאיזה סניף אתה פועל כרגע. זה קובע אילו חברים וביקורים אתה רואה באפליקציה.",
+    currentBranch: "הסניף הנוכחי",
+    switchBranch: "החלף סניף",
+    noOtherBranches: "אין סניפים פעילים נוספים להחלפה.",
+    createABranch: "צור סניף",
+    current: "נוכחי",
+    switchAction: "החלף",
     rightToLeft: "ימין לשמאל",
     leftToRight: "שמאל לימין",
     defaultBadge: "ברירת מחדל",
@@ -2255,6 +2539,21 @@ const he: Dict = {
     whatsappScanInstruction: "פתח WhatsApp בטלפון ← מכשירים מקושרים ← קשר מכשיר ← סרוק את קוד ה-QR.",
     whatsappStarting: "מפעיל סשן WhatsApp — קוד QR יופיע בקרוב…",
     whatsappNotConfigured: "מפתח SparkCo API לא מוגדר בשרת.",
+    whatsappReconnecting: "המכשיר נותק — ממתין לקוד QR חדש…",
+    whatsappRefreshHint: "מתרענן כל 3 שניות.",
+    whatsappGenericError: "אירעה שגיאה.",
+    logoSectionTitle: "לוגו",
+    logoSectionHelp: "בחר אם לכל הסניפים יש לוגו משותף אחד, או שלכל סניף יש לוגו משלו.",
+    logoModeLabel: "מצב לוגו",
+    logoModeShared: "אותו לוגו לכל הסניפים",
+    logoModeSharedHelp: "העלה לוגו אחד שישמש בכל מקום בחשבון.",
+    logoModePerBranch: "לכל סניף לוגו משלו",
+    logoModePerBranchHelp: "העלה לוגו לכל סניף מתוך דף עריכת הסניף.",
+    logoUpload: "העלה לוגו",
+    logoChange: "החלף לוגו",
+    logoRemove: "הסר",
+    logoUploading: "מעלה…",
+    logoUploadError: "העלאת הלוגו נכשלה. נסה שוב.",
     gates: "שערים חכמים",
     gatesTitle: "שערים חכמים",
     gatesDescription: "הגדר את השערים האלקטרוניים המותקנים בסניף זה. כל שער מתחבר למכשיר BAS-IP וניתן להגבילו לפי מגדר.",
@@ -2282,6 +2581,7 @@ const he: Dict = {
   classes: {
     title: "תוכניות אימון ושיעורים",
     programsTitle: "תוכניות אימון",
+    listDescription: "{count} תוכניות אימון ב-{tenant}.",
     newProgram: "תוכנית חדשה",
     noPrograms: "אין עדיין תוכניות אימון.",
     programName: "שם התוכנית",
@@ -2328,6 +2628,14 @@ const he: Dict = {
     certifications: "הסמכות (מופרדות בפסיקים)",
     saveCoachProfile: "שמור פרופיל מאמן",
     notACoach: "לעובד זה אין עדיין פרופיל מאמן — הוסף התמחויות כדי לאפשר הזמנתו כמאמן.",
+    enrolledMembersTitle: "חברים רשומים",
+    enrolledMembersHint: "סמן את החברים הרשומים לתוכנית אימונים זו. חבר יכול להיות רשום ליותר מתוכנית אחת.",
+    searchMembersPlaceholder: "חיפוש חבר לפי שם או מספר…",
+    noMembersFound: "לא נמצאו חברים התואמים לחיפוש.",
+    noMembersEnrolled: "עדיין לא נרשמו חברים.",
+    membersSelectedCount: "נבחרו {count} חברים",
+    showSelectedOnly: "הצג רק נבחרים",
+    saveMembers: "שמור חברים",
   },
 };
 

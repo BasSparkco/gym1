@@ -5,15 +5,21 @@ import { getSettings } from "@/lib/settings";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeTone } from "@/components/ui/badge";
+import { ArrowLeft } from "lucide-react";
 
 type Props = { searchParams: Promise<{ dateFrom?: string; dateTo?: string }> };
 
-const statusColors: Record<string, string> = {
-  paid: "bg-green-100 text-green-700",
-  pending: "bg-yellow-100 text-yellow-700",
-  failed: "bg-red-100 text-red-700",
-  refunded: "bg-orange-100 text-orange-700",
-  cancelled: "bg-gray-100 text-gray-500",
+const statusTone: Record<string, BadgeTone> = {
+  paid: "success",
+  pending: "warning",
+  failed: "danger",
+  refunded: "warning",
+  cancelled: "neutral",
 };
 
 export default async function PaymentsReportPage({ searchParams }: Props) {
@@ -30,27 +36,24 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-            {t.nav.reports}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.reports.payments}</h1>
-          <p className="mt-2 text-sm text-foreground/60">
+      <PageHeader
+        eyebrow={t.nav.reports}
+        title={t.reports.payments}
+        description={
+          <>
             {report.total} payment{report.total !== 1 ? "s" : ""} from{" "}
             {report.dateFrom} to {report.dateTo}.{" "}
             {t.reports.totalPaid}: <span className="font-semibold text-foreground">{currencySymbol}{report.totalPaid.toLocaleString()}</span>.
-          </p>
-        </div>
-        <Link
-          href="/app/reports"
-          className="shrink-0 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-        >
-          {t.reports.allReports}
-        </Link>
-      </section>
+          </>
+        }
+        actions={
+          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+            {t.reports.allReports}
+          </Button>
+        }
+      />
 
-      <section className="rounded-[1.75rem] border border-line bg-surface px-6 py-5">
+      <Card animate delay={1}>
         {report.rows.length === 0 ? (
           <p className="text-sm text-foreground/40">{t.reports.noPayments}</p>
         ) : (
@@ -70,7 +73,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
                   const localDate = formatDateTime(row.paymentDate, dateFormat);
 
                   return (
-                    <tr key={row.paymentId} className="py-3">
+                    <tr key={row.paymentId} className="py-3 transition-colors hover:bg-black/[0.02]">
                       <td className="py-3 pr-4">
                         <Link
                           href={`/app/members/${row.memberId}`}
@@ -84,14 +87,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
                       </td>
                       <td className="py-3 pr-4 text-foreground/60 capitalize">{row.paymentMethod}</td>
                       <td className="py-3 pr-4">
-                        <span
-                          className={[
-                            "rounded-full px-2 py-0.5 text-xs font-medium",
-                            statusColors[row.status] ?? "bg-gray-100 text-gray-600",
-                          ].join(" ")}
-                        >
-                          {row.status}
-                        </span>
+                        <Badge tone={statusTone[row.status] ?? "neutral"}>{row.status}</Badge>
                       </td>
                       <td className="py-3 pr-4 text-xs text-foreground/60">{localDate}</td>
                       <td className="py-3 text-right font-medium">
@@ -104,7 +100,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
             </table>
           </div>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

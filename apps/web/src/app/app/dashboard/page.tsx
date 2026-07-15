@@ -1,14 +1,38 @@
-import Link from "next/link";
 import { getDashboardSummary } from "@/lib/dashboard";
 import { requireSession } from "@/lib/session";
 import { getT, getLang } from "@/lib/i18n";
 import { formatDateLong } from "@/lib/date-format";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Button } from "@/components/ui/button";
+import {
+  CalendarClock,
+  DoorOpen,
+  UserPlus,
+  Users,
+  Wallet,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type CardId =
   | "active-memberships"
   | "expiring-memberships"
   | "today-check-ins"
   | "payments-logged";
+
+const cardIcon: Record<CardId, LucideIcon> = {
+  "active-memberships": Users,
+  "expiring-memberships": CalendarClock,
+  "today-check-ins": DoorOpen,
+  "payments-logged": Wallet,
+};
+
+const actionIcon: Record<string, LucideIcon> = {
+  "Create member": UserPlus,
+  "Sell membership": Wallet,
+  "Record payment": Wallet,
+  "Check in member": DoorOpen,
+};
 
 export default async function DashboardPage() {
   const session = await requireSession();
@@ -47,7 +71,7 @@ export default async function DashboardPage() {
   return (
     <div className="grid gap-6">
       {/* Hero */}
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
           {session.branch.name}
         </p>
@@ -65,25 +89,11 @@ export default async function DashboardPage() {
             {dashboardSummary.quickActions.map((action) => {
               const href = quickActionRoutes[action];
               const label = actionLabel[action] ?? action;
-              if (href) {
-                return (
-                  <Link
-                    key={action}
-                    href={href}
-                    className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand"
-                  >
-                    {label}
-                  </Link>
-                );
-              }
+              const Icon = actionIcon[action];
               return (
-                <button
-                  key={action}
-                  className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition hover:border-brand hover:text-brand"
-                  type="button"
-                >
+                <Button key={action} href={href} variant="secondary" icon={Icon && <Icon className="h-4 w-4" strokeWidth={2} />}>
                   {label}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -92,27 +102,29 @@ export default async function DashboardPage() {
 
       {/* Stat cards */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardSummary.cards.map((card) => {
+        {dashboardSummary.cards.map((card, index) => {
           const id = card.id as CardId;
+          const Icon = cardIcon[id];
           return (
-            <article
+            <StatCard
               key={card.id}
-              className={`rounded-[1.75rem] border border-line ${card.tone} px-5 py-5`}
-            >
-              <p className="text-sm text-foreground/60">{cardLabel[id] ?? card.label}</p>
-              <p className="mt-4 text-3xl font-semibold tracking-tight">{card.value}</p>
-              <p className="mt-3 text-sm leading-6 text-foreground/65">{cardHelper[id] ?? card.helperText}</p>
-            </article>
+              icon={Icon && <Icon className="h-4 w-4" strokeWidth={2} />}
+              label={cardLabel[id] ?? card.label}
+              value={card.value}
+              helper={cardHelper[id] ?? card.helperText}
+              tone={card.tone}
+              delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+            />
           );
         })}
       </section>
 
       {/* Branch overview + Operations guide */}
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <article className="rounded-[2rem] border border-line bg-surface px-6 py-6">
+        <article className="animate-fade-in-up stagger-3 rounded-[2rem] border border-line bg-surface px-6 py-6">
           <h2 className="text-xl font-semibold tracking-tight">{t.dashboard.overviewTitle}</h2>
           <div className="mt-5 grid gap-4">
-            <div className="rounded-3xl border border-line bg-white p-4">
+            <div className="rounded-3xl border border-line bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
                 {t.dashboard.overviewTenantLabel}
               </p>
@@ -123,7 +135,7 @@ export default async function DashboardPage() {
                 <span className="font-semibold text-foreground">{session.role}</span>
               </p>
             </div>
-            <div className="rounded-3xl border border-line bg-white p-4">
+            <div className="rounded-3xl border border-line bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
                 {t.dashboard.overviewAsOfLabel}
               </p>
@@ -135,9 +147,13 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <article className="rounded-[2rem] border border-line bg-brand-strong px-6 py-6 text-white">
-          <h2 className="text-xl font-semibold tracking-tight">{t.dashboard.operationsGuideTitle}</h2>
-          <ul className="mt-5 grid gap-4 text-sm leading-7 text-white/75">
+        <article className="animate-fade-in-up stagger-4 relative overflow-hidden rounded-[2rem] border border-line bg-brand-strong px-6 py-6 text-white">
+          <div
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl"
+            aria-hidden
+          />
+          <h2 className="relative text-xl font-semibold tracking-tight">{t.dashboard.operationsGuideTitle}</h2>
+          <ul className="relative mt-5 grid gap-4 text-sm leading-7 text-white/75">
             <li>{t.dashboard.guide1}</li>
             <li>{t.dashboard.guide2}</li>
             <li>{t.dashboard.guide3}</li>

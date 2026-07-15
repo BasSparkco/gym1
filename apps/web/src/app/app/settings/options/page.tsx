@@ -12,13 +12,20 @@ import {
 import { CURRENCIES } from "@/lib/currencies";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { apiBaseUrl } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import LogoUpload from "@/components/logo-upload";
+import { Save } from "lucide-react";
+import type { LogoMode } from "@/lib/settings";
 
 const ALL_LANGUAGES: Language[] = ["en", "ar", "he"];
 const DATE_FORMATS: DateFormat[] = ["dd/mm/yyyy", "mm/dd/yyyy"];
 const OWNER_DATA_SCOPES: OwnerDataScope[] = ["all", "activeBranch"];
+const LOGO_MODES: LogoMode[] = ["shared", "perBranch"];
 
 export default async function OptionsSettingsPage() {
   const session = await requireSession();
@@ -41,6 +48,7 @@ export default async function OptionsSettingsPage() {
     const reportingCurrencyCode = formData.get("reportingCurrencyCode") as
       | string
       | null;
+    const logoMode = formData.get("logoMode") as LogoMode | null;
 
     const saved = await updateSettings({
       defaultLanguage,
@@ -49,6 +57,7 @@ export default async function OptionsSettingsPage() {
       checkOutTrackingEnabled,
       ...(ownerDataScope ? { ownerDataScope } : {}),
       ...(reportingCurrencyCode ? { reportingCurrencyCode } : {}),
+      ...(logoMode ? { logoMode } : {}),
     });
 
     const cookieStore = await cookies();
@@ -64,38 +73,32 @@ export default async function OptionsSettingsPage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.settings.title} · {t.settings.options}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          {t.settings.optionsTitle}
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">
-          {t.settings.optionsDescription}
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={`${t.settings.title} · ${t.settings.options}`}
+        title={t.settings.optionsTitle}
+        description={t.settings.optionsDescription}
+      />
 
       {/* Sub-nav */}
       <nav className="flex gap-2 flex-wrap">
         <Link
           href="/app/settings/branch"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.branches.title}
         </Link>
-        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white">
+        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white shadow-sm">
           {t.settings.options}
         </span>
         <Link
           href="/app/settings/notifications"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.nav.notifications}
         </Link>
         <Link
           href="/app/settings/gates"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.settings.gates}
         </Link>
@@ -293,6 +296,41 @@ export default async function OptionsSettingsPage() {
 
           <div className="h-px bg-line" />
 
+          {/* Logo */}
+          <div className="grid gap-4">
+            <div>
+              <p className="text-base font-semibold">{t.settings.logoSectionTitle}</p>
+              <p className="mt-1 text-xs text-foreground/60">{t.settings.logoSectionHelp}</p>
+            </div>
+
+            <div className="grid gap-2 rounded-2xl border border-line bg-white px-4 py-3">
+              {LOGO_MODES.map((mode) => (
+                <label
+                  key={mode}
+                  className="flex cursor-pointer items-start gap-3 rounded-xl px-2 py-2.5 transition hover:bg-background"
+                >
+                  <input
+                    type="radio"
+                    name="logoMode"
+                    value={mode}
+                    defaultChecked={(settings.logoMode ?? "shared") === mode}
+                    className="mt-0.5 h-4 w-4 accent-brand"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">
+                      {mode === "shared" ? t.settings.logoModeShared : t.settings.logoModePerBranch}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-foreground/60">
+                      {mode === "shared" ? t.settings.logoModeSharedHelp : t.settings.logoModePerBranchHelp}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-px bg-line" />
+
           {/* Check-in / Check-out */}
           <div className="grid gap-4">
             <p className="text-base font-semibold">{t.settings.checkInOutSectionTitle}</p>
@@ -318,14 +356,34 @@ export default async function OptionsSettingsPage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<Save className="h-4 w-4" strokeWidth={2} />}>
               {t.actions.saveChanges}
-            </button>
+            </Button>
           </div>
         </form>
+      </section>
+
+      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
+          {t.settings.logoSectionTitle}
+        </p>
+        <p className="mt-1 text-xs text-foreground/60">
+          {settings.logoMode === "perBranch" ? t.settings.logoModePerBranchHelp : t.settings.logoModeSharedHelp}
+        </p>
+        <div className="mt-4">
+          <LogoUpload
+            apiBaseUrl={apiBaseUrl}
+            endpoint="/settings/logo"
+            currentLogoUrl={settings.logoUrl}
+            labels={{
+              upload: t.settings.logoUpload,
+              change: t.settings.logoChange,
+              remove: t.settings.logoRemove,
+              uploading: t.settings.logoUploading,
+              error: t.settings.logoUploadError,
+            }}
+          />
+        </div>
       </section>
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-5">

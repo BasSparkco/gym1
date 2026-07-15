@@ -5,6 +5,12 @@ import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DoorOpen, Plus, ChevronRight } from "lucide-react";
 
 export default async function GatesSettingsPage() {
   const session = await requireSession();
@@ -18,39 +24,33 @@ export default async function GatesSettingsPage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.settings.title}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          {t.settings.gatesTitle}
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">
-          {t.settings.gatesDescription}
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={t.settings.title}
+        title={t.settings.gatesTitle}
+        description={t.settings.gatesDescription}
+      />
 
       {/* Sub-nav */}
       <nav className="flex gap-2 flex-wrap">
         <Link
           href="/app/settings/branch"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.branches.title}
         </Link>
         <Link
           href="/app/settings/options"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.settings.options}
         </Link>
         <Link
           href="/app/settings/notifications"
-          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition hover:border-brand hover:text-brand"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >
           {t.nav.notifications}
         </Link>
-        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white">
+        <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white shadow-sm">
           {t.settings.gates}
         </span>
       </nav>
@@ -61,23 +61,26 @@ export default async function GatesSettingsPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50">
             {t.settings.gatesTitle}
           </p>
-          <Link
-            href="/app/settings/gates/new"
-            className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white transition hover:bg-brand/90"
-          >
+          <Button href="/app/settings/gates/new" variant="primary" size="sm" icon={<Plus className="h-3.5 w-3.5" strokeWidth={2} />}>
             {t.settings.gateAddButton}
-          </Link>
+          </Button>
         </div>
 
         {gates.length === 0 ? (
-          <p className="mt-6 text-sm text-foreground/50">{t.settings.gatesEmpty}</p>
+          <div className="mt-6">
+            <EmptyState icon={<DoorOpen className="h-5 w-5" strokeWidth={2} />} title={t.settings.gatesEmpty} />
+          </div>
         ) : (
           <div className="mt-4 grid gap-3">
-            {gates.map((gate) => (
-              <Link
+            {gates.map((gate, index) => (
+              <Card
                 key={gate.id}
+                as={Link}
                 href={`/app/settings/gates/${gate.id}`}
-                className="flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3 transition hover:border-brand"
+                hoverable
+                animate
+                delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+                className="flex items-center justify-between !bg-white !px-4 !py-3"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -111,32 +114,14 @@ export default async function GatesSettingsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {gate.hasDevice ? (
-                    <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                      {t.settings.gateDeviceConfigured}
-                    </span>
+                    <Badge tone="success">{t.settings.gateDeviceConfigured}</Badge>
                   ) : (
-                    <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700">
-                      {t.settings.gateDeviceNotConfigured}
-                    </span>
+                    <Badge tone="warning">{t.settings.gateDeviceNotConfigured}</Badge>
                   )}
-                  {!gate.enabled && (
-                    <span className="rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-foreground/50">
-                      Disabled
-                    </span>
-                  )}
-                  <svg
-                    className="h-4 w-4 text-foreground/30"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
+                  {!gate.enabled && <Badge tone="neutral">Disabled</Badge>}
+                  <ChevronRight className="h-4 w-4 text-foreground/30" strokeWidth={2} />
                 </div>
-              </Link>
+              </Card>
             ))}
           </div>
         )}

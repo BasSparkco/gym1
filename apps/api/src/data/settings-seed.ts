@@ -42,6 +42,10 @@ export type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy';
  * tenant, or only the branch they're currently switched into. */
 export type OwnerDataScope = 'all' | 'activeBranch';
 
+/** Whether the tenant shows one logo across all branches, or lets each
+ * branch have its own. */
+export type LogoMode = 'shared' | 'perBranch';
+
 export type TenantSettingsRecord = {
   tenantId: string;
   defaultLanguage: Language;
@@ -52,6 +56,8 @@ export type TenantSettingsRecord = {
   checkOutTrackingEnabled: boolean;
   ownerDataScope: OwnerDataScope;
   reportingCurrencyCode: string;
+  logoMode: LogoMode;
+  logoUrl: string | null;
 };
 
 const defaultNotificationSettings: NotificationSettings = {
@@ -85,9 +91,11 @@ export function getDefaultTenantSettings(
     enabledLanguages: ['en', 'ar', 'he'],
     notificationSettings: defaultNotificationSettings,
     notificationSenders: defaultNotificationSenders,
-    dateFormat: 'dd/mm/yyyy' as DateFormat,
+    dateFormat: 'dd/mm/yyyy',
     checkOutTrackingEnabled: true,
     ownerDataScope: 'all',
     reportingCurrencyCode: 'ILS',
+    logoMode: 'shared',
+    logoUrl: null,
   };
 }

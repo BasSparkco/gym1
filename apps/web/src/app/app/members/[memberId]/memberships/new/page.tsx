@@ -8,9 +8,11 @@ import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getActiveCurrencySymbol } from "@/lib/currency";
 import { formatDate } from "@/lib/date-format";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import MembershipFormFields from "./membership-form-fields";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { CreditCard } from "lucide-react";
 
 type Props = { params: Promise<{ memberId: string }> };
 
@@ -53,15 +55,11 @@ export default async function SellMembershipPage({ params }: Props) {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.members}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          {t.memberships.sell} — {member.fullName}
-        </h1>
-        <p className="mt-1 text-sm text-foreground/50">{member.memberNumber}</p>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.members}
+        title={`${t.memberships.sell} — ${member.fullName}`}
+        description={member.memberNumber}
+      />
 
       {activeMembership && (
         <section className="rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-sm">
@@ -74,7 +72,7 @@ export default async function SellMembershipPage({ params }: Props) {
         </section>
       )}
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-5">
           <MembershipFormFields
             plans={plans}
@@ -92,19 +90,17 @@ export default async function SellMembershipPage({ params }: Props) {
           />
 
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={plans.length === 0}
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90 disabled:opacity-50"
+              icon={<CreditCard className="h-4 w-4" strokeWidth={2} />}
             >
               {t.memberships.activateMembership}
-            </button>
-            <Link
-              href={`/app/members/${memberId}`}
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href={`/app/members/${memberId}`} variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>

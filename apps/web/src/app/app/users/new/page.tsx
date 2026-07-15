@@ -6,9 +6,11 @@ import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import EmployeeCombobox from "@/components/employee-combobox";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { UserRole } from "@/lib/auth";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { UserPlus } from "lucide-react";
 
 export default async function NewUserPage() {
   const session = await requireSession();
@@ -51,17 +53,13 @@ export default async function NewUserPage() {
 
   return (
     <div className="grid gap-6">
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
-          {t.nav.usersRoles}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{t.users.newStaffUser}</h1>
-        <p className="mt-2 text-sm leading-7 text-foreground/70">
-          Create a staff account. Email, name, role, password, and a linked employee are required.
-        </p>
-      </section>
+      <PageHeader
+        eyebrow={t.nav.usersRoles}
+        title={t.users.newStaffUser}
+        description="Create a staff account. Email, name, role, password, and a linked employee are required."
+      />
 
-      <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-5">
           <div className="grid gap-1.5">
             <label htmlFor="name" className="text-sm font-medium">
@@ -161,18 +159,12 @@ export default async function NewUserPage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90"
-            >
+            <Button type="submit" variant="primary" icon={<UserPlus className="h-4 w-4" strokeWidth={2} />}>
               {t.users.createUser}
-            </button>
-            <Link
-              href="/app/users"
-              className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium transition hover:border-brand hover:text-brand"
-            >
+            </Button>
+            <Button href="/app/users" variant="secondary">
               {t.actions.cancel}
-            </Link>
+            </Button>
           </div>
         </form>
       </section>
