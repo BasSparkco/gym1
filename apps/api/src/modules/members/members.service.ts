@@ -9,6 +9,7 @@ import * as QRCode from 'qrcode';
 import { localDateString, toDateOnlyString } from '../../common/date';
 import { generateQrSig, makeQrPublicUrl, memberIdToUuid } from '../../common/qr';
 import { normalizePhone } from '../../common/phone';
+import { hashPin } from '../../common/pin-hash';
 import { findCountryByCode } from '../../data/countries';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -288,6 +289,38 @@ export class MembersService {
     return this.serializeMember(updated);
   }
 
+  /**
+   * Staff-triggered: assigns or resets the PIN a member uses to sign into
+   * the mobile app. There's no member self-service flow yet — a staff
+   * member hands the PIN to them directly (e.g. at the front desk).
+   */
+  async setMemberAppPin(
+    tenantId: string,
+    branchId: string | undefined,
+    memberId: string,
+    pin: string,
+  ): Promise<void> {
+    if (!/^\d{4,8}$/.test(pin)) {
+      throw new BadRequestException('PIN must be 4 to 8 digits.');
+    }
+
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
+    });
+    if (!member) {
+      throw new NotFoundException('Member not found.');
+    }
+
+    await this.prisma.member.update({
+      where: { id: memberId },
+      data: { pinHash: hashPin(pin) },
+    });
+  }
+
   private async buildActiveSet(tenantId: string): Promise<Set<string>> {
     const today = new Date(localDateString());
     const activeMemberships = await this.prisma.membership.findMany({
@@ -313,16 +346,22 @@ export class MembersService {
   // Postgres DATE columns come back as JS Date objects from Prisma; the API
   // contract (and the web app's raw string comparisons/display of these
   // fields) expects plain "YYYY-MM-DD" strings, same as the old JSON store.
+  // pinHash is dropped here too — it must never reach a client response.
   private serializeMember<T extends Member>(
     member: T,
-  ): Omit<T, 'dateOfBirth' | 'joinDate'> & {
+  ): Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash'> & {
     dateOfBirth: string | null;
     joinDate: string | null;
   } {
+    const { pinHash, ...rest } = member;
+    void pinHash;
     return {
-      ...member,
+      ...rest,
       dateOfBirth: toDateOnlyString(member.dateOfBirth),
       joinDate: toDateOnlyString(member.joinDate),
+    } as Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash'> & {
+      dateOfBirth: string | null;
+      joinDate: string | null;
     };
   }
 

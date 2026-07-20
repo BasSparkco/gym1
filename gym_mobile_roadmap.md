@@ -1,13 +1,20 @@
 # Spark Gym — Member Mobile App Roadmap
 
+*Last checked against the actual backend: 2026-07-20. Phase 0 (member auth) has now been*
+*implemented and is live in `apps/api` — see "Backend Changes Needed" and "API Reference*
+*for the Mobile Client" below for the real, working contract to build the Android app against.*
+
 ## Project Context
 
 This mobile app is the member-facing companion to the Spark Gym ERP system.
 The backend it connects to lives at: `/opt/sites/gym`
 API base: `https://gym.sparkco.vip/api`
 
-The ERP already handles members, memberships, QR access, notifications, and payments.
-This app exposes a read-only member view on top of that existing backend — no separate backend needed.
+The ERP already handles members, memberships, QR access, notifications, and payments —
+but all of that was, until 2026-07-20, **staff-facing only**, authenticated as a `User`
+(employee/owner) account. A separate member-auth surface now exists (`/api/member-auth`,
+`/api/me`) purpose-built for this app — see below for the endpoints and how PINs get
+assigned.
 
 ---
 
@@ -64,9 +71,19 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 ## App Screens — v1 Scope
 
 ### 1. Sign In
-- Member enters phone number or member number + PIN/password
-- Backend validates against existing member records
-- Session stored locally with DataStore
+- Member enters phone number or member number + 4–8 digit PIN
+- `POST /api/member-auth/sign-in` with `{ identifier, pin }` → `{ token, member }`
+  (401 on bad credentials). `identifier` matches either `memberNumber` (case-insensitive)
+  or `phone` (E.164, e.g. `+972522223333`).
+- **There is no member self-service registration.** A member's PIN starts unset
+  (`pinHash` is null) and sign-in fails until staff assigns one from the ERP via
+  `POST /api/members/:memberId/pin` with `{ pin }` — e.g. handed out at the front desk
+  when someone asks for the app. Product/ops still needs to decide the actual handout
+  flow (print it on the QR card? SMS it? read it aloud at the desk?).
+- Store `token` locally with DataStore; send it as `Authorization: Bearer <token>` on
+  every subsequent request. It's an opaque server-side session token (Redis-backed,
+  30-day TTL), not a self-contained JWT — the upside is `POST /api/member-auth/sign-out`
+  actually revokes it immediately, unlike a stateless JWT.
 
 ### 2. Home / Dashboard
 - Gym logo and name at the top
@@ -76,8 +93,10 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 - Announcements feed (latest 3, link to full list)
 
 ### 3. QR Code Screen
-- Full-screen QR code image fetched from:
-  `GET /api/members/:id/qrcode` (session-authenticated)
+- Full-screen QR code image: `GET /api/me/qrcode` with the member's bearer token,
+  returns `image/png` directly (same QR content the gate scanner reads). This is a new
+  member-scoped route — the ERP's own `GET /api/members/:id/qrcode` still exists but
+  stays staff-session-only, unrelated to this.
 - Member name below the QR
 - "Save to Gallery" button
 
@@ -85,12 +104,19 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 - Monthly calendar view
 - Gym-marked closed dates highlighted in red
 - Tapping a date shows the closure reason (holiday, maintenance, etc.)
-- Data comes from a new backend endpoint: `GET /api/branches/:id/closed-dates`
+- No `ClosedDate` concept exists anywhere in the schema today — this needs a real
+  Prisma model (tenant + branch scoped) and migration, not just an endpoint:
+  `GET/POST/DELETE /api/branches/:id/closed-dates`
 
 ### 5. Announcements
 - List of gym announcements (title, body, date)
 - Push notification opens the relevant announcement
-- Data from a new backend endpoint: `GET /api/announcements`
+- There's an existing `Notification` model/module, but it's a different concept:
+  per-member transactional messages (expiry/payment reminders) triggered by staff,
+  sent over `sms | whatsapp | email` — there's no `push` channel and no tenant-wide
+  broadcast concept. Announcements need their own model
+  (tenant-scoped, not per-member) rather than reusing `Notification`:
+  `GET/POST /api/announcements`
 
 ### 6. Profile
 - Member photo (tap to view full size)
@@ -101,34 +127,56 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 
 ## Backend Changes Needed
 
-The existing gym backend at `/opt/sites/gym/apps/api` needs two small additions:
+| Feature | Work | Status |
+|---|---|---|
+| Member credentials | Hashed `pinHash` field on `Member` (migration `20260720214955_add_member_pin`) | ✅ **Done** (2026-07-20) |
+| Member sign-in | `POST /api/member-auth/sign-in` — bearer token via Redis session, not a JWT (see Sign In screen notes) | ✅ **Done** |
+| Staff assigns member PIN | `POST /api/members/:memberId/pin` (staff session, any role) | ✅ **Done** |
+| Member "me" endpoints | `GET /api/me`, `GET /api/me/qrcode` — bearer-token-guarded | ✅ **Done**. `GET /api/me/memberships` not built yet — Home screen (Phase 1) needs membership plan/expiry, so add this before or during Phase 1, not Phase 2 |
+| Closed dates | New `ClosedDate` model + migration, `GET/POST/DELETE /branches/:id/closed-dates` | **New** — not started |
+| Announcements | New `Announcement` model + migration (tenant-scoped, distinct from `Notification`), `GET/POST /announcements` | **New** — not started |
+| Push token registration | New field/table for FCM device tokens on `Member`, `POST /me/device-token` | **New** — not started |
+| Push notification channel | Add `push` to the `NotificationChannel` enum (currently `sms \| whatsapp \| email` only) if announcements should reuse the existing dispatch pattern | **New** — not started |
+| Tenant resolution at sign-in | Not a separate step — `identifier` (phone/memberNumber) is looked up without pre-selecting a tenant, same pattern staff sign-in already uses. Fine for now since there's one tenant in production; revisit if a second tenant is ever onboarded | ✅ **Decided/implemented** this way |
 
-| Feature | New Endpoint |
-|---|---|
-| Closed dates | `GET/POST/DELETE /branches/:id/closed-dates` |
-| Announcements | `GET/POST /announcements` (tenant-scoped) |
-| Push token registration | `POST /members/:id/device-token` |
-| Send push notification | Internal call to FCM when announcement is created |
+## API Reference for the Mobile Client
 
-Everything else (member profile, QR code, membership) already has working endpoints.
+All under `https://gym.sparkco.vip/api` (dev: `http://localhost:3002/api`).
+
+- `POST /member-auth/sign-in` — body `{ identifier, pin }` → `200 { token, member: { id, tenantId, memberNumber, fullName } }`, or `401` on bad credentials. Rate-limited (10/min/IP).
+- `GET /member-auth/current-session` — `Authorization: Bearer <token>` → `200 { member }` or `401`. Useful to validate a stored token on app launch.
+- `POST /member-auth/sign-out` — revokes the token, `204`.
+- `GET /me` — full member profile + computed membership `status` (`active`/`inactive`). No membership plan/expiry details yet (see table above).
+- `GET /me/qrcode` — `image/png`, the same QR the gate scanner reads.
+
+Everything above requires `Authorization: Bearer <token>` except sign-in itself.
 
 ---
 
 ## Development Phases
 
+### Phase 0 — Backend: Member Auth ✅ Done (2026-07-20)
+- Hashed PIN field on `Member`, member sign-in + bearer-token sessions, `/me` and
+  `/me/qrcode` routes, staff-side PIN assignment endpoint. See "API Reference" above.
+- Not yet decided: how staff actually hand a PIN to a member (see Sign In screen notes)
+  — settle this before Phase 1 sign-in UI, since it affects the copy on that screen.
+- Still missing for a complete Home screen: `GET /me/memberships` (plan name, expiry
+  date) — add this first thing in Phase 1.
+
 ### Phase 1 — Core (Android)
 - Project setup (Android Studio, Kotlin, Jetpack Compose)
-- Sign-in screen wired to gym backend
+- Backend: add `GET /me/memberships` (plan name, expiry, status) — Home screen needs it
+- Sign-in screen wired to `/api/member-auth/sign-in`
 - Home screen: gym name, member photo, membership status
-- QR code screen
+- QR code screen (against `/api/me/qrcode`)
 - Estimated: 1 week
 
 ### Phase 2 — Notifications + Calendar
-- Firebase FCM integration
-- Backend: store device tokens, send push on announcement
+- Backend: `Announcement` model + endpoints, `ClosedDate` model + endpoints
+- Firebase FCM integration; backend: device token storage, `push` channel, send on announcement
 - Announcements screen
-- Closed dates calendar (requires backend addition)
-- Estimated: 1 week
+- Closed dates calendar
+- Estimated: 1.5–2 weeks (bigger than before — two new models/migrations, not just endpoints)
 
 ### Phase 3 — Polish + Play Store
 - Gym branding (logo, colors, splash screen)
@@ -182,6 +230,6 @@ If speed and one-codebase simplicity matter more: **go React Native from the sta
 ## Notes
 
 - The gym backend already sends WhatsApp and email notifications. Push notifications are additive — they do not replace those channels, they supplement them for members who install the app.
-- Member authentication for the app should use a separate PIN or the existing password — do not expose the staff login flow to members.
-- The QR endpoint (`/members/:id/qrcode`) is session-protected. The app must send the session cookie or switch to a token-based auth (JWT) for mobile clients.
+- Member authentication is PIN-based, entirely separate from staff login — see "API Reference for the Mobile Client" above for the live endpoints.
+- A member can't sign in until staff assigns them a PIN (`POST /api/members/:memberId/pin`). There's no member self-service flow — decide the handout process (front desk, printed on a card, etc.) before finalizing the sign-in screen's copy.
 - All API calls should go through HTTPS only (`https://gym.sparkco.vip/api`).

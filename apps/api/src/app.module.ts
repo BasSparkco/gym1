@@ -9,6 +9,7 @@ import { ClassBookingsModule } from './modules/class-bookings/class-bookings.mod
 import { ClassSessionsModule } from './modules/class-sessions/class-sessions.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { GatesModule } from './modules/gates/gates.module';
+import { MemberAuthModule } from './modules/member-auth/member-auth.module';
 import { MembersModule } from './modules/members/members.module';
 import { MembershipsModule } from './modules/memberships/memberships.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -36,6 +37,7 @@ import { RedisModule } from './redis/redis.module';
     GatesModule,
     UsersModule,
     MembersModule,
+    MemberAuthModule,
     MembershipsModule,
     PaymentsModule,
     VisitsModule,

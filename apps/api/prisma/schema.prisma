@@ -264,6 +264,10 @@ model Member {
   emergencyContactPhone String?
   medicalNotes          String?
   rfidTag               String?
+  // Hashed PIN a member uses to sign into the mobile app (scrypt, same
+  // format as User.passwordHash). Null until staff assigns one — most
+  // members won't have the mobile app, so this is opt-in per member.
+  pinHash               String?
 
   memberships   Membership[]
   visits        Visit[]

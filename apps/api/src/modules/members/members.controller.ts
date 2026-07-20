@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -246,6 +247,24 @@ export class MembersController {
         pictureUrl,
       ),
     };
+  }
+
+  // Staff sets/resets the PIN a member uses to sign into the mobile app.
+  @Post(':memberId/pin')
+  @HttpCode(204)
+  async setMemberPin(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+    @Body() body: { pin?: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    await this.membersService.setMemberAppPin(
+      session.user.tenant.id,
+      branchId,
+      memberId,
+      body.pin ?? '',
+    );
   }
 
   private async getRequiredSession(cookieHeader: string | undefined) {
