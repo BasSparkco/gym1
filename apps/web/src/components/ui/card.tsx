@@ -25,9 +25,9 @@ export function Card({
   return (
     <As
       className={cn(
-        "rounded-[1.75rem] border border-line bg-surface px-6 py-5 transition-all duration-200",
+        "rounded-[18px] border border-line bg-surface px-6 py-5 shadow-[0_16px_32px_-24px_rgba(var(--shadow-tint),0.55)] transition-all duration-200",
         hoverable &&
-          "hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-[0_16px_36px_-16px_rgba(86,57,28,0.22)]",
+          "hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-[0_16px_36px_-16px_rgba(var(--shadow-tint),0.35)]",
         animate && "animate-fade-in-up",
         animate && staggerClass[delay],
         className,

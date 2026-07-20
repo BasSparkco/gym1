@@ -70,7 +70,7 @@ export function SignInForm({ labels }: SignInFormProps) {
             strokeWidth={2}
           />
           <input
-            className="w-full rounded-2xl border border-line bg-white py-3 pl-11 pr-4 outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="w-full rounded-[10px] border border-line bg-surface py-3 pl-11 pr-4 outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-brand/20"
             placeholder="frontdesk@sparkgym.local"
             type="text"
             value={identifier}
@@ -88,7 +88,7 @@ export function SignInForm({ labels }: SignInFormProps) {
             strokeWidth={2}
           />
           <input
-            className="w-full rounded-2xl border border-line bg-white py-3 pl-11 pr-4 outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="w-full rounded-[10px] border border-line bg-surface py-3 pl-11 pr-4 outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-brand/20"
             placeholder="Enter your password"
             type="password"
             value={password}
@@ -106,7 +106,7 @@ export function SignInForm({ labels }: SignInFormProps) {
       ) : null}
 
       <button
-        className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_-6px_rgba(31,111,95,0.55)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-strong hover:shadow-[0_14px_28px_-8px_rgba(31,111,95,0.6)] active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
+        className="mt-2 inline-flex items-center justify-center gap-2 rounded-[10px] bg-accent px-5 py-3 text-sm font-semibold text-brand-strong shadow-[0_8px_20px_-6px_rgba(124,175,35,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent-strong hover:shadow-[0_14px_28px_-8px_rgba(124,175,35,0.55)] active:translate-y-0 disabled:pointer-events-none disabled:opacity-60"
         type="submit"
         disabled={isSubmitting}
       >

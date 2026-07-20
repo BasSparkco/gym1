@@ -14,7 +14,7 @@ export default async function SignInPage() {
   const t = await getT();
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_#efe6d7,_#f5f1e8_55%,_#eadbc2)] px-6 py-10 text-foreground">
+    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_var(--surface-muted),_var(--background)_55%,_var(--line))] px-6 py-10 text-foreground">
       {/* Decorative glow accents */}
       <div
         className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand/20 blur-3xl"
@@ -33,15 +33,15 @@ export default async function SignInPage() {
           />
 
           <div className="relative flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-              <Dumbbell className="h-5 w-5 text-white" strokeWidth={2} />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-white/10 ring-1 ring-accent/25">
+              <Dumbbell className="h-5 w-5 text-accent" strokeWidth={2} />
             </div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
               Spark Gym ERP
             </p>
           </div>
 
-          <h1 className="relative mt-6 max-w-xl text-4xl font-semibold tracking-tight lg:text-6xl">
+          <h1 className="font-display relative mt-6 max-w-xl text-4xl font-bold tracking-tight lg:text-6xl">
             Daily operations for gyms, built around the front desk.
           </h1>
           <p className="relative mt-6 max-w-xl text-base leading-8 text-white/75 lg:text-lg">
@@ -67,12 +67,12 @@ export default async function SignInPage() {
           </div>
         </section>
 
-        <section className="animate-fade-in-up stagger-2 rounded-[2rem] border border-line bg-surface p-8 shadow-[0_20px_80px_rgba(86,57,28,0.08)] lg:p-10">
+        <section className="animate-fade-in-up stagger-2 rounded-[2rem] border border-line bg-surface p-8 shadow-[0_20px_80px_rgba(var(--shadow-tint),0.1)] lg:p-10">
           <div className="max-w-md">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.28em] text-brand">
               {t.auth.signIn}
             </p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight">
+            <h2 className="font-display mt-4 text-3xl font-bold tracking-tight">
               {t.auth.accessConsole}
             </h2>
             <p className="mt-4 text-sm leading-7 text-foreground/70">

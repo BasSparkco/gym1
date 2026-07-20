@@ -1,15 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f1e8;
-  --foreground: #1d1a16;
-  --surface: #fffdf8;
-  --surface-muted: #efe6d7;
-  --line: #d8c8ae;
-  --brand: #1f6f5f;
-  --brand-strong: #164d42;
-  --accent: #c87d3d;
-  --danger: #a63d40;
+  /* Pine / mist / volt system — see members/[memberId] for the reference page */
+  --background: #F5F7F2;
+  --foreground: #16211D;
+  --surface: #FAFBF7;
+  --surface-muted: #ECEFE9;
+  --line: #DDE3DA;
+  --brand: #2C5A4E;
+  --brand-strong: #0C2B24;
+  --brand-deeper: #123A31;
+  --accent: #C9F24B;
+  --accent-strong: #7CAF23;
+  --accent-ink: #3E6B12;
+  --danger: #B23B3E;
+  --muted: #5C6B64;
+  --on-brand: #F2F6EF;
+  --shadow-tint: 12, 43, 36;
 }
 
 @theme inline {
@@ -20,10 +27,16 @@
   --color-line: var(--line);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
+  --color-brand-deeper: var(--brand-deeper);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
+  --color-muted: var(--muted);
+  --color-on-brand: var(--on-brand);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-archivo);
+  --font-mono: var(--font-plex-mono);
 }
 
 @layer base {
@@ -245,7 +258,7 @@
   overflow: hidden;
   font-family: inherit !important;
   font-size: 0.875rem !important;
-  box-shadow: 0 18px 50px rgba(86, 57, 28, 0.12) !important;
+  box-shadow: 0 18px 50px rgba(var(--shadow-tint), 0.14) !important;
 }
 
 .date-input-calendar .react-calendar__navigation {

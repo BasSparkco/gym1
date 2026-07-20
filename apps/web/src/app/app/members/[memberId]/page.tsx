@@ -10,7 +10,6 @@ import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDate } from "@/lib/date-format";
 import Link from "next/link";
 import { PhoneNumber } from "@/components/phone-number";
-import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import {
   PencilLine,
   QrCode,
@@ -23,9 +22,6 @@ import {
   PlusCircle,
   LogIn,
 } from "lucide-react";
-
-const archivo = Archivo({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800", "900"] });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 type Props = { params: Promise<{ memberId: string }> };
 
@@ -69,25 +65,25 @@ function initials(name: string): string {
 }
 
 const pillTone: Record<string, string> = {
-  active: "bg-[rgba(201,242,75,0.16)] text-[#3E6B12] ring-1 ring-inset ring-[rgba(137,179,42,0.4)]",
-  paid: "bg-[rgba(201,242,75,0.16)] text-[#3E6B12] ring-1 ring-inset ring-[rgba(137,179,42,0.4)]",
+  active: "bg-[rgba(201,242,75,0.16)] text-accent-ink ring-1 ring-inset ring-[rgba(137,179,42,0.4)]",
+  paid: "bg-[rgba(201,242,75,0.16)] text-accent-ink ring-1 ring-inset ring-[rgba(137,179,42,0.4)]",
   frozen: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200",
   pending: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200",
   draft: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200",
-  expired: "bg-[#ECEFE9] text-[#5C6B64] ring-1 ring-inset ring-[#DDE3DA]",
-  refunded: "bg-[#ECEFE9] text-[#5C6B64] ring-1 ring-inset ring-[#DDE3DA]",
+  expired: "bg-surface-muted text-muted ring-1 ring-inset ring-line",
+  refunded: "bg-surface-muted text-muted ring-1 ring-inset ring-line",
   cancelled: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200",
   failed: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200",
 };
-const defaultPillTone = "bg-[#ECEFE9] text-[#5C6B64] ring-1 ring-inset ring-[#DDE3DA]";
+const defaultPillTone = "bg-surface-muted text-muted ring-1 ring-inset ring-line";
 
-const sectionHead = "text-[11px] font-semibold uppercase tracking-[0.22em] text-[#2C5A4E]";
-const fieldKey = "text-[11px] font-medium uppercase tracking-[0.1em] text-[#5C6B64]";
+const sectionHead = "text-[11px] font-semibold uppercase tracking-[0.22em] text-brand";
+const fieldKey = "text-[11px] font-medium uppercase tracking-[0.1em] text-muted";
 const fieldValue = "text-[15px] font-semibold [overflow-wrap:anywhere]";
 const railBtn =
-  "inline-flex items-center gap-2 rounded-[10px] border border-[#DDE3DA] bg-[#FAFBF7] px-[18px] py-[9px] text-[13px] font-semibold text-[#16211D] transition-colors hover:border-[#2C5A4E] hover:text-[#2C5A4E]";
+  "inline-flex items-center gap-2 rounded-[10px] border border-line bg-surface px-[18px] py-[9px] text-[13px] font-semibold text-foreground transition-colors hover:border-brand hover:text-brand";
 const panelBtnSm =
-  "inline-flex shrink-0 items-center gap-1.5 rounded-[9px] border border-[#DDE3DA] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#16211D] transition-colors hover:border-[#2C5A4E] hover:text-[#2C5A4E]";
+  "inline-flex shrink-0 items-center gap-1.5 rounded-[9px] border border-line bg-white px-3.5 py-1.5 text-[12px] font-semibold text-foreground transition-colors hover:border-brand hover:text-brand";
 
 export default async function MemberProfilePage({ params }: Props) {
   const { memberId } = await params;
@@ -133,22 +129,22 @@ export default async function MemberProfilePage({ params }: Props) {
   };
 
   return (
-    <div className={archivo.className}>
+    <div className="font-display">
       {/* Top bar */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <nav
           aria-label="Breadcrumb"
-          className={`${plexMono.className} flex items-center gap-2.5 text-[11px] uppercase tracking-[0.18em] text-[#5C6B64]`}
+          className={`font-mono flex items-center gap-2.5 text-[11px] uppercase tracking-[0.18em] text-muted`}
         >
-          <Link href="/app/members" className="text-[#2C5A4E] hover:underline">
+          <Link href="/app/members" className="text-brand hover:underline">
             {t.nav.members}
           </Link>
-          <span className="text-[#DDE3DA]">/</span>
+          <span className="text-line">/</span>
           <span>{member.memberNumber}</span>
         </nav>
         <Link
           href="/app/members"
-          className="inline-flex items-center gap-2 rounded-[10px] border border-[#DDE3DA] bg-[#FAFBF7] px-4 py-2 text-[13px] font-semibold text-[#2C5A4E] transition-colors hover:border-[#2C5A4E]"
+          className="inline-flex items-center gap-2 rounded-[10px] border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-brand transition-colors hover:border-brand"
         >
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.2} />
           {t.members.allMembers}
@@ -156,7 +152,7 @@ export default async function MemberProfilePage({ params }: Props) {
       </div>
 
       {/* Member card */}
-      <header className="relative overflow-hidden rounded-[18px] bg-[#0C2B24] text-[#F2F6EF] shadow-[0_24px_48px_-24px_rgba(12,43,36,0.45)]">
+      <header className="relative overflow-hidden rounded-[18px] bg-brand-strong text-on-brand shadow-[0_24px_48px_-24px_rgba(var(--shadow-tint),0.45)]">
         <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(115deg,transparent_0_90px,rgba(255,255,255,0.028)_90px_92px)]" />
 
         <div className="relative flex flex-wrap items-center gap-7 px-9 py-8">
@@ -168,7 +164,7 @@ export default async function MemberProfilePage({ params }: Props) {
               className="h-24 w-24 shrink-0 rounded-2xl border border-white/15 object-cover"
             />
           ) : (
-            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-[linear-gradient(145deg,#2C5A4E,#123A31)] text-[34px] font-extrabold text-[#C9F24B]">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-[linear-gradient(145deg,var(--brand),var(--brand-deeper))] text-[34px] font-extrabold text-accent">
               {initials(member.fullName)}
             </div>
           )}
@@ -183,14 +179,14 @@ export default async function MemberProfilePage({ params }: Props) {
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-2.5">
               <span
-                className={`${plexMono.className} inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.14em] ${
-                  member.status === "active" ? "border-[rgba(201,242,75,0.35)] text-[#C9F24B]" : "border-white/25 text-white/60"
+                className={`font-mono inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.14em] ${
+                  member.status === "active" ? "border-[rgba(201,242,75,0.35)] text-accent" : "border-white/25 text-white/60"
                 }`}
               >
                 <span
                   className={`h-[7px] w-[7px] rounded-full ${
                     member.status === "active"
-                      ? "bg-[#C9F24B] shadow-[0_0_0_3px_rgba(201,242,75,0.18)] motion-safe:animate-pulse"
+                      ? "bg-accent shadow-[0_0_0_3px_rgba(201,242,75,0.18)] motion-safe:animate-pulse"
                       : "bg-white/40"
                   }`}
                 />
@@ -198,12 +194,12 @@ export default async function MemberProfilePage({ params }: Props) {
               </span>
               {homeBranch && (
                 <span
-                  className={`${plexMono.className} rounded-full border border-white/16 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-white/75`}
+                  className={`font-mono rounded-full border border-white/16 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-white/75`}
                 >
                   {homeBranch.name}
                 </span>
               )}
-              <span className={`${plexMono.className} text-[12px] tracking-[0.14em] text-white/65`}>
+              <span className={`font-mono text-[12px] tracking-[0.14em] text-white/65`}>
                 {member.memberNumber}
               </span>
             </div>
@@ -212,10 +208,10 @@ export default async function MemberProfilePage({ params }: Props) {
           {member.rfidTag && (
             <div className="flex shrink-0 flex-col items-end gap-2 text-right">
               <div className="relative h-[38px] w-[52px] rounded-lg bg-[linear-gradient(140deg,#E8D98A,#C9AF5B_55%,#EADFA4)] before:absolute before:inset-x-0 before:top-3 before:h-px before:bg-[rgba(60,45,10,0.35)] after:absolute after:inset-x-0 after:bottom-3 after:h-px after:bg-[rgba(60,45,10,0.35)]" />
-              <span className={`${plexMono.className} text-[12px] tracking-[0.22em] text-[#C9F24B]`}>
+              <span className={`font-mono text-[12px] tracking-[0.22em] text-accent`}>
                 {member.rfidTag}
               </span>
-              <span className={`${plexMono.className} text-[10px] uppercase tracking-[0.18em] text-white/50`}>
+              <span className={`font-mono text-[10px] uppercase tracking-[0.18em] text-white/50`}>
                 {t.members.rfidTagLabel}
               </span>
             </div>
@@ -226,30 +222,30 @@ export default async function MemberProfilePage({ params }: Props) {
           <div className="flex flex-wrap gap-7">
             {member.joinDate && (
               <div className="flex flex-col gap-0.5">
-                <span className={`${plexMono.className} text-[10px] uppercase tracking-[0.16em] text-white/50`}>
+                <span className={`font-mono text-[10px] uppercase tracking-[0.16em] text-white/50`}>
                   {t.members.memberSince}
                 </span>
-                <span className="text-[14px] font-semibold text-[#F2F6EF]">
+                <span className="text-[14px] font-semibold text-on-brand">
                   {formatDate(member.joinDate, dateFormat)}
                 </span>
               </div>
             )}
             {age !== null && (
               <div className="flex flex-col gap-0.5">
-                <span className={`${plexMono.className} text-[10px] uppercase tracking-[0.16em] text-white/50`}>
+                <span className={`font-mono text-[10px] uppercase tracking-[0.16em] text-white/50`}>
                   {t.members.age}
                 </span>
-                <span className="text-[14px] font-semibold text-[#F2F6EF]">{age}</span>
+                <span className="text-[14px] font-semibold text-on-brand">{age}</span>
               </div>
             )}
             {registeredEmployee && (
               <div className="flex flex-col gap-0.5">
-                <span className={`${plexMono.className} text-[10px] uppercase tracking-[0.16em] text-white/50`}>
+                <span className={`font-mono text-[10px] uppercase tracking-[0.16em] text-white/50`}>
                   {t.members.registeredEmployee}
                 </span>
                 <span
                   dir={isRtlText(registeredEmployee.fullName) ? "rtl" : undefined}
-                  className="text-[14px] font-semibold text-[#F2F6EF]"
+                  className="text-[14px] font-semibold text-on-brand"
                 >
                   {registeredEmployee.fullName}
                 </span>
@@ -259,14 +255,14 @@ export default async function MemberProfilePage({ params }: Props) {
           <div className="flex gap-2.5">
             <Link
               href={`/app/members/${member.id}/edit`}
-              className="inline-flex items-center gap-2 rounded-[10px] border border-white/25 px-[18px] py-[9px] text-[13px] font-semibold text-[#F2F6EF] transition-colors hover:border-white/50"
+              className="inline-flex items-center gap-2 rounded-[10px] border border-white/25 px-[18px] py-[9px] text-[13px] font-semibold text-on-brand transition-colors hover:border-white/50"
             >
               <PencilLine className="h-3.5 w-3.5" strokeWidth={2.2} />
               {t.members.editDetails}
             </Link>
             <Link
               href="/app/check-in"
-              className="inline-flex items-center gap-2 rounded-[10px] bg-[#C9F24B] px-[18px] py-[9px] text-[13px] font-semibold text-[#0C2B24] transition-colors hover:bg-[#D6F86A]"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-accent px-[18px] py-[9px] text-[13px] font-semibold text-brand-strong transition-colors hover:bg-accent-strong"
             >
               <LogIn className="h-3.5 w-3.5" strokeWidth={2.2} />
               {t.nav.checkIn}
@@ -313,10 +309,10 @@ export default async function MemberProfilePage({ params }: Props) {
       {/* Details grid */}
       <div className="mt-5 grid gap-5 md:grid-cols-2">
         {/* Identity + Contact */}
-        <section className="rounded-[18px] border border-[#DDE3DA] bg-[#FAFBF7] px-7 py-6">
+        <section className="rounded-[18px] border border-line bg-surface px-7 py-6">
           <div className="mb-4 flex items-center gap-2.5">
-            <h2 className={`${plexMono.className} ${sectionHead}`}>{t.members.identityTitle}</h2>
-            <span className="h-px flex-1 bg-[#DDE3DA]" />
+            <h2 className={`font-mono ${sectionHead}`}>{t.members.identityTitle}</h2>
+            <span className="h-px flex-1 bg-line" />
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
             <div className="flex flex-col gap-1">
@@ -339,7 +335,7 @@ export default async function MemberProfilePage({ params }: Props) {
                 <span className={fieldValue}>
                   {formatDate(member.dateOfBirth, dateFormat)}
                   {age !== null && (
-                    <span className="ms-1 text-[12px] font-normal text-[#5C6B64]">
+                    <span className="ms-1 text-[12px] font-normal text-muted">
                       · {formatDict(t.members.ageYears, { count: age })}
                     </span>
                   )}
@@ -349,7 +345,7 @@ export default async function MemberProfilePage({ params }: Props) {
             {member.idNumber && (
               <div className="flex flex-col gap-1">
                 <span className={fieldKey}>{t.members.idNumber}</span>
-                <span className={`${plexMono.className} text-[14px] font-medium tracking-[0.06em]`}>
+                <span className={`font-mono text-[14px] font-medium tracking-[0.06em]`}>
                   {member.idNumber}
                 </span>
               </div>
@@ -365,8 +361,8 @@ export default async function MemberProfilePage({ params }: Props) {
           </div>
 
           <div className="mb-4 mt-6 flex items-center gap-2.5">
-            <h2 className={`${plexMono.className} ${sectionHead}`}>{t.members.contactTitle}</h2>
-            <span className="h-px flex-1 bg-[#DDE3DA]" />
+            <h2 className={`font-mono ${sectionHead}`}>{t.members.contactTitle}</h2>
+            <span className="h-px flex-1 bg-line" />
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
             {member.phone && (
@@ -374,7 +370,7 @@ export default async function MemberProfilePage({ params }: Props) {
                 <span className={fieldKey}>{t.members.phone}</span>
                 <a
                   href={`tel:${member.phone}`}
-                  className={`${plexMono.className} text-[14px] font-medium text-[#2C5A4E] hover:underline`}
+                  className={`font-mono text-[14px] font-medium text-brand hover:underline`}
                 >
                   <PhoneNumber value={member.phone} />
                 </a>
@@ -385,7 +381,7 @@ export default async function MemberProfilePage({ params }: Props) {
                 <span className={fieldKey}>{t.members.email}</span>
                 <a
                   href={`mailto:${member.email}`}
-                  className={`${plexMono.className} break-all text-[14px] font-medium text-[#2C5A4E] hover:underline`}
+                  className={`font-mono break-all text-[14px] font-medium text-brand hover:underline`}
                 >
                   {member.email}
                 </a>
@@ -395,10 +391,10 @@ export default async function MemberProfilePage({ params }: Props) {
         </section>
 
         {/* Emergency contact + Physical profile */}
-        <section className="rounded-[18px] border border-[#DDE3DA] bg-[#FAFBF7] px-7 py-6">
+        <section className="rounded-[18px] border border-line bg-surface px-7 py-6">
           <div className="mb-4 flex items-center gap-2.5">
-            <h2 className={`${plexMono.className} ${sectionHead}`}>{t.members.emergencyContact}</h2>
-            <span className="h-px flex-1 bg-[#DDE3DA]" />
+            <h2 className={`font-mono ${sectionHead}`}>{t.members.emergencyContact}</h2>
+            <span className="h-px flex-1 bg-line" />
           </div>
           {member.emergencyContactName || member.emergencyContactPhone ? (
             <div className="grid grid-cols-2 gap-x-6 gap-y-4">
@@ -413,15 +409,15 @@ export default async function MemberProfilePage({ params }: Props) {
               {member.emergencyContactPhone && (
                 <div className="flex flex-col gap-1">
                   <span className={fieldKey}>{t.members.phone}</span>
-                  <span className={`${plexMono.className} text-[14px] font-medium`}>
+                  <span className={`font-mono text-[14px] font-medium`}>
                     <PhoneNumber value={member.emergencyContactPhone} />
                   </span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-[#DDE3DA] bg-[#ECEFE9] px-5 py-5">
-              <p className="text-[13px] text-[#5C6B64]">{t.members.noEmergencyContactLong}</p>
+            <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-line bg-surface-muted px-5 py-5">
+              <p className="text-[13px] text-muted">{t.members.noEmergencyContactLong}</p>
               <Link href={`/app/members/${member.id}/edit`} className={panelBtnSm}>
                 <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
                 {t.members.addEmergencyContact}
@@ -432,50 +428,50 @@ export default async function MemberProfilePage({ params }: Props) {
           {member.medicalNotes && (
             <>
               <div className="mb-3 mt-6 flex items-center gap-2.5">
-                <h2 className={`${plexMono.className} text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5C6B64]`}>
+                <h2 className={`font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-muted`}>
                   {t.members.medicalNotes}
                 </h2>
-                <span className="h-px flex-1 bg-[#DDE3DA]" />
+                <span className="h-px flex-1 bg-line" />
               </div>
-              <p className="text-[14px] leading-6 text-[#16211D]/80">{member.medicalNotes}</p>
+              <p className="text-[14px] leading-6 text-foreground/80">{member.medicalNotes}</p>
             </>
           )}
 
           {(member.height || member.weight) && (
             <>
               <div className="mb-4 mt-6 flex items-center gap-2.5">
-                <h2 className={`${plexMono.className} ${sectionHead}`}>{t.members.physicalProfileTitle}</h2>
-                <span className="h-px flex-1 bg-[#DDE3DA]" />
+                <h2 className={`font-mono ${sectionHead}`}>{t.members.physicalProfileTitle}</h2>
+                <span className="h-px flex-1 bg-line" />
               </div>
               <div className="grid grid-cols-3 gap-3.5">
                 {member.height && (
-                  <div className="rounded-xl border border-[#DDE3DA] bg-[#ECEFE9] px-4 py-3.5">
+                  <div className="rounded-xl border border-line bg-surface-muted px-4 py-3.5">
                     <div className="text-[24px] font-extrabold leading-none" style={{ fontVariationSettings: '"wdth" 110' }}>
                       {member.height}
-                      <small className="ms-1 text-[12px] font-semibold text-[#5C6B64]">cm</small>
+                      <small className="ms-1 text-[12px] font-semibold text-muted">cm</small>
                     </div>
-                    <div className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-[#5C6B64]">
+                    <div className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-muted">
                       {t.members.heightStat}
                     </div>
                   </div>
                 )}
                 {member.weight && (
-                  <div className="rounded-xl border border-[#DDE3DA] bg-[#ECEFE9] px-4 py-3.5">
+                  <div className="rounded-xl border border-line bg-surface-muted px-4 py-3.5">
                     <div className="text-[24px] font-extrabold leading-none" style={{ fontVariationSettings: '"wdth" 110' }}>
                       {member.weight}
-                      <small className="ms-1 text-[12px] font-semibold text-[#5C6B64]">kg</small>
+                      <small className="ms-1 text-[12px] font-semibold text-muted">kg</small>
                     </div>
-                    <div className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-[#5C6B64]">
+                    <div className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-muted">
                       {t.members.weightStat}
                     </div>
                   </div>
                 )}
                 {bmi !== null && (
-                  <div className="rounded-xl border border-[#DDE3DA] bg-[#ECEFE9] px-4 py-3.5">
+                  <div className="rounded-xl border border-line bg-surface-muted px-4 py-3.5">
                     <div className="text-[24px] font-extrabold leading-none" style={{ fontVariationSettings: '"wdth" 110' }}>
                       {bmi}
                     </div>
-                    <div className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-[#5C6B64]">{t.members.bmi}</div>
+                    <div className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-muted">{t.members.bmi}</div>
                   </div>
                 )}
               </div>
@@ -484,10 +480,10 @@ export default async function MemberProfilePage({ params }: Props) {
         </section>
 
         {/* Memberships */}
-        <section className="rounded-[18px] border border-[#DDE3DA] bg-[#FAFBF7] px-7 py-6 md:col-span-2">
+        <section className="rounded-[18px] border border-line bg-surface px-7 py-6 md:col-span-2">
           <div className="flex items-center gap-2.5">
-            <h2 className={`${plexMono.className} ${sectionHead}`}>{t.members.memberships}</h2>
-            <span className="h-px flex-1 bg-[#DDE3DA]" />
+            <h2 className={`font-mono ${sectionHead}`}>{t.members.memberships}</h2>
+            <span className="h-px flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/memberships/new`} className={panelBtnSm}>
               <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
               {t.members.sellMembership}
@@ -495,8 +491,8 @@ export default async function MemberProfilePage({ params }: Props) {
           </div>
 
           {memberships.length === 0 ? (
-            <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-dashed border-[#DDE3DA] bg-[#ECEFE9] px-5 py-5">
-              <p className="text-[13px] text-[#5C6B64]">{t.members.noMembershipsYet}</p>
+            <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-dashed border-line bg-surface-muted px-5 py-5">
+              <p className="text-[13px] text-muted">{t.members.noMembershipsYet}</p>
             </div>
           ) : (
             <div className="mt-4 grid gap-2.5">
@@ -512,25 +508,25 @@ export default async function MemberProfilePage({ params }: Props) {
                   return (
                     <div
                       key={ms.id}
-                      className="flex flex-wrap items-center gap-4 rounded-xl border border-[#DDE3DA] bg-white px-4 py-4"
+                      className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-white px-4 py-4"
                     >
                       <div className="flex min-w-[200px] flex-1 flex-col gap-0.5">
                         <span dir={isRtlText(ms.plan?.name) ? "rtl" : undefined} className="text-[15px] font-semibold">
                           {ms.plan?.name ?? ms.planId}
                         </span>
-                        <span className={`${plexMono.className} text-[12px] tracking-[0.04em] text-[#5C6B64]`}>
+                        <span className={`font-mono text-[12px] tracking-[0.04em] text-muted`}>
                           {formatDate(ms.startDate, dateFormat)} → {formatDate(ms.endDate, dateFormat)}
                         </span>
                       </div>
                       {isActiveMs && (
                         <div className="w-[120px] shrink-0">
-                          <div className="h-[5px] overflow-hidden rounded-full bg-[#DDE3DA]">
+                          <div className="h-[5px] overflow-hidden rounded-full bg-line">
                             <div
-                              className="h-full rounded-full bg-[linear-gradient(90deg,#2C5A4E,#7CAF23)]"
+                              className="h-full rounded-full bg-[linear-gradient(90deg,var(--brand),var(--accent-strong))]"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
-                          <div className={`${plexMono.className} mt-1.5 text-[10px] uppercase tracking-[0.1em] text-[#5C6B64]`}>
+                          <div className={`font-mono mt-1.5 text-[10px] uppercase tracking-[0.1em] text-muted`}>
                             {formatDict(
                               remainingDays === 1 ? t.members.daysLeftSingular : t.members.daysLeftPlural,
                               { count: remainingDays },
@@ -538,14 +534,14 @@ export default async function MemberProfilePage({ params }: Props) {
                           </div>
                         </div>
                       )}
-                      <span className={`${plexMono.className} text-[15px] font-semibold`}>
+                      <span className={`font-mono text-[15px] font-semibold`}>
                         {currencySymbol}
                         {ms.finalPrice}
                       </span>
                       <span
-                        className={`${plexMono.className} inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${pillTone[ms.status] ?? defaultPillTone}`}
+                        className={`font-mono inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${pillTone[ms.status] ?? defaultPillTone}`}
                       >
-                        {isActiveMs && <span className="h-[6px] w-[6px] rounded-full bg-[#7CAF23]" />}
+                        {isActiveMs && <span className="h-[6px] w-[6px] rounded-full bg-accent-strong" />}
                         {statusLabel(ms.status)}
                       </span>
                     </div>
@@ -556,10 +552,10 @@ export default async function MemberProfilePage({ params }: Props) {
         </section>
 
         {/* Payments */}
-        <section className="rounded-[18px] border border-[#DDE3DA] bg-[#FAFBF7] px-7 py-6 md:col-span-2">
+        <section className="rounded-[18px] border border-line bg-surface px-7 py-6 md:col-span-2">
           <div className="flex items-center gap-2.5">
-            <h2 className={`${plexMono.className} ${sectionHead}`}>{t.members.payments}</h2>
-            <span className="h-px flex-1 bg-[#DDE3DA]" />
+            <h2 className={`font-mono ${sectionHead}`}>{t.members.payments}</h2>
+            <span className="h-px flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/payments/new`} className={panelBtnSm}>
               <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
               {t.members.recordPayment}
@@ -567,8 +563,8 @@ export default async function MemberProfilePage({ params }: Props) {
           </div>
 
           {payments.length === 0 ? (
-            <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-dashed border-[#DDE3DA] bg-[#ECEFE9] px-5 py-5">
-              <p className="text-[13px] text-[#5C6B64]">{t.payments.noPayments}</p>
+            <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-dashed border-line bg-surface-muted px-5 py-5">
+              <p className="text-[13px] text-muted">{t.payments.noPayments}</p>
             </div>
           ) : (
             <div className="mt-4 grid gap-2.5">
@@ -578,20 +574,20 @@ export default async function MemberProfilePage({ params }: Props) {
                 .map((pmt) => (
                   <div
                     key={pmt.id}
-                    className="flex flex-wrap items-center gap-4 rounded-xl border border-[#DDE3DA] bg-white px-4 py-4"
+                    className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-white px-4 py-4"
                   >
                     <div className="flex flex-1 flex-wrap items-center gap-2.5">
-                      <span className={`${plexMono.className} text-[15px] font-semibold`}>
+                      <span className={`font-mono text-[15px] font-semibold`}>
                         {currencySymbol}
                         {pmt.amount}
                       </span>
-                      <span className="text-[13px] capitalize text-[#5C6B64]">{pmt.paymentMethod}</span>
-                      <span className={`${plexMono.className} text-[12px] text-[#5C6B64]/70`}>
+                      <span className="text-[13px] capitalize text-muted">{pmt.paymentMethod}</span>
+                      <span className={`font-mono text-[12px] text-muted/70`}>
                         {formatDate(pmt.paymentDate, dateFormat)}
                       </span>
                     </div>
                     <span
-                      className={`${plexMono.className} inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${pillTone[pmt.status] ?? defaultPillTone}`}
+                      className={`font-mono inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${pillTone[pmt.status] ?? defaultPillTone}`}
                     >
                       {statusLabel(pmt.status)}
                     </span>

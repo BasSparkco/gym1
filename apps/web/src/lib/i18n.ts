@@ -21,6 +21,10 @@ export type Dict = {
     reports: string;
     settings: string;
     classes: string;
+    groupOverview: string;
+    groupPeople: string;
+    groupOperations: string;
+    groupInsights: string;
   };
   shell: {
     appName: string;
@@ -56,6 +60,8 @@ export type Dict = {
     view: string;
     details: string;
     saveChanges: string;
+    prev: string;
+    next: string;
   };
   status: {
     active: string;
@@ -93,6 +99,12 @@ export type Dict = {
     actionSellMembership: string;
     actionRecordPayment: string;
     actionCheckInMember: string;
+    latestCheckIns: string;
+    noRecentCheckIns: string;
+    expiringMemberships: string;
+    noExpiringMemberships: string;
+    branchesAtGlance: string;
+    branchesAtGlanceHelper: string;
   };
   members: {
     title: string;
@@ -171,6 +183,9 @@ export type Dict = {
     rfidTagLabel: string;
     heightStat: string;
     weightStat: string;
+    searchPlaceholder: string;
+    filterAllPlans: string;
+    showingResults: string;
   };
   plans: {
     title: string;
@@ -181,6 +196,7 @@ export type Dict = {
     planType: string;
     planDetails: string;
     durationBased: string;
+    mostSubscribed: string;
     sessionBased: string;
     duration: string;
     sessionCount: string;
@@ -366,6 +382,9 @@ export type Dict = {
     newEmployee: string;
     newStaffEmployee: string;
     noEmployees: string;
+    filterAllBranches: string;
+    filterAllPositions: string;
+    searchPlaceholder: string;
     createEmployee: string;
     employeeNumber: string;
     fullName: string;
@@ -610,6 +629,13 @@ export type Dict = {
     listDescription: string;
     newProgram: string;
     noPrograms: string;
+    todaysSessions: string;
+    todaysSessionsHelper: string;
+    noSessionsToday: string;
+    statusInProgress: string;
+    statusUpcoming: string;
+    statusCompleted: string;
+    statusLowBookings: string;
     programName: string;
     description: string;
     color: string;
@@ -679,6 +705,10 @@ const en: Dict = {
     reports: "Reports",
     settings: "Settings",
     classes: "Classes",
+    groupOverview: "Overview",
+    groupPeople: "People",
+    groupOperations: "Operations",
+    groupInsights: "Insights",
   },
   shell: {
     appName: "Spark Gym ERP",
@@ -714,6 +744,8 @@ const en: Dict = {
     view: "View",
     details: "Details",
     saveChanges: "Save changes",
+    prev: "Prev",
+    next: "Next",
   },
   status: {
     active: "Active",
@@ -751,6 +783,12 @@ const en: Dict = {
     actionSellMembership: "Sell membership",
     actionRecordPayment: "Record payment",
     actionCheckInMember: "Check in",
+    latestCheckIns: "Latest check-ins",
+    noRecentCheckIns: "No check-ins recorded yet today.",
+    expiringMemberships: "Memberships expiring soon",
+    noExpiringMemberships: "Nothing expiring in the next 7 days.",
+    branchesAtGlance: "Branches at a glance",
+    branchesAtGlanceHelper: "Active members and today's check-ins per branch.",
   },
   members: {
     title: "Members",
@@ -829,6 +867,9 @@ const en: Dict = {
     rfidTagLabel: "RFID tag",
     heightStat: "Height",
     weightStat: "Weight",
+    searchPlaceholder: "Search by name, phone or ID…",
+    filterAllPlans: "All plans",
+    showingResults: "Showing {from}–{to} of {total}",
   },
   plans: {
     title: "Membership plans",
@@ -839,6 +880,7 @@ const en: Dict = {
     planType: "Plan type",
     planDetails: "Plan details",
     durationBased: "Duration-based",
+    mostSubscribed: "Most subscribed",
     sessionBased: "Session-based",
     duration: "Duration",
     sessionCount: "Session count",
@@ -1024,6 +1066,9 @@ const en: Dict = {
     newEmployee: "New employee",
     newStaffEmployee: "New staff employee",
     noEmployees: "No employees found.",
+    filterAllBranches: "All branches",
+    filterAllPositions: "All positions",
+    searchPlaceholder: "Search employees…",
     createEmployee: "Create employee",
     employeeNumber: "Employee no.",
     fullName: "Full name",
@@ -1268,6 +1313,13 @@ const en: Dict = {
     listDescription: "{count} training program{plural} in {tenant}.",
     newProgram: "New Program",
     noPrograms: "No training programs yet.",
+    todaysSessions: "Today's sessions",
+    todaysSessionsHelper: "Classes scheduled for today across all programs.",
+    noSessionsToday: "No sessions scheduled today.",
+    statusInProgress: "In progress",
+    statusUpcoming: "Upcoming",
+    statusCompleted: "Completed",
+    statusLowBookings: "Low bookings",
     programName: "Program name",
     description: "Description",
     color: "Color",
@@ -1337,6 +1389,10 @@ const ar: Dict = {
     reports: "التقارير",
     settings: "الإعدادات",
     classes: "الحصص",
+    groupOverview: "نظرة عامة",
+    groupPeople: "الأشخاص",
+    groupOperations: "العمليات",
+    groupInsights: "التحليلات",
   },
   shell: {
     appName: "Spark Gym ERP",
@@ -1372,6 +1428,8 @@ const ar: Dict = {
     view: "عرض",
     details: "التفاصيل",
     saveChanges: "حفظ التغييرات",
+    prev: "السابق",
+    next: "التالي",
   },
   status: {
     active: "نشط",
@@ -1409,6 +1467,12 @@ const ar: Dict = {
     actionSellMembership: "بيع اشتراك",
     actionRecordPayment: "تسجيل دفعة",
     actionCheckInMember: "تسجيل دخول",
+    latestCheckIns: "آخر تسجيلات الدخول",
+    noRecentCheckIns: "لا توجد تسجيلات دخول اليوم بعد.",
+    expiringMemberships: "اشتراكات على وشك الانتهاء",
+    noExpiringMemberships: "لا يوجد اشتراكات تنتهي خلال 7 أيام.",
+    branchesAtGlance: "نظرة سريعة على الفروع",
+    branchesAtGlanceHelper: "الأعضاء النشطون وتسجيلات الدخول اليوم لكل فرع.",
   },
   members: {
     title: "الأعضاء",
@@ -1487,6 +1551,9 @@ const ar: Dict = {
     rfidTagLabel: "علامة RFID",
     heightStat: "الطول",
     weightStat: "الوزن",
+    searchPlaceholder: "ابحث بالاسم أو الهاتف أو الرقم…",
+    filterAllPlans: "جميع الخطط",
+    showingResults: "عرض {from}–{to} من {total}",
   },
   plans: {
     title: "خطط الاشتراك",
@@ -1497,6 +1564,7 @@ const ar: Dict = {
     planType: "نوع الخطة",
     planDetails: "تفاصيل الخطة",
     durationBased: "مبنية على المدة",
+    mostSubscribed: "الأكثر اشتراكًا",
     sessionBased: "مبنية على الجلسات",
     duration: "المدة",
     sessionCount: "عدد الجلسات",
@@ -1682,6 +1750,9 @@ const ar: Dict = {
     newEmployee: "موظف جديد",
     newStaffEmployee: "موظف جديد",
     noEmployees: "لم يتم العثور على موظفين.",
+    filterAllBranches: "كل الفروع",
+    filterAllPositions: "كل الوظائف",
+    searchPlaceholder: "ابحث عن موظف…",
     createEmployee: "إضافة موظف",
     employeeNumber: "رقم الموظف",
     fullName: "الاسم الكامل",
@@ -1926,6 +1997,13 @@ const ar: Dict = {
     listDescription: "{count} برنامج تدريبي في {tenant}.",
     newProgram: "برنامج جديد",
     noPrograms: "لا توجد برامج تدريبية بعد.",
+    todaysSessions: "حصص اليوم",
+    todaysSessionsHelper: "الحصص المجدولة اليوم لجميع البرامج.",
+    noSessionsToday: "لا توجد حصص مجدولة اليوم.",
+    statusInProgress: "جارية الآن",
+    statusUpcoming: "قادمة",
+    statusCompleted: "انتهت",
+    statusLowBookings: "حجوزات منخفضة",
     programName: "اسم البرنامج",
     description: "الوصف",
     color: "اللون",
@@ -1995,6 +2073,10 @@ const he: Dict = {
     reports: "דוחות",
     settings: "הגדרות",
     classes: "שיעורים",
+    groupOverview: "סקירה כללית",
+    groupPeople: "אנשים",
+    groupOperations: "תפעול",
+    groupInsights: "תובנות",
   },
   shell: {
     appName: "Spark Gym ERP",
@@ -2030,6 +2112,8 @@ const he: Dict = {
     view: "הצג",
     details: "פרטים",
     saveChanges: "שמור שינויים",
+    prev: "הקודם",
+    next: "הבא",
   },
   status: {
     active: "פעיל",
@@ -2067,6 +2151,12 @@ const he: Dict = {
     actionSellMembership: "מכור מנוי",
     actionRecordPayment: "רשום תשלום",
     actionCheckInMember: "כניסה",
+    latestCheckIns: "כניסות אחרונות",
+    noRecentCheckIns: "עדיין לא נרשמו כניסות היום.",
+    expiringMemberships: "מנויים שעומדים לפוג",
+    noExpiringMemberships: "אין מנויים שפגים בתוך 7 הימים הקרובים.",
+    branchesAtGlance: "מבט מהיר על הסניפים",
+    branchesAtGlanceHelper: "חברים פעילים וכניסות היום לכל סניף.",
   },
   members: {
     title: "חברים",
@@ -2145,6 +2235,9 @@ const he: Dict = {
     rfidTagLabel: "תג RFID",
     heightStat: "גובה",
     weightStat: "משקל",
+    searchPlaceholder: "חיפוש לפי שם, טלפון או מספר…",
+    filterAllPlans: "כל המנויים",
+    showingResults: "מציג {from}–{to} מתוך {total}",
   },
   plans: {
     title: "תוכניות מנוי",
@@ -2155,6 +2248,7 @@ const he: Dict = {
     planType: "סוג תוכנית",
     planDetails: "פרטי תוכנית",
     durationBased: "מבוסס משך",
+    mostSubscribed: "המנוי הפופולרי ביותר",
     sessionBased: "מבוסס מפגשים",
     duration: "משך",
     sessionCount: "מספר מפגשים",
@@ -2340,6 +2434,9 @@ const he: Dict = {
     newEmployee: "עובד חדש",
     newStaffEmployee: "עובד צוות חדש",
     noEmployees: "לא נמצאו עובדים.",
+    filterAllBranches: "כל הסניפים",
+    filterAllPositions: "כל התפקידים",
+    searchPlaceholder: "חיפוש עובדים…",
     createEmployee: "צור עובד",
     employeeNumber: "מספר עובד",
     fullName: "שם מלא",
@@ -2584,6 +2681,13 @@ const he: Dict = {
     listDescription: "{count} תוכניות אימון ב-{tenant}.",
     newProgram: "תוכנית חדשה",
     noPrograms: "אין עדיין תוכניות אימון.",
+    todaysSessions: "השיעורים של היום",
+    todaysSessionsHelper: "שיעורים מתוזמנים להיום בכל התוכניות.",
+    noSessionsToday: "אין שיעורים מתוזמנים היום.",
+    statusInProgress: "מתקיים כעת",
+    statusUpcoming: "בקרוב",
+    statusCompleted: "הסתיים",
+    statusLowBookings: "מעט הרשמות",
     programName: "שם התוכנית",
     description: "תיאור",
     color: "צבע",

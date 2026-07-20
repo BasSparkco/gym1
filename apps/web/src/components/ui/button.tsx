@@ -6,17 +6,17 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "dark
 export type ButtonSize = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 cursor-pointer";
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-semibold transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 cursor-pointer";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand text-white shadow-[0_8px_20px_-6px_rgba(31,111,95,0.55)] hover:bg-brand-strong hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-8px_rgba(31,111,95,0.6)] active:translate-y-0 active:shadow-[0_6px_14px_-6px_rgba(31,111,95,0.5)]",
+    "bg-accent text-[#0C2B24] shadow-[0_8px_20px_-6px_rgba(124,175,35,0.5)] hover:bg-accent-strong hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-8px_rgba(124,175,35,0.55)] active:translate-y-0 active:shadow-[0_6px_14px_-6px_rgba(124,175,35,0.45)]",
   secondary:
-    "border border-line bg-white hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-[0_10px_24px_-10px_rgba(86,57,28,0.25)] active:translate-y-0",
+    "border border-line bg-surface hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-[0_10px_24px_-10px_rgba(var(--shadow-tint),0.3)] active:translate-y-0",
   ghost:
     "text-foreground/70 hover:bg-black/[0.04] hover:text-foreground",
   danger:
-    "border border-danger/25 bg-danger/[0.06] text-danger hover:-translate-y-0.5 hover:bg-danger/10 hover:shadow-[0_10px_24px_-10px_rgba(166,61,64,0.3)] active:translate-y-0",
+    "border border-danger/25 bg-danger/[0.06] text-danger hover:-translate-y-0.5 hover:bg-danger/10 hover:shadow-[0_10px_24px_-10px_rgba(178,59,62,0.3)] active:translate-y-0",
   dark:
     "bg-white text-brand-strong shadow-sm hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
 };

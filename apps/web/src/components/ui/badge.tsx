@@ -13,13 +13,13 @@ export type BadgeTone =
 
 const tones: Record<BadgeTone, string> = {
   brand: "bg-brand/10 text-brand",
-  accent: "bg-accent/10 text-accent",
-  success: "bg-green-100 text-green-700",
-  warning: "bg-amber-100 text-amber-700",
-  danger: "bg-red-100 text-red-600",
-  info: "bg-blue-100 text-blue-700",
-  neutral: "bg-gray-100 text-gray-500",
-  outline: "border border-line bg-white text-foreground/60",
+  accent: "bg-accent/20 text-accent-ink",
+  success: "bg-accent/15 text-accent-ink ring-1 ring-inset ring-accent-strong/30",
+  warning: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200",
+  danger: "bg-danger/10 text-danger ring-1 ring-inset ring-danger/20",
+  info: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200",
+  neutral: "bg-surface-muted text-foreground/60",
+  outline: "border border-line bg-surface text-foreground/60",
 };
 
 export function Badge({

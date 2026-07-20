@@ -22,32 +22,36 @@ export function AppShell({ children, user, t, viewingAllBranches, logoUrl }: App
         user={user}
         t={t}
         languageSwitcher={<LanguageSwitcher variant="dark" />}
-        logoUrl={logoUrl}
       />
 
       <div className="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 lg:h-full lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-b border-line bg-brand-strong px-6 py-8 text-white lg:block lg:overflow-y-auto lg:border-b-0 lg:border-r">
+        <aside
+          className="hidden border-b border-line px-6 py-8 text-white shadow-[inset_-1px_0_0_rgba(0,0,0,0.25)] lg:flex lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r"
+          style={{
+            background:
+              "radial-gradient(160% 120% at 0% 0%, rgba(201,242,75,0.07), transparent 55%), radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,0.04), transparent 50%), linear-gradient(180deg, var(--brand-deeper) 0%, var(--brand-strong) 55%, #081a15 100%)",
+          }}
+        >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15 overflow-hidden">
-              {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt="" className="h-full w-full object-contain" />
-              ) : (
-                <Dumbbell className="h-5 w-5 text-white" strokeWidth={2} />
-              )}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 ring-1 ring-accent/25">
+              <Dumbbell className="h-5 w-5 text-accent" strokeWidth={2} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
-                {t.shell.appName}
+              <p className="font-display text-sm font-extrabold tracking-tight">
+                <span className="text-white">Spark</span>
+                <span className="bg-gradient-to-b from-[#FFE066] to-[#F5A623] bg-clip-text text-transparent">
+                  Gym
+                </span>
+                <span className="ml-1.5 font-semibold text-white/70">ERP</span>
               </p>
             </div>
           </div>
 
           <div className="mt-6 space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="font-display text-2xl font-bold tracking-tight">
               {t.shell.appTitle}
             </h1>
-            <p className="max-w-xs text-sm leading-6 text-white/70">
+            <p className="max-w-xs text-sm leading-6 text-white/60">
               {t.shell.appDescription}
             </p>
           </div>
@@ -56,14 +60,23 @@ export function AppShell({ children, user, t, viewingAllBranches, logoUrl }: App
         </aside>
 
         <div className="flex min-h-screen flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
-          <header className="sticky top-0 z-20 hidden shrink-0 border-b border-line bg-surface/80 px-6 py-4 backdrop-blur-md lg:block">
+          <header className="sticky top-0 z-20 hidden shrink-0 border-b border-line bg-surface/85 px-6 py-4 backdrop-blur-md lg:block">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand">
-                  {t.shell.pilotBranchContext}
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <h2 className="text-2xl font-semibold tracking-tight">
+              <div className="flex items-center gap-4">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoUrl}
+                    alt=""
+                    className="h-16 w-16 shrink-0 rounded-2xl bg-white object-contain ring-1 ring-line"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand/10 ring-1 ring-line">
+                    <Dumbbell className="h-7 w-7 text-brand" strokeWidth={2} />
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-2xl font-bold tracking-tight">
                     {user.branch.name}
                   </h2>
                   {viewingAllBranches && (
@@ -72,7 +85,6 @@ export function AppShell({ children, user, t, viewingAllBranches, logoUrl }: App
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-sm text-foreground/60">{user.tenant.name}</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 text-sm">

@@ -10,9 +10,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { UserPlus, Users } from "lucide-react";
+import { UserPlus, Users, Filter } from "lucide-react";
 
-export default async function EmployeesPage() {
+type Props = { searchParams: Promise<{ q?: string; branch?: string; job?: string }> };
+
+export default async function EmployeesPage({ searchParams }: Props) {
   const session = await requireSession();
   const t = await getT();
 
@@ -20,22 +22,86 @@ export default async function EmployeesPage() {
     redirect("/app/dashboard");
   }
 
-  const [employees, branches] = await Promise.all([listEmployees(), listBranches()]);
+  const { q, branch: branchFilter, job: jobFilter } = await searchParams;
+  const [allEmployees, branches] = await Promise.all([listEmployees(), listBranches()]);
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
-  const activeCount = employees.filter((e) => e.status === "active").length;
+  const activeCount = allEmployees.filter((e) => e.status === "active").length;
+  const positions = Array.from(
+    new Set(allEmployees.map((e) => e.job).filter((job): job is string => Boolean(job))),
+  ).sort();
+
+  let employees = allEmployees;
+  if (q) {
+    const lq = q.toLowerCase();
+    employees = employees.filter(
+      (e) => e.fullName.toLowerCase().includes(lq) || e.employeeNumber.toLowerCase().includes(lq),
+    );
+  }
+  if (branchFilter) {
+    employees = employees.filter((e) => e.branchId === branchFilter);
+  }
+  if (jobFilter) {
+    employees = employees.filter((e) => e.job === jobFilter);
+  }
 
   return (
     <div className="grid gap-6">
       <PageHeader
         eyebrow={t.employees.title}
         title={t.employees.title}
-        description={formatDict(t.employees.listDescription, { active: activeCount, total: employees.length, tenant: session.tenant.name })}
+        description={formatDict(t.employees.listDescription, { active: activeCount, total: allEmployees.length, tenant: session.tenant.name })}
         actions={
           <Button href="/app/employees/new" variant="primary" icon={<UserPlus className="h-4 w-4" strokeWidth={2} />}>
             {t.employees.newEmployee}
           </Button>
         }
       />
+
+      <form className="flex flex-wrap items-end gap-3 rounded-[18px] border border-line bg-surface px-6 py-5">
+        <label className="grid flex-1 gap-1 text-sm" style={{ minWidth: 200 }}>
+          <span className="text-xs font-medium text-foreground/60">{t.employees.searchPlaceholder}</span>
+          <input
+            type="text"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder={t.employees.searchPlaceholder}
+            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm outline-none focus:border-brand"
+          />
+        </label>
+        <label className="grid gap-1 text-sm">
+          <span className="text-xs font-medium text-foreground/60">{t.employees.branch}</span>
+          <select
+            name="branch"
+            defaultValue={branchFilter ?? ""}
+            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm"
+          >
+            <option value="">{t.employees.filterAllBranches}</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm">
+          <span className="text-xs font-medium text-foreground/60">{t.employees.job}</span>
+          <select
+            name="job"
+            defaultValue={jobFilter ?? ""}
+            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm"
+          >
+            <option value="">{t.employees.filterAllPositions}</option>
+            {positions.map((job) => (
+              <option key={job} value={job}>
+                {job}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button type="submit" variant="primary" size="md" icon={<Filter className="h-4 w-4" strokeWidth={2} />}>
+          {t.reports.applyFilter}
+        </Button>
+      </form>
 
       <section className="grid gap-3">
         {employees.length === 0 && (

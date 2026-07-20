@@ -12,7 +12,6 @@ type MobileHeaderProps = {
   user: SessionUser;
   t: Dict;
   languageSwitcher: React.ReactNode;
-  logoUrl?: string | null;
 };
 
 const roleLabelKey: Record<UserRole, keyof Dict["roles"]> = {
@@ -21,26 +20,31 @@ const roleLabelKey: Record<UserRole, keyof Dict["roles"]> = {
   "front-desk": "frontDesk",
 };
 
-export function MobileHeader({ user, t, languageSwitcher, logoUrl }: MobileHeaderProps) {
+export function MobileHeader({ user, t, languageSwitcher }: MobileHeaderProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <div className="lg:hidden">
-      <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-brand-strong px-4 text-white">
+      <header
+        className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-line px-4 text-white"
+        style={{
+          background:
+            "radial-gradient(160% 200% at 0% 0%, rgba(201,242,75,0.08), transparent 60%), linear-gradient(180deg, var(--brand-deeper), var(--brand-strong))",
+        }}
+      >
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15 overflow-hidden">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt="" className="h-full w-full object-contain" />
-            ) : (
-              <Dumbbell className="h-[18px] w-[18px] text-white" strokeWidth={2} />
-            )}
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-white/10 ring-1 ring-accent/25">
+            <Dumbbell className="h-[18px] w-[18px] text-accent" strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
-              {t.shell.appName}
+            <p className="font-display text-xs font-extrabold tracking-tight">
+              <span className="text-white">Spark</span>
+              <span className="bg-gradient-to-b from-[#FFE066] to-[#F5A623] bg-clip-text text-transparent">
+                Gym
+              </span>
+              <span className="ml-1 font-semibold text-white/70">ERP</span>
             </p>
-            <h1 className="truncate text-lg font-semibold tracking-tight">
+            <h1 className="font-display truncate text-lg font-bold tracking-tight">
               {user.branch.name}
             </h1>
           </div>
@@ -83,10 +87,16 @@ export function MobileHeader({ user, t, languageSwitcher, logoUrl }: MobileHeade
             onClick={() => setOpen(false)}
             className="animate-fade-in fixed inset-x-0 bottom-0 top-16 z-30 bg-black/40"
           />
-          <div className="animate-fade-in-up fixed inset-x-0 top-16 z-40 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-line bg-brand-strong px-6 py-6 text-white shadow-xl">
-            <div className="rounded-2xl bg-black/15 px-4 py-3">
+          <div
+            className="animate-fade-in-up fixed inset-x-0 top-16 z-40 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-line px-6 py-6 text-white shadow-xl"
+            style={{
+              background:
+                "radial-gradient(160% 120% at 0% 0%, rgba(201,242,75,0.06), transparent 55%), linear-gradient(180deg, var(--brand-deeper), var(--brand-strong))",
+            }}
+          >
+            <div className="rounded-[10px] bg-black/15 px-4 py-3">
               <p className="truncate text-sm font-semibold">{user.name}</p>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/60">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/60">
                 {t.roles[roleLabelKey[user.role]]}
               </p>
             </div>

@@ -1,4 +1,4 @@
-import { listUsers } from "@/lib/users";
+import { listUsers, listRoles } from "@/lib/users";
 import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
@@ -19,9 +19,13 @@ const roleTone: Record<string, BadgeTone> = {
 export default async function UsersPage() {
   const session = await requireSession();
   const t = await getT();
-  const [users, employees] = await Promise.all([listUsers(), listEmployees()]);
+  const [users, employees, roles] = await Promise.all([listUsers(), listEmployees(), listRoles()]);
   const employeeMap = new Map(employees.map((e) => [e.id, e.fullName]));
   const canCreate = session.role === "owner";
+  const roleCounts = new Map<string, number>();
+  for (const user of users) {
+    roleCounts.set(user.role, (roleCounts.get(user.role) ?? 0) + 1);
+  }
 
   return (
     <div className="grid gap-6">
@@ -37,6 +41,22 @@ export default async function UsersPage() {
           )
         }
       />
+
+      {roles.length > 0 && (
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {roles.map((role, index) => (
+            <Card key={role.id} animate delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}>
+              <Badge tone={roleTone[role.id] ?? "neutral"} className="font-semibold">
+                {role.label}
+              </Badge>
+              <p className="mt-3 text-2xl font-bold tracking-tight font-mono">
+                {roleCounts.get(role.id) ?? 0}
+              </p>
+              <p className="mt-1 text-xs text-foreground/55 line-clamp-2">{role.description}</p>
+            </Card>
+          ))}
+        </section>
+      )}
 
       <section className="grid gap-3">
         {users.length === 0 && (
