@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { BadgeTone } from "@/components/ui/badge";
+import { UserList } from "@/components/users/user-list";
+import type { EmployeeOption } from "@/components/employee-combobox";
 import { UserPlus, ShieldCheck } from "lucide-react";
 
 const roleTone: Record<string, BadgeTone> = {
@@ -20,11 +22,27 @@ export default async function UsersPage() {
   const session = await requireSession();
   const t = await getT();
   const [users, employees, roles] = await Promise.all([listUsers(), listEmployees(), listRoles()]);
-  const employeeMap = new Map(employees.map((e) => [e.id, e.fullName]));
   const canCreate = session.role === "owner";
+  const canEdit = session.role === "owner" || session.role === "manager";
   const roleCounts = new Map<string, number>();
   for (const user of users) {
     roleCounts.set(user.role, (roleCounts.get(user.role) ?? 0) + 1);
+  }
+
+  const employeesById: Record<string, EmployeeOption> = Object.fromEntries(
+    employees.map((e) => [e.id, { id: e.id, fullName: e.fullName, employeeNumber: e.employeeNumber }]),
+  );
+
+  const linkableEmployeesByUser: Record<string, EmployeeOption[]> = {};
+  if (canEdit) {
+    for (const u of users) {
+      const linkedElsewhere = new Set(
+        users.filter((other) => other.id !== u.id && other.employeeId).map((other) => other.employeeId as string),
+      );
+      linkableEmployeesByUser[u.id] = employees
+        .filter((e) => e.status === "active" && (e.id === u.employeeId || !linkedElsewhere.has(e.id)))
+        .map((e) => ({ id: e.id, fullName: e.fullName, employeeNumber: e.employeeNumber }));
+    }
   }
 
   return (
@@ -58,45 +76,19 @@ export default async function UsersPage() {
         </section>
       )}
 
-      <section className="grid gap-3">
-        {users.length === 0 && (
-          <EmptyState icon={<ShieldCheck className="h-5 w-5" strokeWidth={2} />} title={t.users.noUsers} />
-        )}
-        {users.map((user, index) => (
-          <Card
-            key={user.id}
-            hoverable
-            animate
-            delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-semibold tracking-tight">{user.name}</h2>
-                  <Badge tone={roleTone[user.role] ?? "neutral"}>{user.role}</Badge>
-                </div>
-                <p className="mt-1 text-sm text-foreground/55">{user.email}</p>
-                <p className="mt-0.5 text-sm text-foreground/45">
-                  {t.users.homeBranch}: {user.branch.name}
-                </p>
-                <p className="mt-0.5 text-sm text-foreground/45">
-                  {t.users.linkedEmployee}:{" "}
-                  {user.employeeId ? (
-                    employeeMap.get(user.employeeId) ?? "—"
-                  ) : (
-                    <span className="font-medium text-red-600">{t.users.notLinked}</span>
-                  )}
-                </p>
-              </div>
-              {user.id !== session.id && (
-                <Button href={`/app/users/${user.id}`} variant="secondary" size="sm" className="shrink-0">
-                  {t.actions.view}
-                </Button>
-              )}
-            </div>
-          </Card>
-        ))}
-      </section>
+      {users.length === 0 ? (
+        <EmptyState icon={<ShieldCheck className="h-5 w-5" strokeWidth={2} />} title={t.users.noUsers} />
+      ) : (
+        <UserList
+          users={users}
+          employeesById={employeesById}
+          currentUserId={session.id}
+          canEdit={canEdit}
+          linkableEmployeesByUser={linkableEmployeesByUser}
+          roleTone={roleTone}
+          t={t}
+        />
+      )}
 
       <section>
         <Link

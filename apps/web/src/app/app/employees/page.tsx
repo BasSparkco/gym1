@@ -1,15 +1,15 @@
 "use server";
 
-import { listEmployees } from "@/lib/employees";
+import { listEmployees, getCoachProfile, type CoachProfile } from "@/lib/employees";
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { EmployeeList } from "@/components/employees/employee-list";
 import { UserPlus, Users, Filter } from "lucide-react";
 
 type Props = { searchParams: Promise<{ q?: string; branch?: string; job?: string }> };
@@ -23,8 +23,9 @@ export default async function EmployeesPage({ searchParams }: Props) {
   }
 
   const { q, branch: branchFilter, job: jobFilter } = await searchParams;
-  const [allEmployees, branches] = await Promise.all([listEmployees(), listBranches()]);
-  const branchMap = new Map(branches.map((b) => [b.id, b.name]));
+  const [allEmployees, branches, settings] = await Promise.all([listEmployees(), listBranches(), getSettings()]);
+  const branchMap = Object.fromEntries(branches.map((b) => [b.id, b.name]));
+  const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
   const activeCount = allEmployees.filter((e) => e.status === "active").length;
   const positions = Array.from(
     new Set(allEmployees.map((e) => e.job).filter((job): job is string => Boolean(job))),
@@ -43,6 +44,11 @@ export default async function EmployeesPage({ searchParams }: Props) {
   if (jobFilter) {
     employees = employees.filter((e) => e.job === jobFilter);
   }
+
+  const coachProfiles = await Promise.all(employees.map((e) => getCoachProfile(e.id)));
+  const coachProfilesByEmployee: Record<string, CoachProfile | null> = Object.fromEntries(
+    employees.map((e, i) => [e.id, coachProfiles[i]]),
+  );
 
   return (
     <div className="grid gap-6">
@@ -103,42 +109,18 @@ export default async function EmployeesPage({ searchParams }: Props) {
         </Button>
       </form>
 
-      <section className="grid gap-3">
-        {employees.length === 0 && (
-          <EmptyState icon={<Users className="h-5 w-5" strokeWidth={2} />} title={t.employees.noEmployees} />
-        )}
-        {employees.map((emp, index) => (
-          <Card
-            key={emp.id}
-            hoverable
-            animate
-            delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-semibold tracking-tight">{emp.fullName}</h2>
-                  <Badge tone={emp.status === "active" ? "success" : "neutral"}>
-                    {emp.status === "active" ? t.employees.active : t.employees.inactive}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-sm text-foreground/55 font-mono">{emp.employeeNumber}</p>
-                <p className="mt-0.5 text-sm text-foreground/45">
-                  {t.employees.branch}: {branchMap.get(emp.branchId) ?? emp.branchId}
-                </p>
-                {emp.user && (
-                  <p className="mt-0.5 text-sm text-foreground/45">
-                    {t.users.username}: <span className="font-mono">{emp.user.username}</span>
-                  </p>
-                )}
-              </div>
-              <Button href={`/app/employees/${emp.id}`} variant="secondary" size="sm" className="shrink-0">
-                {t.actions.view}
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </section>
+      {employees.length === 0 ? (
+        <EmptyState icon={<Users className="h-5 w-5" strokeWidth={2} />} title={t.employees.noEmployees} />
+      ) : (
+        <EmployeeList
+          employees={employees}
+          branches={branches}
+          branchMap={branchMap}
+          coachProfilesByEmployee={coachProfilesByEmployee}
+          dateFormat={dateFormat}
+          t={t}
+        />
+      )}
     </div>
   );
 }

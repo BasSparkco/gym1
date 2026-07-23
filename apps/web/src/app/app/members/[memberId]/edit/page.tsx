@@ -81,11 +81,18 @@ export default async function EditMemberPage({ params }: Props) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand mb-4">{t.members.basicInfo}</p>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-1.5 sm:col-span-2">
-                <label htmlFor="fullName" className="text-sm font-medium">
-                  {t.members.fullName} <span className="text-red-500">*</span>
-                </label>
-                <input id="fullName" name="fullName" required defaultValue={member.fullName} className={inputClass} />
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <label htmlFor="fullName" className="text-sm font-medium">
+                    {t.members.fullName} <span className="text-red-500">*</span>
+                  </label>
+                  <input id="fullName" name="fullName" required defaultValue={member.fullName} className={inputClass} />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <label htmlFor="address" className="text-sm font-medium">{t.members.address}</label>
+                  <input id="address" name="address" defaultValue={member.address} placeholder="e.g. Al-Irsal St, Ramallah" className={inputClass} />
+                </div>
               </div>
 
               <div className="grid gap-1.5">
@@ -124,11 +131,6 @@ export default async function EditMemberPage({ params }: Props) {
                 </p>
               </div>
 
-              <div className="grid gap-1.5 sm:col-span-2">
-                <label htmlFor="address" className="text-sm font-medium">{t.members.address}</label>
-                <input id="address" name="address" defaultValue={member.address} placeholder="e.g. Al-Irsal St, Ramallah" className={inputClass} />
-              </div>
-
               <div className="grid gap-1.5">
                 <label htmlFor="height" className="text-sm font-medium">{t.members.height}</label>
                 <input
@@ -157,28 +159,30 @@ export default async function EditMemberPage({ params }: Props) {
                 />
               </div>
 
-              <div className="grid gap-1.5">
-                <label htmlFor="homeBranchId" className="text-sm font-medium">{t.members.homeBranch}</label>
-                <select id="homeBranchId" name="homeBranchId" defaultValue={member.homeBranchId} className={inputClass}>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <label htmlFor="homeBranchId" className="text-sm font-medium">{t.members.homeBranch}</label>
+                  <select id="homeBranchId" name="homeBranchId" defaultValue={member.homeBranchId} className={inputClass}>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="grid gap-1.5 sm:col-span-2">
-                <label htmlFor="registeredEmployeeId" className="text-sm font-medium">{t.members.registeredEmployee}</label>
-                <select
-                  id="registeredEmployeeId"
-                  name="registeredEmployeeId"
-                  defaultValue={member.registeredEmployeeId ?? ""}
-                  className={inputClass}
-                >
-                  <option value="">—</option>
-                  {employees.map((e) => (
-                    <option key={e.id} value={e.id}>{e.fullName} ({e.employeeNumber})</option>
-                  ))}
-                </select>
+                <div className="grid gap-1.5">
+                  <label htmlFor="registeredEmployeeId" className="text-sm font-medium">{t.members.registeredEmployee}</label>
+                  <select
+                    id="registeredEmployeeId"
+                    name="registeredEmployeeId"
+                    defaultValue={member.registeredEmployeeId ?? ""}
+                    className={inputClass}
+                  >
+                    <option value="">—</option>
+                    {employees.map((e) => (
+                      <option key={e.id} value={e.id}>{e.fullName} ({e.employeeNumber})</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>

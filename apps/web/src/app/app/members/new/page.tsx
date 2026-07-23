@@ -75,11 +75,18 @@ export default async function NewMemberPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand mb-4">{t.members.basicInfo}</p>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-1.5 sm:col-span-2">
-                <label htmlFor="fullName" className="text-sm font-medium">
-                  {t.members.fullName} <span className="text-red-500">*</span>
-                </label>
-                <input id="fullName" name="fullName" required placeholder="e.g. Lina Ahmad" className={inputClass} />
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <label htmlFor="fullName" className="text-sm font-medium">
+                    {t.members.fullName} <span className="text-red-500">*</span>
+                  </label>
+                  <input id="fullName" name="fullName" required placeholder="e.g. Lina Ahmad" className={inputClass} />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <label htmlFor="address" className="text-sm font-medium">{t.members.address}</label>
+                  <input id="address" name="address" placeholder="e.g. Al-Irsal St, Ramallah" className={inputClass} />
+                </div>
               </div>
 
               <div className="grid gap-1.5">
@@ -111,11 +118,6 @@ export default async function NewMemberPage() {
                 <DateInput id="dateOfBirth" name="dateOfBirth" dateFormat={dateFormat} />
               </div>
 
-              <div className="grid gap-1.5 sm:col-span-2">
-                <label htmlFor="address" className="text-sm font-medium">{t.members.address}</label>
-                <input id="address" name="address" placeholder="e.g. Al-Irsal St, Ramallah" className={inputClass} />
-              </div>
-
               <div className="grid gap-1.5">
                 <label htmlFor="height" className="text-sm font-medium">{t.members.height}</label>
                 <input id="height" name="height" type="number" min="50" max="250" placeholder="e.g. 175" className={inputClass} />
@@ -126,28 +128,30 @@ export default async function NewMemberPage() {
                 <input id="weight" name="weight" type="number" min="20" max="300" placeholder="e.g. 75" className={inputClass} />
               </div>
 
-              <div className="grid gap-1.5">
-                <label htmlFor="homeBranchId" className="text-sm font-medium">{t.members.homeBranch}</label>
-                <select id="homeBranchId" name="homeBranchId" className={inputClass}>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <label htmlFor="homeBranchId" className="text-sm font-medium">{t.members.homeBranch}</label>
+                  <select id="homeBranchId" name="homeBranchId" className={inputClass}>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="grid gap-1.5 sm:col-span-2">
-                <label htmlFor="registeredEmployeeId" className="text-sm font-medium">{t.members.registeredEmployee}</label>
-                <select
-                  id="registeredEmployeeId"
-                  name="registeredEmployeeId"
-                  defaultValue={session.employeeId ?? ""}
-                  className={inputClass}
-                >
-                  <option value="">—</option>
-                  {employees.map((e) => (
-                    <option key={e.id} value={e.id}>{e.fullName} ({e.employeeNumber})</option>
-                  ))}
-                </select>
+                <div className="grid gap-1.5">
+                  <label htmlFor="registeredEmployeeId" className="text-sm font-medium">{t.members.registeredEmployee}</label>
+                  <select
+                    id="registeredEmployeeId"
+                    name="registeredEmployeeId"
+                    defaultValue={session.employeeId ?? ""}
+                    className={inputClass}
+                  >
+                    <option value="">—</option>
+                    {employees.map((e) => (
+                      <option key={e.id} value={e.id}>{e.fullName} ({e.employeeNumber})</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>

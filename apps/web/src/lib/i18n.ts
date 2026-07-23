@@ -138,6 +138,7 @@ export type Dict = {
     takePhoto: string;
     changePhoto: string;
     homeBranch: string;
+    debt: string;
     emergencyContact: string;
     medicalNotes: string;
     memberNumber: string;
@@ -822,6 +823,7 @@ const en: Dict = {
     takePhoto: "Take photo",
     changePhoto: "Change photo",
     homeBranch: "Home branch",
+    debt: "Debt",
     emergencyContact: "Emergency contact",
     medicalNotes: "Medical notes",
     memberNumber: "Member number",
@@ -1506,6 +1508,7 @@ const ar: Dict = {
     takePhoto: "التقاط صورة",
     changePhoto: "تغيير الصورة",
     homeBranch: "الفرع الرئيسي",
+    debt: "الدين",
     emergencyContact: "جهة الاتصال في الطوارئ",
     medicalNotes: "ملاحظات طبية",
     memberNumber: "رقم العضو",
@@ -2190,6 +2193,7 @@ const he: Dict = {
     takePhoto: "צלם תמונה",
     changePhoto: "שנה תמונה",
     homeBranch: "סניף בית",
+    debt: "חוב",
     emergencyContact: "איש קשר לחירום",
     medicalNotes: "הערות רפואיות",
     memberNumber: "מספר חבר",

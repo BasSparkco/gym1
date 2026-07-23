@@ -1,18 +1,21 @@
 import { listMembers, getMemberPhotoUrl } from "@/lib/members";
 import { listAllMemberships } from "@/lib/memberships";
+import { listPaymentsForMember } from "@/lib/payments";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { listBranches } from "@/lib/branches";
+import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDate } from "@/lib/date-format";
+import { computeAge, computeBmi, initials } from "@/components/members/member-profile-shared";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import Link from "next/link";
+import { MembersTableBody, type MemberRow } from "@/components/members/members-table-body";
 import type { BadgeTone } from "@/components/ui/badge";
 import { UserPlus, Users, UserCheck, CalendarClock, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -42,15 +45,6 @@ const membershipPriority: Record<string, number> = {
   cancelled: 1,
 };
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
-}
-
 export default async function MembersPage({
   searchParams,
 }: {
@@ -60,11 +54,12 @@ export default async function MembersPage({
   const t = await getT();
   const { q, ms, branch: branchFilter, plan: planFilter, page: pageParam } = await searchParams;
 
-  const [allMembers, allMemberships, allPlans, branches, settings] = await Promise.all([
+  const [allMembers, allMemberships, allPlans, branches, employees, settings] = await Promise.all([
     listMembers(),
     listAllMemberships(),
     listMembershipPlans(),
     listBranches(),
+    listEmployees(),
     getSettings(),
   ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
@@ -152,6 +147,70 @@ export default async function MembersPage({
   const currentPage = Math.min(Math.max(1, Number(pageParam) || 1), totalPages);
   const startIdx = (currentPage - 1) * PAGE_SIZE;
   const pageMembers = members.slice(startIdx, startIdx + PAGE_SIZE);
+
+  const pagePayments = await Promise.all(pageMembers.map((m) => listPaymentsForMember(m.id)));
+
+  const rows: MemberRow[] = pageMembers.map((member, i) => {
+    const primaryMs = membershipMap.get(member.id);
+    const plan = primaryMs ? planMap.get(primaryMs.planId) : undefined;
+    const homeBranch = branches.find((b) => b.id === member.homeBranchId);
+    const registeredEmployee = employees.find((e) => e.id === member.registeredEmployeeId);
+    const memberMemberships = allMemberships
+      .filter((ms) => ms.memberId === member.id)
+      .slice()
+      .sort((a, b) => b.startDate.localeCompare(a.startDate))
+      .map((ms) => ({
+        id: ms.id,
+        planName: planMap.get(ms.planId)?.name ?? ms.planId,
+        startDate: ms.startDate,
+        endDate: ms.endDate,
+        status: ms.status,
+        finalPrice: ms.finalPrice,
+      }));
+
+    const statusTone: BadgeTone = primaryMs
+      ? (membershipTone[primaryMs.status] ?? "neutral")
+      : member.status === "active"
+        ? "success"
+        : "neutral";
+    const statusLabelText = primaryMs
+      ? (t.status[primaryMs.status as keyof typeof t.status] ?? primaryMs.status)
+      : member.status === "active"
+        ? t.status.active
+        : t.status.inactive;
+    const isExpired = primaryMs?.status === "expired";
+    const isExpiringSoon =
+      primaryMs?.status === "active" &&
+      primaryMs.endDate >= todayStr &&
+      primaryMs.endDate <= thirtyDaysStr;
+    const expiryColorClass = isExpired ? "text-danger" : isExpiringSoon ? "text-amber-600" : "text-foreground/70";
+
+    return {
+      member,
+      avatar: initials(member.fullName),
+      photoUrl: getMemberPhotoUrl(member.pictureUrl),
+      planBadge: plan?.name,
+      branchName: branchMap.get(member.homeBranchId) ?? "—",
+      expiresText: primaryMs ? formatDate(primaryMs.endDate, dateFormat) : "—",
+      expiryColorClass,
+      statusTone,
+      statusLabelText,
+      currencySymbol: getCurrencySymbol(homeBranch?.operatingCurrencyCode),
+      registeredEmployeeName: registeredEmployee?.fullName,
+      age: computeAge(member.dateOfBirth),
+      bmi: computeBmi(member.height, member.weight),
+      memberships: memberMemberships,
+      payments: pagePayments[i].map((p) => ({
+        id: p.id,
+        amount: p.amount,
+        paymentDate: p.paymentDate,
+        status: p.status,
+        paymentMethod: p.paymentMethod,
+      })),
+      hasActiveMembership: memberMemberships.some((ms) => ms.status === "active"),
+      hasFrozenMembership: memberMemberships.some((ms) => ms.status === "frozen"),
+    };
+  });
 
   function pageUrl(targetPage: number) {
     const params = new URLSearchParams();
@@ -288,90 +347,11 @@ export default async function MembersPage({
                   <th className="pb-3 pe-4 text-start">{t.members.homeBranch}</th>
                   <th className="pb-3 pe-4 text-start">{t.reports.expiresCol}</th>
                   <th className="pb-3 pe-4 text-start">{t.reports.statusCol}</th>
+                  <th className="pb-3 pe-4 text-start">{t.members.debt}</th>
                   <th className="pb-3 text-end">{t.actions.details}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
-                {pageMembers.map((member) => {
-                  const primaryMs = membershipMap.get(member.id);
-                  const plan = primaryMs ? planMap.get(primaryMs.planId) : undefined;
-                  const avatar = initials(member.fullName);
-                  const photoUrl = getMemberPhotoUrl(member.pictureUrl);
-                  const statusTone: BadgeTone = primaryMs
-                    ? (membershipTone[primaryMs.status] ?? "neutral")
-                    : member.status === "active"
-                      ? "success"
-                      : "neutral";
-                  const statusLabel = primaryMs
-                    ? (t.status[primaryMs.status as keyof typeof t.status] ?? primaryMs.status)
-                    : member.status === "active"
-                      ? t.status.active
-                      : t.status.inactive;
-                  const isExpired = primaryMs?.status === "expired";
-                  const isExpiringSoon =
-                    primaryMs?.status === "active" &&
-                    primaryMs.endDate >= todayStr &&
-                    primaryMs.endDate <= thirtyDaysStr;
-                  const expiryColor = isExpired
-                    ? "text-danger"
-                    : isExpiringSoon
-                      ? "text-amber-600"
-                      : "text-foreground/70";
-
-                  return (
-                    <tr key={member.id} className="transition-colors hover:bg-black/[0.02]">
-                      <td className="py-3 pe-4 text-start">
-                        <Link href={`/app/members/${member.id}`} className="flex items-center gap-3">
-                          {photoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={photoUrl}
-                              alt=""
-                              className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-brand/10"
-                            />
-                          ) : (
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand/20 to-brand/5 text-xs font-semibold text-brand ring-1 ring-brand/10">
-                              {avatar}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold tracking-tight hover:text-brand hover:underline">
-                              {member.fullName}
-                            </p>
-                            <p className="font-mono text-xs text-foreground/50">{member.memberNumber}</p>
-                          </div>
-                        </Link>
-                      </td>
-                      <td className="py-3 pe-4 text-start">
-                        {plan ? (
-                          <Badge tone="brand">{plan.name}</Badge>
-                        ) : (
-                          <span className="text-xs text-foreground/40">{t.members.noMembershipsYet}</span>
-                        )}
-                      </td>
-                      <td className="py-3 pe-4 text-start text-foreground/70">
-                        {branchMap.get(member.homeBranchId) ?? "—"}
-                      </td>
-                      <td className={`py-3 pe-4 text-start font-mono text-xs ${expiryColor}`}>
-                        {primaryMs ? formatDate(primaryMs.endDate, dateFormat) : "—"}
-                      </td>
-                      <td className="py-3 pe-4 text-start">
-                        <Badge tone={statusTone}>{statusLabel}</Badge>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex justify-end gap-2">
-                          <Button href={`/app/members/${member.id}`} variant="secondary" size="sm">
-                            {t.members.profile}
-                          </Button>
-                          <Button href={`/app/members/${member.id}/edit`} variant="secondary" size="sm">
-                            {t.actions.edit}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
+              <MembersTableBody rows={rows} branches={branches} employees={employees} dateFormat={dateFormat} t={t} />
             </table>
           </div>
 
