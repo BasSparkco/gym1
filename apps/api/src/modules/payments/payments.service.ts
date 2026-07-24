@@ -6,6 +6,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { toNumber } from '../../common/decimal';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DebtService } from '../debt/debt.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Payment, PaymentMethod, PaymentStatus } from '../../generated/prisma/client';
 
@@ -24,6 +25,7 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly debtService: DebtService,
   ) {}
 
   async listPaymentsForMember(tenantId: string, memberId: string) {
@@ -129,6 +131,8 @@ export class PaymentsService {
         },
       );
     }
+
+    await this.debtService.recompute(payment.memberId);
 
     return this.serialize(payment);
   }

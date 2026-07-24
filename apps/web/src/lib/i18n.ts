@@ -14,6 +14,7 @@ export type Dict = {
     usersRoles: string;
     employees: string;
     membershipPlans: string;
+    lockers: string;
     members: string;
     checkIn: string;
     visits: string;
@@ -113,10 +114,13 @@ export type Dict = {
     profile: string;
     memberships: string;
     payments: string;
+    lockers: string;
     quickActions: string;
     editDetails: string;
     recordPayment: string;
     sellMembership: string;
+    sellLocker: string;
+    noLockersYet: string;
     renewMembership: string;
     freezeMembership: string;
     reactivateMembership: string;
@@ -271,6 +275,48 @@ export type Dict = {
     sellMembershipFirst: string;
     noPayments: string;
     statusLabel: string;
+    currentDebt: string;
+  };
+  lockers: {
+    title: string;
+    listDescription: string;
+    newLocker: string;
+    editLocker: string;
+    lockerNumber: string;
+    size: string;
+    sizeNone: string;
+    sizeSmall: string;
+    sizeMedium: string;
+    sizeLarge: string;
+    monthlyPrice: string;
+    statusLabel: string;
+    statusAvailable: string;
+    statusOccupied: string;
+    statusMaintenance: string;
+    quantity: string;
+    quantityHelp: string;
+    createLocker: string;
+    saveChanges: string;
+    noLockers: string;
+    allLockers: string;
+    details: string;
+    branch: string;
+    delete: string;
+    deleteConfirm: string;
+    sell: string;
+    sellDescription: string;
+    selectLocker: string;
+    noLockersAvailable: string;
+    createLockerFirst: string;
+    activeRentalExists: string;
+    startDate: string;
+    endDate: string;
+    finalPrice: string;
+    activateRental: string;
+    cancelRental: string;
+    rentalHistory: string;
+    noRentalsYet: string;
+    rentedBy: string;
   };
   checkIn: {
     title: string;
@@ -681,14 +727,42 @@ export type Dict = {
     certifications: string;
     saveCoachProfile: string;
     notACoach: string;
-    enrolledMembersTitle: string;
-    enrolledMembersHint: string;
-    searchMembersPlaceholder: string;
-    noMembersFound: string;
-    noMembersEnrolled: string;
-    membersSelectedCount: string;
-    showSelectedOnly: string;
-    saveMembers: string;
+    price: string;
+    startDate: string;
+    endDate: string;
+    scheduleTitle: string;
+    scheduleHint: string;
+    dayOfWeek: string;
+    addSlot: string;
+    removeSlot: string;
+    saveSchedule: string;
+    generateSessions: string;
+    daySunday: string;
+    dayMonday: string;
+    dayTuesday: string;
+    dayWednesday: string;
+    dayThursday: string;
+    dayFriday: string;
+    daySaturday: string;
+    rosterTitle: string;
+    rosterHint: string;
+    addStudent: string;
+    noStudentsRegistered: string;
+    unregisterStudent: string;
+    registerForCourse: string;
+    selectCourse: string;
+    noCoursesAvailable: string;
+    coursesTitle: string;
+    noCoursesYet: string;
+    attendanceReportTitle: string;
+    attendanceReportHint: string;
+    viewReport: string;
+    present: string;
+    absent: string;
+    totalLessons: string;
+    noLessonsYet: string;
+    markPresent: string;
+    markAbsent: string;
   };
 };
 
@@ -699,13 +773,14 @@ const en: Dict = {
     usersRoles: "Users & Roles",
     employees: "Employees",
     membershipPlans: "Membership Plans",
+    lockers: "Lockers",
     members: "Members",
     checkIn: "Check-In",
     visits: "Visits",
     notifications: "Notifications",
     reports: "Reports",
     settings: "Settings",
-    classes: "Classes",
+    classes: "Courses",
     groupOverview: "Overview",
     groupPeople: "People",
     groupOperations: "Operations",
@@ -798,10 +873,13 @@ const en: Dict = {
     profile: "Profile",
     memberships: "Memberships",
     payments: "Payments",
+    lockers: "Lockers",
     quickActions: "Quick actions",
     editDetails: "Edit member details",
     recordPayment: "Record payment",
     sellMembership: "Sell membership",
+    sellLocker: "Sell locker",
+    noLockersYet: "No locker rentals yet.",
     renewMembership: "Renew membership",
     freezeMembership: "Freeze membership",
     reactivateMembership: "Re-activate membership",
@@ -956,6 +1034,48 @@ const en: Dict = {
     sellMembershipFirst: "Sell a membership first.",
     noPayments: "No payments recorded.",
     statusLabel: "Status",
+    currentDebt: "Current debt",
+  },
+  lockers: {
+    title: "Lockers",
+    listDescription: "{count} locker{plural} in your inventory.",
+    newLocker: "New locker",
+    editLocker: "Edit locker",
+    lockerNumber: "Locker number",
+    size: "Size",
+    sizeNone: "Not specified",
+    sizeSmall: "Small",
+    sizeMedium: "Medium",
+    sizeLarge: "Large",
+    monthlyPrice: "Monthly price",
+    statusLabel: "Status",
+    statusAvailable: "Available",
+    statusOccupied: "Occupied",
+    statusMaintenance: "Maintenance",
+    quantity: "Quantity",
+    quantityHelp: "Create several lockers at once, numbered sequentially from the locker number above.",
+    createLocker: "Create locker",
+    saveChanges: "Save changes",
+    noLockers: "No lockers yet. Add your locker inventory to start renting them out.",
+    allLockers: "All lockers",
+    details: "Details",
+    branch: "Branch",
+    delete: "Delete locker",
+    deleteConfirm: "Delete this locker? This cannot be undone.",
+    sell: "Sell locker",
+    sellDescription: "Assign an available locker to this member and set the rental price.",
+    selectLocker: "Locker",
+    noLockersAvailable: "No available lockers at this branch.",
+    createLockerFirst: "Add one to the locker inventory first.",
+    activeRentalExists: "This member already has an active locker rental.",
+    startDate: "Start date",
+    endDate: "End date",
+    finalPrice: "Rental price",
+    activateRental: "Rent locker",
+    cancelRental: "Cancel rental",
+    rentalHistory: "Rental history",
+    noRentalsYet: "No locker rentals yet.",
+    rentedBy: "Rented by",
   },
   checkIn: {
     title: "Check-In",
@@ -1310,11 +1430,11 @@ const en: Dict = {
     gateDeviceNotConfigured: "No device configured",
   },
   classes: {
-    title: "Training Programs & Classes",
-    programsTitle: "Training Programs",
-    listDescription: "{count} training program{plural} in {tenant}.",
-    newProgram: "New Program",
-    noPrograms: "No training programs yet.",
+    title: "Courses",
+    programsTitle: "Courses",
+    listDescription: "{count} course{plural} in {tenant}.",
+    newProgram: "New Course",
+    noPrograms: "No courses yet.",
     todaysSessions: "Today's sessions",
     todaysSessionsHelper: "Classes scheduled for today across all programs.",
     noSessionsToday: "No sessions scheduled today.",
@@ -1322,16 +1442,19 @@ const en: Dict = {
     statusUpcoming: "Upcoming",
     statusCompleted: "Completed",
     statusLowBookings: "Low bookings",
-    programName: "Program name",
+    programName: "Course name",
     description: "Description",
     color: "Color",
-    maxMembers: "Max members per class",
+    maxMembers: "Max students",
     defaultCoach: "Default coach",
     noCoach: "No coach assigned",
     allBranches: "All branches (global)",
-    createProgram: "Create program",
-    programDetails: "Program details",
-    allPrograms: "All programs",
+    createProgram: "Create course",
+    programDetails: "Course details",
+    allPrograms: "All courses",
+    price: "Price",
+    startDate: "Start date",
+    endDate: "End date",
     sessionsTitle: "Class Sessions",
     newSession: "Schedule a class",
     program: "Program",
@@ -1366,14 +1489,39 @@ const en: Dict = {
     certifications: "Certifications (comma-separated)",
     saveCoachProfile: "Save coach profile",
     notACoach: "This employee has no coach profile yet — add specializations to make them bookable as a coach.",
-    enrolledMembersTitle: "Registered Members",
-    enrolledMembersHint: "Check the members registered in this training program. A member can be registered in more than one program.",
-    searchMembersPlaceholder: "Search members by name or number…",
-    noMembersFound: "No members match your search.",
-    noMembersEnrolled: "No members registered yet.",
-    membersSelectedCount: "{count} member(s) selected",
-    showSelectedOnly: "Show selected only",
-    saveMembers: "Save members",
+    scheduleTitle: "Weekly Schedule",
+    scheduleHint: "Set the days and times this course meets each week, then generate its class sessions for the full course term.",
+    dayOfWeek: "Day of week",
+    addSlot: "Add time slot",
+    removeSlot: "Remove",
+    saveSchedule: "Save schedule",
+    generateSessions: "Generate sessions",
+    daySunday: "Sunday",
+    dayMonday: "Monday",
+    dayTuesday: "Tuesday",
+    dayWednesday: "Wednesday",
+    dayThursday: "Thursday",
+    dayFriday: "Friday",
+    daySaturday: "Saturday",
+    rosterTitle: "Students",
+    rosterHint: "Members registered for this course. Registering charges the course price to the member and books them into every upcoming lesson — no membership required.",
+    addStudent: "Register a student",
+    noStudentsRegistered: "No students registered yet.",
+    unregisterStudent: "Unregister",
+    registerForCourse: "Register for a course",
+    selectCourse: "Select a course",
+    noCoursesAvailable: "No courses available.",
+    coursesTitle: "Courses",
+    noCoursesYet: "Not registered for any courses yet.",
+    attendanceReportTitle: "Attendance report",
+    attendanceReportHint: "Presence and absence for every student across all lessons of this course.",
+    viewReport: "View attendance report",
+    present: "Present",
+    absent: "Absent",
+    totalLessons: "Total lessons",
+    noLessonsYet: "No lessons scheduled yet.",
+    markPresent: "Mark present",
+    markAbsent: "Mark absent",
   },
 };
 
@@ -1384,13 +1532,14 @@ const ar: Dict = {
     usersRoles: "المستخدمون والأدوار",
     employees: "الموظفون",
     membershipPlans: "خطط الاشتراك",
+    lockers: "الخزائن",
     members: "الأعضاء",
     checkIn: "تسجيل الدخول",
     visits: "الزيارات",
     notifications: "الإشعارات",
     reports: "التقارير",
     settings: "الإعدادات",
-    classes: "الحصص",
+    classes: "الدورات",
     groupOverview: "نظرة عامة",
     groupPeople: "الأشخاص",
     groupOperations: "العمليات",
@@ -1483,10 +1632,13 @@ const ar: Dict = {
     profile: "الملف الشخصي",
     memberships: "الاشتراكات",
     payments: "المدفوعات",
+    lockers: "الخزائن",
     quickActions: "إجراءات سريعة",
     editDetails: "تعديل بيانات العضو",
     recordPayment: "تسجيل دفعة",
     sellMembership: "بيع اشتراك",
+    sellLocker: "بيع خزانة",
+    noLockersYet: "لا توجد إيجارات خزائن بعد.",
     renewMembership: "تجديد الاشتراك",
     freezeMembership: "تجميد الاشتراك",
     reactivateMembership: "إعادة تفعيل الاشتراك",
@@ -1641,6 +1793,48 @@ const ar: Dict = {
     sellMembershipFirst: "بيع اشتراك أولاً.",
     noPayments: "لا توجد مدفوعات مسجلة.",
     statusLabel: "الحالة",
+    currentDebt: "الدين الحالي",
+  },
+  lockers: {
+    title: "الخزائن",
+    listDescription: "{count} خزانة في المخزون.",
+    newLocker: "خزانة جديدة",
+    editLocker: "تعديل الخزانة",
+    lockerNumber: "رقم الخزانة",
+    size: "الحجم",
+    sizeNone: "غير محدد",
+    sizeSmall: "صغير",
+    sizeMedium: "متوسط",
+    sizeLarge: "كبير",
+    monthlyPrice: "السعر الشهري",
+    statusLabel: "الحالة",
+    statusAvailable: "متاحة",
+    statusOccupied: "مؤجرة",
+    statusMaintenance: "صيانة",
+    quantity: "الكمية",
+    quantityHelp: "أنشئ عدة خزائن دفعة واحدة، مرقّمة بالتسلسل بدءًا من رقم الخزانة أعلاه.",
+    createLocker: "إنشاء خزانة",
+    saveChanges: "حفظ التغييرات",
+    noLockers: "لا توجد خزائن بعد. أضف مخزون الخزائن لبدء تأجيرها.",
+    allLockers: "جميع الخزائن",
+    details: "التفاصيل",
+    branch: "الفرع",
+    delete: "حذف الخزانة",
+    deleteConfirm: "حذف هذه الخزانة؟ لا يمكن التراجع عن هذا الإجراء.",
+    sell: "بيع خزانة",
+    sellDescription: "خصّص خزانة متاحة لهذا العضو وحدد سعر الإيجار.",
+    selectLocker: "الخزانة",
+    noLockersAvailable: "لا توجد خزائن متاحة في هذا الفرع.",
+    createLockerFirst: "أضف خزانة إلى المخزون أولاً.",
+    activeRentalExists: "لدى هذا العضو بالفعل إيجار خزانة نشط.",
+    startDate: "تاريخ البدء",
+    endDate: "تاريخ الانتهاء",
+    finalPrice: "سعر الإيجار",
+    activateRental: "تأجير الخزانة",
+    cancelRental: "إلغاء الإيجار",
+    rentalHistory: "سجل الإيجار",
+    noRentalsYet: "لا توجد إيجارات خزائن بعد.",
+    rentedBy: "مستأجرة من قبل",
   },
   checkIn: {
     title: "تسجيل الدخول",
@@ -1995,11 +2189,11 @@ const ar: Dict = {
     gateDeviceNotConfigured: "لا يوجد جهاز مضبوط",
   },
   classes: {
-    title: "البرامج التدريبية والحصص",
-    programsTitle: "البرامج التدريبية",
-    listDescription: "{count} برنامج تدريبي في {tenant}.",
-    newProgram: "برنامج جديد",
-    noPrograms: "لا توجد برامج تدريبية بعد.",
+    title: "الدورات",
+    programsTitle: "الدورات",
+    listDescription: "{count} دورة في {tenant}.",
+    newProgram: "دورة جديدة",
+    noPrograms: "لا توجد دورات بعد.",
     todaysSessions: "حصص اليوم",
     todaysSessionsHelper: "الحصص المجدولة اليوم لجميع البرامج.",
     noSessionsToday: "لا توجد حصص مجدولة اليوم.",
@@ -2007,16 +2201,19 @@ const ar: Dict = {
     statusUpcoming: "قادمة",
     statusCompleted: "انتهت",
     statusLowBookings: "حجوزات منخفضة",
-    programName: "اسم البرنامج",
+    programName: "اسم الدورة",
     description: "الوصف",
     color: "اللون",
-    maxMembers: "الحد الأقصى للأعضاء لكل حصة",
+    maxMembers: "الحد الأقصى للطلاب",
     defaultCoach: "المدرب الافتراضي",
     noCoach: "لا يوجد مدرب معيّن",
     allBranches: "جميع الفروع (عام)",
-    createProgram: "إنشاء برنامج",
-    programDetails: "تفاصيل البرنامج",
-    allPrograms: "جميع البرامج",
+    createProgram: "إنشاء دورة",
+    programDetails: "تفاصيل الدورة",
+    allPrograms: "جميع الدورات",
+    price: "السعر",
+    startDate: "تاريخ البدء",
+    endDate: "تاريخ الانتهاء",
     sessionsTitle: "الحصص المجدولة",
     newSession: "جدولة حصة",
     program: "البرنامج",
@@ -2051,14 +2248,39 @@ const ar: Dict = {
     certifications: "الشهادات (مفصولة بفواصل)",
     saveCoachProfile: "حفظ ملف المدرب",
     notACoach: "لا يملك هذا الموظف ملف مدرب بعد — أضف التخصصات لجعله قابلاً للحجز كمدرب.",
-    enrolledMembersTitle: "الأعضاء المسجلون",
-    enrolledMembersHint: "حدد الأعضاء المسجلين في هذا البرنامج التدريبي. يمكن أن يكون العضو مسجلاً في أكثر من برنامج.",
-    searchMembersPlaceholder: "ابحث عن عضو بالاسم أو الرقم…",
-    noMembersFound: "لا يوجد أعضاء مطابقون لبحثك.",
-    noMembersEnrolled: "لا يوجد أعضاء مسجلون بعد.",
-    membersSelectedCount: "تم اختيار {count} عضو",
-    showSelectedOnly: "عرض المحددين فقط",
-    saveMembers: "حفظ الأعضاء",
+    scheduleTitle: "الجدول الأسبوعي",
+    scheduleHint: "حدد الأيام والأوقات التي تُعقد فيها هذه الدورة كل أسبوع، ثم أنشئ حصصها لكامل مدة الدورة.",
+    dayOfWeek: "يوم الأسبوع",
+    addSlot: "إضافة موعد",
+    removeSlot: "إزالة",
+    saveSchedule: "حفظ الجدول",
+    generateSessions: "إنشاء الحصص",
+    daySunday: "الأحد",
+    dayMonday: "الاثنين",
+    dayTuesday: "الثلاثاء",
+    dayWednesday: "الأربعاء",
+    dayThursday: "الخميس",
+    dayFriday: "الجمعة",
+    daySaturday: "السبت",
+    rosterTitle: "الطلاب",
+    rosterHint: "الأعضاء المسجلون في هذه الدورة. يؤدي التسجيل إلى تحميل سعر الدورة على العضو وحجزه في كل حصة قادمة — دون الحاجة إلى عضوية.",
+    addStudent: "تسجيل طالب",
+    noStudentsRegistered: "لا يوجد طلاب مسجلون بعد.",
+    unregisterStudent: "إلغاء التسجيل",
+    registerForCourse: "التسجيل في دورة",
+    selectCourse: "اختر دورة",
+    noCoursesAvailable: "لا توجد دورات متاحة.",
+    coursesTitle: "الدورات",
+    noCoursesYet: "غير مسجل في أي دورة بعد.",
+    attendanceReportTitle: "تقرير الحضور",
+    attendanceReportHint: "حضور وغياب كل طالب عبر جميع حصص هذه الدورة.",
+    viewReport: "عرض تقرير الحضور",
+    present: "حاضر",
+    absent: "غائب",
+    totalLessons: "إجمالي الحصص",
+    noLessonsYet: "لا توجد حصص مجدولة بعد.",
+    markPresent: "تسجيل حضور",
+    markAbsent: "تسجيل غياب",
   },
 };
 
@@ -2069,13 +2291,14 @@ const he: Dict = {
     usersRoles: "משתמשים ותפקידים",
     employees: "עובדים",
     membershipPlans: "תוכניות מנוי",
+    lockers: "לוקרים",
     members: "חברים",
     checkIn: "כניסה",
     visits: "ביקורים",
     notifications: "התראות",
     reports: "דוחות",
     settings: "הגדרות",
-    classes: "שיעורים",
+    classes: "קורסים",
     groupOverview: "סקירה כללית",
     groupPeople: "אנשים",
     groupOperations: "תפעול",
@@ -2168,10 +2391,13 @@ const he: Dict = {
     profile: "פרופיל",
     memberships: "מנויים",
     payments: "תשלומים",
+    lockers: "לוקרים",
     quickActions: "פעולות מהירות",
     editDetails: "ערוך פרטי חבר",
     recordPayment: "רשום תשלום",
     sellMembership: "מכור מנוי",
+    sellLocker: "מכור לוקר",
+    noLockersYet: "עדיין אין השכרות לוקרים.",
     renewMembership: "חדש מנוי",
     freezeMembership: "הקפא מנוי",
     reactivateMembership: "הפעל מחדש מנוי",
@@ -2326,6 +2552,48 @@ const he: Dict = {
     sellMembershipFirst: "מכור מנוי תחילה.",
     noPayments: "לא נרשמו תשלומים.",
     statusLabel: "סטטוס",
+    currentDebt: "חוב נוכחי",
+  },
+  lockers: {
+    title: "לוקרים",
+    listDescription: "{count} לוקרים במלאי.",
+    newLocker: "לוקר חדש",
+    editLocker: "ערוך לוקר",
+    lockerNumber: "מספר לוקר",
+    size: "גודל",
+    sizeNone: "לא צוין",
+    sizeSmall: "קטן",
+    sizeMedium: "בינוני",
+    sizeLarge: "גדול",
+    monthlyPrice: "מחיר חודשי",
+    statusLabel: "סטטוס",
+    statusAvailable: "פנוי",
+    statusOccupied: "תפוס",
+    statusMaintenance: "בתחזוקה",
+    quantity: "כמות",
+    quantityHelp: "צור מספר לוקרים בבת אחת, ממוספרים ברצף החל ממספר הלוקר שלמעלה.",
+    createLocker: "צור לוקר",
+    saveChanges: "שמור שינויים",
+    noLockers: "עדיין אין לוקרים. הוסף את מלאי הלוקרים כדי להתחיל להשכיר אותם.",
+    allLockers: "כל הלוקרים",
+    details: "פרטים",
+    branch: "סניף",
+    delete: "מחק לוקר",
+    deleteConfirm: "למחוק את הלוקר הזה? לא ניתן לבטל פעולה זו.",
+    sell: "מכור לוקר",
+    sellDescription: "שייך לוקר פנוי לחבר זה וקבע את מחיר ההשכרה.",
+    selectLocker: "לוקר",
+    noLockersAvailable: "אין לוקרים פנויים בסניף זה.",
+    createLockerFirst: "הוסף לוקר למלאי תחילה.",
+    activeRentalExists: "לחבר זה כבר יש השכרת לוקר פעילה.",
+    startDate: "תאריך התחלה",
+    endDate: "תאריך סיום",
+    finalPrice: "מחיר השכרה",
+    activateRental: "השכר לוקר",
+    cancelRental: "בטל השכרה",
+    rentalHistory: "היסטוריית השכרות",
+    noRentalsYet: "עדיין אין השכרות לוקרים.",
+    rentedBy: "מושכר על ידי",
   },
   checkIn: {
     title: "כניסה",
@@ -2680,11 +2948,11 @@ const he: Dict = {
     gateDeviceNotConfigured: "אין מכשיר מוגדר",
   },
   classes: {
-    title: "תוכניות אימון ושיעורים",
-    programsTitle: "תוכניות אימון",
-    listDescription: "{count} תוכניות אימון ב-{tenant}.",
-    newProgram: "תוכנית חדשה",
-    noPrograms: "אין עדיין תוכניות אימון.",
+    title: "קורסים",
+    programsTitle: "קורסים",
+    listDescription: "{count} קורסים ב-{tenant}.",
+    newProgram: "קורס חדש",
+    noPrograms: "אין עדיין קורסים.",
     todaysSessions: "השיעורים של היום",
     todaysSessionsHelper: "שיעורים מתוזמנים להיום בכל התוכניות.",
     noSessionsToday: "אין שיעורים מתוזמנים היום.",
@@ -2692,16 +2960,19 @@ const he: Dict = {
     statusUpcoming: "בקרוב",
     statusCompleted: "הסתיים",
     statusLowBookings: "מעט הרשמות",
-    programName: "שם התוכנית",
+    programName: "שם הקורס",
     description: "תיאור",
     color: "צבע",
-    maxMembers: "מספר חברים מרבי לשיעור",
+    maxMembers: "מספר תלמידים מרבי",
     defaultCoach: "מאמן ברירת מחדל",
     noCoach: "לא הוקצה מאמן",
     allBranches: "כל הסניפים (כללי)",
-    createProgram: "צור תוכנית",
-    programDetails: "פרטי התוכנית",
-    allPrograms: "כל התוכניות",
+    createProgram: "צור קורס",
+    programDetails: "פרטי הקורס",
+    allPrograms: "כל הקורסים",
+    price: "מחיר",
+    startDate: "תאריך התחלה",
+    endDate: "תאריך סיום",
     sessionsTitle: "שיעורים מתוזמנים",
     newSession: "תזמן שיעור",
     program: "תוכנית",
@@ -2736,14 +3007,39 @@ const he: Dict = {
     certifications: "הסמכות (מופרדות בפסיקים)",
     saveCoachProfile: "שמור פרופיל מאמן",
     notACoach: "לעובד זה אין עדיין פרופיל מאמן — הוסף התמחויות כדי לאפשר הזמנתו כמאמן.",
-    enrolledMembersTitle: "חברים רשומים",
-    enrolledMembersHint: "סמן את החברים הרשומים לתוכנית אימונים זו. חבר יכול להיות רשום ליותר מתוכנית אחת.",
-    searchMembersPlaceholder: "חיפוש חבר לפי שם או מספר…",
-    noMembersFound: "לא נמצאו חברים התואמים לחיפוש.",
-    noMembersEnrolled: "עדיין לא נרשמו חברים.",
-    membersSelectedCount: "נבחרו {count} חברים",
-    showSelectedOnly: "הצג רק נבחרים",
-    saveMembers: "שמור חברים",
+    scheduleTitle: "לוח זמנים שבועי",
+    scheduleHint: "הגדירו את הימים והשעות שבהם מתקיים הקורס מדי שבוע, ולאחר מכן צרו את השיעורים לכל משך הקורס.",
+    dayOfWeek: "יום בשבוע",
+    addSlot: "הוסף מועד",
+    removeSlot: "הסר",
+    saveSchedule: "שמור לוח זמנים",
+    generateSessions: "צור שיעורים",
+    daySunday: "ראשון",
+    dayMonday: "שני",
+    dayTuesday: "שלישי",
+    dayWednesday: "רביעי",
+    dayThursday: "חמישי",
+    dayFriday: "שישי",
+    daySaturday: "שבת",
+    rosterTitle: "תלמידים",
+    rosterHint: "חברים הרשומים לקורס זה. הרשמה מחייבת את החבר במחיר הקורס ומזמינה אותו לכל שיעור עתידי — ללא צורך במנוי.",
+    addStudent: "רישום תלמיד",
+    noStudentsRegistered: "עדיין לא נרשמו תלמידים.",
+    unregisterStudent: "ביטול הרשמה",
+    registerForCourse: "הרשמה לקורס",
+    selectCourse: "בחר קורס",
+    noCoursesAvailable: "אין קורסים זמינים.",
+    coursesTitle: "קורסים",
+    noCoursesYet: "עדיין לא נרשם לאף קורס.",
+    attendanceReportTitle: "דוח נוכחות",
+    attendanceReportHint: "נוכחות והיעדרות של כל תלמיד בכל שיעורי הקורס.",
+    viewReport: "צפה בדוח נוכחות",
+    present: "נוכח",
+    absent: "נעדר",
+    totalLessons: "סה\"כ שיעורים",
+    noLessonsYet: "עדיין לא נקבעו שיעורים.",
+    markPresent: "סמן נוכח",
+    markAbsent: "סמן נעדר",
   },
 };
 

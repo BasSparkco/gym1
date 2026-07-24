@@ -15,6 +15,57 @@ export type TrainingProgram = {
   active: boolean;
   maxMembers?: number;
   defaultCoachId?: string | null;
+  price: number;
+  startDate: string | null;
+  endDate: string | null;
+};
+
+export type ProgramScheduleSlot = {
+  id: string;
+  programId: string;
+  dayOfWeek: number; // 0 = Sunday .. 6 = Saturday
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+};
+
+export type ProgramEnrollmentStatus = "active" | "cancelled";
+
+export type ProgramEnrollment = {
+  memberId: string;
+  programId: string;
+  enrolledAt: string;
+  finalPrice: number;
+  status: ProgramEnrollmentStatus;
+  member: {
+    id: string;
+    fullName: string;
+    memberNumber: string;
+  };
+};
+
+export type ProgramEnrollmentWithProgram = {
+  memberId: string;
+  programId: string;
+  enrolledAt: string;
+  finalPrice: number;
+  status: ProgramEnrollmentStatus;
+  program: TrainingProgram;
+};
+
+export type AttendanceStatus = "booked" | "waitlisted" | "attended" | "noShow" | "cancelled";
+
+export type AttendanceReport = {
+  program: TrainingProgram;
+  sessions: { id: string; date: string; startTime: string; endTime: string }[];
+  students: {
+    memberId: string;
+    fullName: string;
+    memberNumber: string;
+    finalPrice: number;
+    enrollmentStatus: ProgramEnrollmentStatus;
+    lessons: { sessionId: string; date: string; status: AttendanceStatus | null }[];
+    totals: { totalLessons: number; attended: number; absent: number; pending: number };
+  }[];
 };
 
 async function getCookieHeader() {
@@ -65,6 +116,9 @@ export async function createTrainingProgram(data: {
   color?: string;
   maxMembers?: number;
   defaultCoachId?: string | null;
+  price?: number;
+  startDate?: string | null;
+  endDate?: string | null;
 }): Promise<TrainingProgram> {
   const response = await authedFetch("/training-programs", {
     method: "POST",
@@ -84,6 +138,9 @@ export async function updateTrainingProgram(
     active?: boolean;
     maxMembers?: number;
     defaultCoachId?: string | null;
+    price?: number;
+    startDate?: string | null;
+    endDate?: string | null;
   },
 ): Promise<TrainingProgram> {
   const response = await authedFetch(`/training-programs/${programId}`, {
@@ -92,24 +149,6 @@ export async function updateTrainingProgram(
   });
   const payload = (await response.json()) as { program: TrainingProgram };
   return payload.program;
-}
-
-export async function getEnrolledMemberIds(programId: string): Promise<string[]> {
-  const response = await authedFetch(`/training-programs/${programId}/members`);
-  const payload = (await response.json()) as { memberIds: string[] };
-  return payload.memberIds;
-}
-
-export async function setEnrolledMemberIds(
-  programId: string,
-  memberIds: string[],
-): Promise<string[]> {
-  const response = await authedFetch(`/training-programs/${programId}/members`, {
-    method: "PATCH",
-    body: JSON.stringify({ memberIds }),
-  });
-  const payload = (await response.json()) as { memberIds: string[] };
-  return payload.memberIds;
 }
 
 export async function getEntitledProgramIds(planId: string): Promise<string[] | "all"> {
@@ -128,4 +167,78 @@ export async function setEntitledProgramIds(
   );
   const payload = (await response.json()) as { programIds: string[] | "all" };
   return payload.programIds;
+}
+
+// ── Weekly schedule ──────────────────────────────────────────────────────────
+
+export async function getScheduleSlots(programId: string): Promise<ProgramScheduleSlot[]> {
+  const response = await authedFetch(`/training-programs/${programId}/schedule`);
+  const payload = (await response.json()) as { slots: ProgramScheduleSlot[] };
+  return payload.slots;
+}
+
+export async function setScheduleSlots(
+  programId: string,
+  slots: { dayOfWeek: number; startTime: string; endTime: string }[],
+): Promise<ProgramScheduleSlot[]> {
+  const response = await authedFetch(`/training-programs/${programId}/schedule`, {
+    method: "PATCH",
+    body: JSON.stringify({ slots }),
+  });
+  const payload = (await response.json()) as { slots: ProgramScheduleSlot[] };
+  return payload.slots;
+}
+
+export async function generateProgramSessions(
+  programId: string,
+  branchId?: string,
+): Promise<{ created: unknown[]; skipped: { date: string; reason: string }[] }> {
+  const response = await authedFetch(`/training-programs/${programId}/generate-sessions`, {
+    method: "POST",
+    body: JSON.stringify(branchId ? { branchId } : {}),
+  });
+  return response.json();
+}
+
+// ── Registration (any member, priced independently of membership) ──────────
+
+export async function listEnrollments(programId: string): Promise<ProgramEnrollment[]> {
+  const response = await authedFetch(`/training-programs/${programId}/enrollments`);
+  const payload = (await response.json()) as { enrollments: ProgramEnrollment[] };
+  return payload.enrollments;
+}
+
+export async function listEnrollmentsForMember(
+  memberId: string,
+): Promise<ProgramEnrollmentWithProgram[]> {
+  const response = await authedFetch(`/training-programs/enrollments/member/${memberId}`);
+  const payload = (await response.json()) as { enrollments: ProgramEnrollmentWithProgram[] };
+  return payload.enrollments;
+}
+
+export async function registerMemberForCourse(
+  programId: string,
+  memberId: string,
+): Promise<ProgramEnrollment> {
+  const response = await authedFetch(`/training-programs/${programId}/register`, {
+    method: "POST",
+    body: JSON.stringify({ memberId }),
+  });
+  const payload = (await response.json()) as { enrollment: ProgramEnrollment };
+  return payload.enrollment;
+}
+
+export async function unregisterMemberFromCourse(
+  programId: string,
+  memberId: string,
+): Promise<void> {
+  await authedFetch(`/training-programs/${programId}/unregister`, {
+    method: "POST",
+    body: JSON.stringify({ memberId }),
+  });
+}
+
+export async function getAttendanceReport(programId: string): Promise<AttendanceReport> {
+  const response = await authedFetch(`/training-programs/${programId}/attendance-report`);
+  return response.json();
 }

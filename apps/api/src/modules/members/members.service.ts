@@ -10,8 +10,10 @@ import { localDateString, toDateOnlyString } from '../../common/date';
 import { generateQrSig, makeQrPublicUrl, memberIdToUuid } from '../../common/qr';
 import { normalizePhone } from '../../common/phone';
 import { hashPin } from '../../common/pin-hash';
+import { toNumber } from '../../common/decimal';
 import { findCountryByCode } from '../../data/countries';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
+import { DebtService } from '../debt/debt.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Branch, Member, Sex } from '../../generated/prisma/client';
 
@@ -58,6 +60,7 @@ export class MembersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly basIpSyncService: BasIpSyncService,
+    private readonly debtService: DebtService,
   ) {}
 
   getReportingDate() {
@@ -349,9 +352,10 @@ export class MembersService {
   // pinHash is dropped here too — it must never reach a client response.
   private serializeMember<T extends Member>(
     member: T,
-  ): Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash'> & {
+  ): Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash' | 'debt'> & {
     dateOfBirth: string | null;
     joinDate: string | null;
+    debt: number;
   } {
     const { pinHash, ...rest } = member;
     void pinHash;
@@ -359,10 +363,19 @@ export class MembersService {
       ...rest,
       dateOfBirth: toDateOnlyString(member.dateOfBirth),
       joinDate: toDateOnlyString(member.joinDate),
-    } as Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash'> & {
+      debt: toNumber(member.debt),
+    } as Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash' | 'debt'> & {
       dateOfBirth: string | null;
       joinDate: string | null;
+      debt: number;
     };
+  }
+
+  /** Recomputes on read rather than trusting the cached column — cheap, and
+   * guarantees the figure shown at the point of recording a payment is
+   * never stale even if some edge case caused the cache to drift. */
+  async getMemberDebt(tenantId: string, memberId: string): Promise<number> {
+    return this.debtService.recomputeForTenant(tenantId, memberId);
   }
 
   private normalizeMemberName(fullName: string) {

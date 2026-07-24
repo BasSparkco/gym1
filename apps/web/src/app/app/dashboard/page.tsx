@@ -114,10 +114,17 @@ export default async function DashboardPage() {
 
   const reportingDate = formatDateLong(dashboardSummary.scope.asOfDate, lang);
 
+  const cardBorder: Record<CardId, string> = {
+    "active-memberships": "border-s-4 border-s-accent-strong",
+    "expiring-memberships": "border-s-4 border-s-amber-500",
+    "today-check-ins": "border-s-4 border-s-blue-500",
+    "payments-logged": "border-s-4 border-s-brand-deeper",
+  };
+
   return (
     <div className="grid gap-6">
       {/* Hero */}
-      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(var(--shadow-tint),0.08)]">
+      <section className="animate-fade-in-up rounded-[2rem] border border-line border-s-4 border-s-brand bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(var(--shadow-tint),0.08)]">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.28em] text-brand">
           {session.branch.name}
         </p>
@@ -159,6 +166,7 @@ export default async function DashboardPage() {
               value={card.value}
               helper={cardHelper[id] ?? card.helperText}
               tone={card.tone}
+              className={cardBorder[id]}
               delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
             />
           );
@@ -167,7 +175,7 @@ export default async function DashboardPage() {
 
       {/* Latest check-ins + Memberships expiring soon */}
       <section className="grid gap-6 lg:grid-cols-2">
-        <Card animate delay={2} className="!px-0 !py-0">
+        <Card animate delay={2} className="!px-0 !py-0 border-s-4 border-s-blue-500">
           <div className="flex items-center justify-between gap-3 px-6 pt-6">
             <h2 className="text-lg font-semibold tracking-tight">{t.dashboard.latestCheckIns}</h2>
             <Link
@@ -215,7 +223,7 @@ export default async function DashboardPage() {
           <div className="h-6" />
         </Card>
 
-        <Card animate delay={3} className="!px-0 !py-0">
+        <Card animate delay={3} className="!px-0 !py-0 border-s-4 border-s-amber-500">
           <div className="flex items-center justify-between gap-3 px-6 pt-6">
             <h2 className="text-lg font-semibold tracking-tight">{t.dashboard.expiringMemberships}</h2>
             <Link
@@ -255,7 +263,7 @@ export default async function DashboardPage() {
       {/* Branches at a glance (owners viewing all branches) */}
       {viewingAllBranches && branchGlance.length > 0 && (
         <section>
-          <Card animate delay={4}>
+          <Card animate delay={4} className="border-s-4 border-s-brand">
             <h2 className="text-lg font-semibold tracking-tight">{t.dashboard.branchesAtGlance}</h2>
             <p className="mt-1 text-sm text-foreground/60">{t.dashboard.branchesAtGlanceHelper}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -284,7 +292,7 @@ export default async function DashboardPage() {
 
       {/* Branch overview + Operations guide */}
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <article className="animate-fade-in-up stagger-3 rounded-[2rem] border border-line bg-surface px-6 py-6">
+        <article className="animate-fade-in-up stagger-3 rounded-[2rem] border border-line border-s-4 border-s-muted bg-surface px-6 py-6">
           <h2 className="text-xl font-semibold tracking-tight">{t.dashboard.overviewTitle}</h2>
           <div className="mt-5 grid gap-4">
             <div className="rounded-3xl border border-line bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
@@ -310,7 +318,7 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <article className="animate-fade-in-up stagger-4 relative overflow-hidden rounded-[2rem] border border-line bg-brand-strong px-6 py-6 text-white">
+        <article className="animate-fade-in-up stagger-4 relative overflow-hidden rounded-[2rem] border border-line border-s-4 border-s-accent bg-brand-strong px-6 py-6 text-white">
           <div
             className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl"
             aria-hidden

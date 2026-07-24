@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { randomUUID } from 'node:crypto';
-import { localDateString } from '../../common/date';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ClassBooking, Prisma } from '../../generated/prisma/client';
 
@@ -89,27 +88,14 @@ export class ClassBookingsService {
       throw new BadRequestException('Member is invalid for this tenant.');
     }
 
-    const membership = await this.activeMembershipFor(memberId);
-    if (!membership) {
+    const enrollment = await this.activeEnrollmentFor(
+      memberId,
+      classSession.programId,
+    );
+    if (!enrollment) {
       throw new BadRequestException(
-        'Member has no active membership — booking requires an active membership.',
+        'Member must be registered for this course before booking a class.',
       );
-    }
-
-    if (!membership.plan.allowAllPrograms) {
-      const entitled = await this.prisma.membershipPlanProgram.findUnique({
-        where: {
-          planId_programId: {
-            planId: membership.planId,
-            programId: classSession.programId,
-          },
-        },
-      });
-      if (!entitled) {
-        throw new BadRequestException(
-          "This member's plan does not include this training program.",
-        );
-      }
     }
 
     await this.assertNoOverlap(memberId, classSession, undefined);
@@ -130,13 +116,37 @@ export class ClassBookingsService {
           id: `booking-${randomUUID()}`,
           classSessionId,
           memberId,
-          membershipId: membership.id,
           status,
         },
       });
 
       return this.serialize(booking);
     });
+  }
+
+  async markAttendance(
+    tenantId: string,
+    bookingId: string,
+    status: 'attended' | 'noShow',
+  ) {
+    const booking = await this.prisma.classBooking.findFirst({
+      where: { id: bookingId, classSession: { tenantId } },
+    });
+    if (!booking) {
+      throw new NotFoundException('Booking not found.');
+    }
+    if (booking.status === 'cancelled') {
+      throw new BadRequestException(
+        'Cannot mark attendance on a cancelled booking.',
+      );
+    }
+
+    const updated = await this.prisma.classBooking.update({
+      where: { id: bookingId },
+      data: { status },
+    });
+
+    return this.serialize(updated);
   }
 
   async cancelBooking(tenantId: string, bookingId: string) {
@@ -166,10 +176,10 @@ export class ClassBookingsService {
     });
   }
 
-  /** Promotes the oldest waitlisted booking to `booked`, re-validating
-   * membership status and plan entitlement at promotion time (a member could
-   * have frozen/expired since joining the waitlist). Skips invalid
-   * candidates and tries the next one rather than leaving the seat empty. */
+  /** Promotes the oldest waitlisted booking to `booked`, re-validating the
+   * member's course registration at promotion time (they could have
+   * unregistered since joining the waitlist). Skips invalid candidates and
+   * tries the next one rather than leaving the seat empty. */
   private async promoteNextWaitlisted(
     tx: Prisma.TransactionClient,
     classSessionId: string,
@@ -179,35 +189,24 @@ export class ClassBookingsService {
       orderBy: { bookedAt: 'asc' },
     });
 
+    if (waitlisted.length === 0) return;
+
+    const session = await tx.classSession.findUnique({
+      where: { id: classSessionId },
+    });
+
     for (const candidate of waitlisted) {
-      const membership = await tx.membership.findUnique({
-        where: { id: candidate.membershipId },
-        include: { plan: true },
+      const enrollment = await tx.programEnrollment.findUnique({
+        where: {
+          programId_memberId: {
+            programId: session!.programId,
+            memberId: candidate.memberId,
+          },
+        },
       });
 
-      const today = new Date(`${localDateString()}T00:00:00.000Z`);
-      const membershipValid =
-        membership &&
-        membership.status === 'active' &&
-        membership.endDate >= today;
-
-      if (!membershipValid) {
+      if (!enrollment || enrollment.status !== 'active') {
         continue;
-      }
-
-      if (!membership.plan.allowAllPrograms) {
-        const session = await tx.classSession.findUnique({
-          where: { id: classSessionId },
-        });
-        const entitled = await tx.membershipPlanProgram.findUnique({
-          where: {
-            planId_programId: {
-              planId: membership.planId,
-              programId: session!.programId,
-            },
-          },
-        });
-        if (!entitled) continue;
       }
 
       await tx.classBooking.update({
@@ -218,18 +217,11 @@ export class ClassBookingsService {
     }
   }
 
-  private async activeMembershipFor(memberId: string) {
-    const today = new Date(`${localDateString()}T00:00:00.000Z`);
-    return this.prisma.membership.findFirst({
-      where: {
-        memberId,
-        status: 'active',
-        startDate: { lte: today },
-        endDate: { gte: today },
-      },
-      include: { plan: true },
-      orderBy: { endDate: 'desc' },
+  private async activeEnrollmentFor(memberId: string, programId: string) {
+    const enrollment = await this.prisma.programEnrollment.findUnique({
+      where: { programId_memberId: { programId, memberId } },
     });
+    return enrollment?.status === 'active' ? enrollment : null;
   }
 
   private async assertNoOverlap(

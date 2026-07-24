@@ -6,6 +6,7 @@ import {
   listBookingsForSession,
   bookClass,
   cancelClassBooking,
+  markClassBookingAttendance,
 } from "@/lib/class-bookings";
 import { listBranches } from "@/lib/branches";
 import { listCoaches } from "@/lib/employees";
@@ -83,6 +84,14 @@ export default async function ClassSessionDetailPage({ params }: Props) {
     redirect(`/app/training-programs/${programId}/sessions/${sessionId}`);
   }
 
+  async function handleMarkAttendance(formData: FormData) {
+    "use server";
+    const bookingId = formData.get("bookingId") as string;
+    const status = formData.get("status") as "attended" | "noShow";
+    await markClassBookingAttendance(bookingId, status);
+    redirect(`/app/training-programs/${programId}/sessions/${sessionId}`);
+  }
+
   async function handleCancelSession() {
     "use server";
     await cancelClassSession(sessionId);
@@ -141,6 +150,31 @@ export default async function ClassSessionDetailPage({ params }: Props) {
                   <Badge tone={bookingStatusTone[booking.status] ?? "neutral"}>
                     {t.classes[bookingStatusLabelKey[booking.status]]}
                   </Badge>
+                  {canManage &&
+                    (booking.status === "booked" ||
+                      booking.status === "attended" ||
+                      booking.status === "noShow") && (
+                      <>
+                        {booking.status !== "attended" && (
+                          <form action={handleMarkAttendance}>
+                            <input type="hidden" name="bookingId" value={booking.id} />
+                            <input type="hidden" name="status" value="attended" />
+                            <Button type="submit" variant="primary" size="sm">
+                              {t.classes.markPresent}
+                            </Button>
+                          </form>
+                        )}
+                        {booking.status !== "noShow" && (
+                          <form action={handleMarkAttendance}>
+                            <input type="hidden" name="bookingId" value={booking.id} />
+                            <input type="hidden" name="status" value="noShow" />
+                            <Button type="submit" variant="secondary" size="sm">
+                              {t.classes.markAbsent}
+                            </Button>
+                          </form>
+                        )}
+                      </>
+                    )}
                   {(booking.status === "booked" || booking.status === "waitlisted") && (
                     <form action={handleCancelBooking}>
                       <input type="hidden" name="bookingId" value={booking.id} />

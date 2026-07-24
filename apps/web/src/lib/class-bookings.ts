@@ -15,7 +15,7 @@ export type ClassBooking = {
   id: string;
   classSessionId: string;
   memberId: string;
-  membershipId: string;
+  membershipId: string | null;
   status: ClassBookingStatus;
   bookedAt: string;
   cancelledAt?: string | null;
@@ -83,6 +83,18 @@ export async function bookClass(data: {
 export async function cancelClassBooking(bookingId: string): Promise<ClassBooking> {
   const response = await authedFetch(`/class-bookings/${bookingId}/cancel`, {
     method: "POST",
+  });
+  const payload = (await response.json()) as { booking: ClassBooking };
+  return payload.booking;
+}
+
+export async function markClassBookingAttendance(
+  bookingId: string,
+  status: "attended" | "noShow",
+): Promise<ClassBooking> {
+  const response = await authedFetch(`/class-bookings/${bookingId}/attendance`, {
+    method: "POST",
+    body: JSON.stringify({ status }),
   });
   const payload = (await response.json()) as { booking: ClassBooking };
   return payload.booking;

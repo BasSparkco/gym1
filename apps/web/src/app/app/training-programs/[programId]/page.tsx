@@ -3,8 +3,9 @@
 import {
   getTrainingProgram,
   updateTrainingProgram,
-  getEnrolledMemberIds,
-  setEnrolledMemberIds,
+  listEnrollments,
+  registerMemberForCourse,
+  unregisterMemberFromCourse,
 } from "@/lib/training-programs";
 import { listClassSessions } from "@/lib/class-sessions";
 import { listBranches } from "@/lib/branches";
@@ -12,13 +13,12 @@ import { listCoaches } from "@/lib/employees";
 import { listMembers } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
-import MemberChecklist from "@/components/members/member-checklist";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle } from "lucide-react";
+import { CalendarClock, PlusCircle } from "lucide-react";
 
 type Props = {
   params: Promise<{ programId: string }>;
@@ -35,13 +35,13 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
 
   const canManage = session.role === "owner" || session.role === "manager";
 
-  const [program, sessions, branches, coaches, members, enrolledMemberIds] = await Promise.all([
+  const [program, sessions, branches, coaches, members, enrollments] = await Promise.all([
     getTrainingProgram(programId),
     listClassSessions({ programId }),
     listBranches(),
     listCoaches(),
     listMembers(),
-    getEnrolledMemberIds(programId),
+    listEnrollments(programId),
   ]);
 
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
@@ -51,6 +51,7 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
     "use server";
     const branchId = (formData.get("branchId") as string) || null;
     const maxMembersRaw = formData.get("maxMembers") as string;
+    const priceRaw = formData.get("price") as string;
     const defaultCoachId = (formData.get("defaultCoachId") as string) || null;
     await updateTrainingProgram(programId, {
       name: formData.get("name") as string,
@@ -60,13 +61,24 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
       maxMembers: maxMembersRaw ? Number(maxMembersRaw) : undefined,
       defaultCoachId,
       active: formData.get("active") === "true",
+      price: priceRaw ? Number(priceRaw) : undefined,
+      startDate: (formData.get("startDate") as string) || null,
+      endDate: (formData.get("endDate") as string) || null,
     });
     redirect(`/app/training-programs/${programId}`);
   }
 
-  async function handleSetMembers(formData: FormData) {
+  async function handleRegister(formData: FormData) {
     "use server";
-    await setEnrolledMemberIds(programId, formData.getAll("memberIds").map(String));
+    const memberId = formData.get("memberId") as string;
+    await registerMemberForCourse(programId, memberId);
+    redirect(`/app/training-programs/${programId}`);
+  }
+
+  async function handleUnregister(formData: FormData) {
+    "use server";
+    const memberId = formData.get("memberId") as string;
+    await unregisterMemberFromCourse(programId, memberId);
     redirect(`/app/training-programs/${programId}`);
   }
 
@@ -78,15 +90,27 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
     .filter((s) => s.status !== "cancelled")
     .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
 
+  const activeEnrollments = enrollments.filter((e) => e.status === "active");
+  const enrolledMemberIds = new Set(activeEnrollments.map((e) => e.memberId));
+  const registerableMembers = members.filter((m) => !enrolledMemberIds.has(m.id));
+
   return (
     <div className="grid gap-6">
       <PageHeader
         eyebrow={t.classes.title}
         title={program.name}
         actions={
-          <Button href="/app/training-programs" variant="secondary">
-            {t.classes.allPrograms}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button href={`/app/training-programs/${programId}/schedule`} variant="secondary">
+              {t.classes.scheduleTitle}
+            </Button>
+            <Button href={`/app/training-programs/${programId}/report`} variant="secondary">
+              {t.classes.viewReport}
+            </Button>
+            <Button href="/app/training-programs" variant="secondary">
+              {t.classes.allPrograms}
+            </Button>
+          </div>
         }
       />
 
@@ -133,6 +157,21 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
             </div>
 
             <div className="grid gap-1.5">
+              <label htmlFor="price" className="text-sm font-medium">{t.classes.price}</label>
+              <input id="price" name="price" type="number" min="0" step="0.01" defaultValue={program.price} className={inputCls} />
+            </div>
+
+            <div className="grid gap-1.5">
+              <label htmlFor="startDate" className="text-sm font-medium">{t.classes.startDate}</label>
+              <input id="startDate" name="startDate" type="date" defaultValue={program.startDate ?? ""} className={inputCls} />
+            </div>
+
+            <div className="grid gap-1.5">
+              <label htmlFor="endDate" className="text-sm font-medium">{t.classes.endDate}</label>
+              <input id="endDate" name="endDate" type="date" defaultValue={program.endDate ?? ""} className={inputCls} />
+            </div>
+
+            <div className="grid gap-1.5">
               <label htmlFor="active" className="text-sm font-medium">{t.status.active}</label>
               <select id="active" name="active" defaultValue={String(program.active)} className={selectCls}>
                 <option value="true">{t.status.active}</option>
@@ -160,57 +199,74 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
                 <dd className="mt-0.5 font-medium">{coachMap.get(program.defaultCoachId) ?? program.defaultCoachId}</dd>
               </div>
             )}
+            <div>
+              <dt className="text-foreground/55">{t.classes.price}</dt>
+              <dd className="mt-0.5 font-mono font-medium">{program.price.toLocaleString()}</dd>
+            </div>
+            {(program.startDate || program.endDate) && (
+              <div>
+                <dt className="text-foreground/55">{t.classes.startDate} – {t.classes.endDate}</dt>
+                <dd className="mt-0.5 font-medium">{program.startDate ?? "—"} – {program.endDate ?? "—"}</dd>
+              </div>
+            )}
           </dl>
         )}
       </Card>
 
       <Card animate delay={2}>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
-          {t.classes.enrolledMembersTitle}
+          {t.classes.rosterTitle}
         </p>
-        <p className="mt-1 text-sm text-foreground/60">{t.classes.enrolledMembersHint}</p>
+        <p className="mt-1 text-sm text-foreground/60">{t.classes.rosterHint}</p>
 
-        {canManage ? (
-          <form action={handleSetMembers} className="mt-4 grid gap-4">
-            <MemberChecklist
-              name="memberIds"
-              members={members.map((m) => ({
-                id: m.id,
-                fullName: m.fullName,
-                memberNumber: m.memberNumber,
-                status: m.status,
-              }))}
-              defaultSelectedIds={enrolledMemberIds}
-              searchPlaceholder={t.classes.searchMembersPlaceholder}
-              noMatchesLabel={t.classes.noMembersFound}
-              selectedCountTemplate={t.classes.membersSelectedCount}
-              showSelectedOnlyLabel={t.classes.showSelectedOnly}
-              inactiveLabel={t.status.inactive}
-            />
-            <div>
-              <Button type="submit" variant="primary" size="sm">
-                {t.classes.saveMembers}
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <div className="mt-4 grid gap-2">
-            {enrolledMemberIds.length === 0 && (
-              <p className="text-sm text-foreground/60">{t.classes.noMembersEnrolled}</p>
-            )}
-            {members
-              .filter((m) => enrolledMemberIds.includes(m.id))
-              .sort((a, b) => a.fullName.localeCompare(b.fullName))
-              .map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-white px-4 py-2.5 text-sm"
-                >
-                  <span>{m.fullName}</span>
-                  <span className="font-mono text-xs text-foreground/50">{m.memberNumber}</span>
+        <div className="mt-4 grid gap-2">
+          {activeEnrollments.length === 0 && (
+            <p className="text-sm text-foreground/60">{t.classes.noStudentsRegistered}</p>
+          )}
+          {activeEnrollments
+            .slice()
+            .sort((a, b) => a.member.fullName.localeCompare(b.member.fullName))
+            .map((enrollment) => (
+              <div
+                key={enrollment.memberId}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-white px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-medium">{enrollment.member.fullName}</p>
+                  <p className="text-xs text-foreground/50">{enrollment.member.memberNumber}</p>
                 </div>
-              ))}
-          </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm text-foreground/70">
+                    {enrollment.finalPrice.toLocaleString()}
+                  </span>
+                  {canManage && (
+                    <form action={handleUnregister}>
+                      <input type="hidden" name="memberId" value={enrollment.memberId} />
+                      <Button type="submit" variant="danger" size="sm">
+                        {t.classes.unregisterStudent}
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            ))}
+        </div>
+
+        {canManage && registerableMembers.length > 0 && (
+          <form action={handleRegister} className="mt-5 flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-end">
+            <div className="grid flex-1 gap-1.5">
+              <label htmlFor="memberId" className="text-sm font-medium">{t.classes.addStudent}</label>
+              <select id="memberId" name="memberId" required defaultValue="" className={selectCls}>
+                <option value="" disabled>{t.classes.selectMember}</option>
+                {registerableMembers.map((m) => (
+                  <option key={m.id} value={m.id}>{m.fullName} ({m.memberNumber})</option>
+                ))}
+              </select>
+            </div>
+            <Button type="submit" variant="primary" icon={<PlusCircle className="h-4 w-4" strokeWidth={2} />}>
+              {t.classes.addStudent}
+            </Button>
+          </form>
         )}
       </Card>
 
@@ -220,14 +276,24 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
             {t.classes.sessionsTitle}
           </p>
           {canManage && (
-            <Button
-              href={`/app/training-programs/${programId}/sessions/new`}
-              variant="primary"
-              size="sm"
-              icon={<PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />}
-            >
-              {t.classes.newSession}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                href={`/app/training-programs/${programId}/schedule`}
+                variant="secondary"
+                size="sm"
+                icon={<CalendarClock className="h-3.5 w-3.5" strokeWidth={2} />}
+              >
+                {t.classes.generateSessions}
+              </Button>
+              <Button
+                href={`/app/training-programs/${programId}/sessions/new`}
+                variant="primary"
+                size="sm"
+                icon={<PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />}
+              >
+                {t.classes.newSession}
+              </Button>
+            </div>
           )}
         </div>
 

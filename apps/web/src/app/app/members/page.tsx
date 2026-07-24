@@ -1,6 +1,8 @@
 import { listMembers, getMemberPhotoUrl } from "@/lib/members";
 import { listAllMemberships } from "@/lib/memberships";
 import { listPaymentsForMember } from "@/lib/payments";
+import { listLockerRentalsForMember } from "@/lib/lockers";
+import { listEnrollmentsForMember } from "@/lib/training-programs";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { listBranches } from "@/lib/branches";
 import { listEmployees } from "@/lib/employees";
@@ -149,6 +151,8 @@ export default async function MembersPage({
   const pageMembers = members.slice(startIdx, startIdx + PAGE_SIZE);
 
   const pagePayments = await Promise.all(pageMembers.map((m) => listPaymentsForMember(m.id)));
+  const pageLockerRentals = await Promise.all(pageMembers.map((m) => listLockerRentalsForMember(m.id)));
+  const pageCourseEnrollments = await Promise.all(pageMembers.map((m) => listEnrollmentsForMember(m.id)));
 
   const rows: MemberRow[] = pageMembers.map((member, i) => {
     const primaryMs = membershipMap.get(member.id);
@@ -206,6 +210,21 @@ export default async function MembersPage({
         paymentDate: p.paymentDate,
         status: p.status,
         paymentMethod: p.paymentMethod,
+      })),
+      lockerRentals: pageLockerRentals[i].map((r) => ({
+        id: r.id,
+        lockerNumber: r.locker?.lockerNumber ?? r.lockerId,
+        startDate: r.startDate,
+        endDate: r.endDate,
+        status: r.status,
+        finalPrice: r.finalPrice,
+      })),
+      courseEnrollments: pageCourseEnrollments[i].map((e) => ({
+        programId: e.programId,
+        programName: e.program.name,
+        enrolledAt: e.enrolledAt,
+        status: e.status,
+        finalPrice: e.finalPrice,
       })),
       hasActiveMembership: memberMemberships.some((ms) => ms.status === "active"),
       hasFrozenMembership: memberMemberships.some((ms) => ms.status === "frozen"),

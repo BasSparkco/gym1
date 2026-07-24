@@ -1,6 +1,6 @@
 "use server";
 
-import { getMember } from "@/lib/members";
+import { getMember, getMemberDebt } from "@/lib/members";
 import { listMembershipsForMember } from "@/lib/memberships";
 import { createPayment } from "@/lib/payments";
 import { requireSession } from "@/lib/session";
@@ -19,9 +19,10 @@ export default async function RecordPaymentPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const [member, memberships] = await Promise.all([
+  const [member, memberships, debt] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
+    getMemberDebt(memberId),
   ]);
   const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
 
@@ -57,6 +58,15 @@ export default async function RecordPaymentPage({ params }: Props) {
         title={`${t.payments.recordPayment} — ${member.fullName}`}
         description={member.memberNumber}
       />
+
+      <section
+        className={`rounded-2xl border px-5 py-4 text-sm ${debt > 0 ? "border-danger/25 bg-danger/[0.06]" : "border-line bg-surface"}`}
+      >
+        <p className={`font-mono text-lg font-semibold ${debt > 0 ? "text-danger" : "text-foreground"}`}>
+          {t.payments.currentDebt}: {currencySymbol}
+          {debt.toLocaleString()}
+        </p>
+      </section>
 
       {activeMemberships.length === 0 && (
         <section className="rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-sm">

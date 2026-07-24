@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { AccessModule } from '../access/access.module';
 import { AuthModule } from '../auth/auth.module';
 import { DataScopeModule } from '../../common/data-scope.module';
+import { DebtModule } from '../debt/debt.module';
 import { MemberPhotosController } from './member-photos.controller';
 import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
 
 @Module({
-  imports: [AccessModule, AuthModule, DataScopeModule],
+  imports: [AccessModule, AuthModule, DataScopeModule, DebtModule],
   controllers: [MembersController, MemberPhotosController],
   providers: [MembersService],
   exports: [MembersService],

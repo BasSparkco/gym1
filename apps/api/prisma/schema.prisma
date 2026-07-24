@@ -122,6 +122,29 @@ enum ClassBookingStatus {
   cancelled
 }
 
+enum LockerSize {
+  small
+  medium
+  large
+}
+
+enum LockerStatus {
+  available
+  occupied
+  maintenance
+}
+
+enum LockerRentalStatus {
+  active
+  expired
+  cancelled
+}
+
+enum ProgramEnrollmentStatus {
+  active
+  cancelled
+}
+
 // ── Tenant ───────────────────────────────────────────────────────────────────
 
 model Tenant {
@@ -140,6 +163,7 @@ model Tenant {
   users            User[]
   trainingPrograms TrainingProgram[]
   classSessions    ClassSession[]
+  lockers          Locker[]
 }
 
 // ── Branches / Employees / Gates ─────────────────────────────────────────────
@@ -163,6 +187,7 @@ model Branch {
   payments         Payment[]
   trainingPrograms TrainingProgram[]
   classSessions    ClassSession[]
+  lockers          Locker[]
 
   @@index([tenantId])
 }
@@ -268,13 +293,19 @@ model Member {
   // format as User.passwordHash). Null until staff assigns one — most
   // members won't have the mobile app, so this is opt-in per member.
   pinHash               String?
+  // Cached total owed across every membership/locker-rental/course
+  // enrollment minus every 'paid' payment — recomputed by DebtService
+  // whenever any of those change (see modules/debt/debt.service.ts), not
+  // hand-maintained. Never trust a stale read across a direct DB edit.
+  debt                  Decimal       @default(0) @db.Decimal(10, 2)
 
-  memberships   Membership[]
-  visits        Visit[]
-  payments      Payment[]
-  notifications Notification[]
-  classBookings ClassBooking[]
+  memberships        Membership[]
+  visits             Visit[]
+  payments           Payment[]
+  notifications      Notification[]
+  classBookings      ClassBooking[]
   programEnrollments ProgramEnrollment[]
+  lockerRentals      LockerRental[]
 
   @@unique([tenantId, memberNumber])
   @@unique([tenantId, rfidTag])
@@ -347,6 +378,44 @@ model Freeze {
   @@index([membershipId])
 }
 
+// ── Lockers ──────────────────────────────────────────────────────────────────
+
+// The physical locker unit at a branch — a limited resource (unlike
+// MembershipPlan, which is an unlimited template), so it carries its own
+// occupancy status rather than just being a catalog price.
+model Locker {
+  id           String       @id
+  tenantId     String
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  branchId     String
+  branch       Branch       @relation(fields: [branchId], references: [id])
+  lockerNumber String
+  size         LockerSize?
+  monthlyPrice Decimal      @db.Decimal(10, 2)
+  status       LockerStatus @default(available)
+
+  rentals LockerRental[]
+
+  @@unique([branchId, lockerNumber])
+  @@index([tenantId])
+}
+
+model LockerRental {
+  id         String             @id
+  lockerId   String
+  locker     Locker             @relation(fields: [lockerId], references: [id], onDelete: Restrict)
+  memberId   String
+  member     Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  startDate  DateTime           @db.Date
+  endDate    DateTime           @db.Date
+  status     LockerRentalStatus @default(active)
+  finalPrice Decimal            @db.Decimal(10, 2)
+
+  @@index([memberId])
+  @@index([lockerId])
+  @@index([status, endDate])
+}
+
 // ── Training Programs / Classes / Bookings ───────────────────────────────────
 
 model TrainingProgram {
@@ -363,24 +432,51 @@ model TrainingProgram {
   maxMembers     Int?
   defaultCoachId String?
   defaultCoach   Employee? @relation(fields: [defaultCoachId], references: [id], onDelete: SetNull)
+  // A course's own price, charged independently of any membership plan —
+  // any member may register regardless of their membership (see
+  // ProgramEnrollment.finalPrice). startDate/endDate bound the course term
+  // that scheduleSlots are expanded into ClassSessions across.
+  price          Decimal   @default(0) @db.Decimal(10, 2)
+  startDate      DateTime? @db.Date
+  endDate        DateTime? @db.Date
 
   classSessions    ClassSession[]
   entitledForPlans MembershipPlanProgram[]
   enrolledMembers  ProgramEnrollment[]
+  scheduleSlots    ProgramScheduleSlot[]
 
   @@index([tenantId])
   @@index([branchId])
 }
 
-// Standing enrollment of a member in a training program, independent of any
+// A course's weekly timetable — one row per day/time it meets (e.g. Mon
+// 18:00-19:00, Wed 18:00-19:00). generateSessions() expands these across
+// the program's startDate..endDate into concrete ClassSessions.
+model ProgramScheduleSlot {
+  id        String          @id
+  programId String
+  program   TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  dayOfWeek Int // 0 = Sunday .. 6 = Saturday
+  startTime DateTime        @db.Time
+  endTime   DateTime        @db.Time
+
+  @@index([programId])
+}
+
+// Standing registration of a member in a course, independent of any
 // specific ClassSession booking (a member can be "in CrossFit" without being
-// booked into a particular class time).
+// booked into a particular class time). finalPrice is the price owed for
+// the course, snapshotted at registration time — same pattern as
+// Membership.finalPrice / LockerRental.finalPrice; staff collect it via the
+// existing manual Payments flow, there's no auto-generated ledger entry.
 model ProgramEnrollment {
   memberId   String
-  member     Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member     Member                  @relation(fields: [memberId], references: [id], onDelete: Cascade)
   programId  String
-  program    TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
-  enrolledAt DateTime        @default(now())
+  program    TrainingProgram         @relation(fields: [programId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime                @default(now())
+  finalPrice Decimal                 @db.Decimal(10, 2)
+  status     ProgramEnrollmentStatus @default(active)
 
   @@id([programId, memberId])
   @@index([memberId])
@@ -417,8 +513,11 @@ model ClassBooking {
   classSession   ClassSession       @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   memberId       String
   member         Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  membershipId   String
-  membership     Membership         @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  // Historical/optional now that course bookings are authorized via
+  // ProgramEnrollment rather than an active membership — see
+  // ClassBookingsService.bookClass.
+  membershipId   String?
+  membership     Membership?        @relation(fields: [membershipId], references: [id], onDelete: SetNull)
   status         ClassBookingStatus @default(booked)
   bookedAt       DateTime           @default(now())
   cancelledAt    DateTime?

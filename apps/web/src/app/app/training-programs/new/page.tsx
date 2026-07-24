@@ -24,6 +24,7 @@ export default async function NewTrainingProgramPage() {
     "use server";
     const branchId = (formData.get("branchId") as string) || null;
     const maxMembersRaw = formData.get("maxMembers") as string;
+    const priceRaw = formData.get("price") as string;
     const defaultCoachId = (formData.get("defaultCoachId") as string) || null;
     const program = await createTrainingProgram({
       name: formData.get("name") as string,
@@ -32,6 +33,9 @@ export default async function NewTrainingProgramPage() {
       color: (formData.get("color") as string) || undefined,
       maxMembers: maxMembersRaw ? Number(maxMembersRaw) : undefined,
       defaultCoachId,
+      price: priceRaw ? Number(priceRaw) : undefined,
+      startDate: (formData.get("startDate") as string) || null,
+      endDate: (formData.get("endDate") as string) || null,
     });
     redirect(`/app/training-programs/${program.id}`);
   }
@@ -86,6 +90,21 @@ export default async function NewTrainingProgramPage() {
           <div className="grid gap-1.5">
             <label htmlFor="color" className="text-sm font-medium">{t.classes.color}</label>
             <input id="color" name="color" type="color" defaultValue="#5B8DEF" className={`${inputCls} h-11 p-1`} />
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="price" className="text-sm font-medium">{t.classes.price}</label>
+            <input id="price" name="price" type="number" min="0" step="0.01" defaultValue={0} className={inputCls} />
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="startDate" className="text-sm font-medium">{t.classes.startDate}</label>
+            <input id="startDate" name="startDate" type="date" className={inputCls} />
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="endDate" className="text-sm font-medium">{t.classes.endDate}</label>
+            <input id="endDate" name="endDate" type="date" className={inputCls} />
           </div>
 
           <div className="flex gap-3 pt-2 sm:col-span-2">

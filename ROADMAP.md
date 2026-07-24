@@ -8,12 +8,16 @@ Development Standard
 
 * pnpm is the default package manager for project setup, dependency installation, and workspace scripts.
 
-Current Status Snapshot
+Current Status Snapshot (refreshed 2026-07-23)
 
-* Overall status: In Progress
-* Phase 0 status: In Progress
-* Phase 1 status: Started
-* Phase 2 and later: Not Started
+* Overall status: MVP (Phase 0-1) complete and in production; Phase 2 (Operations) mostly built; Phase 4 (Access) partially delivered via QR/BAS-IP instead of RFID; Phase 5 (Mobile) backend groundwork started.
+* Phase 0 status: Done
+* Phase 1 status: Done (pilot-ready MVP live in production; only Push notifications from the original MVP notification list remain unbuilt — SMS/WhatsApp/Email are live)
+* Phase 2 status: Started — Training Programs, Classes & Coaches fully built and deployed (schema, backend, frontend, e2e coverage); Lockers not started
+* Phase 3 status: Not Started
+* Phase 4 status: Partial — QR-based access control, BAS-IP device sync, gate open, and multi-gate ("Smart Gates": gender restriction, per-gate assignment) are live in production. RFID/fingerprint/face recognition were superseded by QR for this customer and are not built.
+* Phase 5 status: Started — member-facing auth backend (PIN sign-in, bearer sessions, `/me`, `/me/qrcode`) is built (commit `806b8e2`, 2026-07-21) and **live in production** (verified 2026-07-23: `POST /api/member-auth/sign-in` returns 401, confirming the route is registered). No native Android/Flutter app exists yet — only the API contract it will consume, documented in `gym_mobile_roadmap.md`.
+* Phase 6-7 status: Not Started
 
 Current completed work
 
@@ -43,10 +47,17 @@ Current completed work
 * SparkCo messaging is live: email and WhatsApp delivery confirmed end-to-end via `POST /api/v1/messages/send`. SMTP removed — SparkCo handles all delivery.
 * Pilot release gate walkthrough complete: full member lifecycle confirmed end-to-end with real credentials.
 * Member photo storage now uses MinIO (S3-compatible object storage) instead of local disk, proxied through the API at the same /api/uploads/members/<file> path with no frontend changes; auth sessions now live in Redis instead of Postgres, with native TTL expiry replacing manual filtering and removing the need for a cleanup job.
+* Postgres/Prisma is now the persistence layer for everything (real FKs, no JSON stores); Redis backs auth sessions, MinIO backs member photos. Security hardening done: `Secure` cookie fixed, reports role-gated, sign-in rate-limited, nightly backup script in place. e2e suite green 40/40.
+* Training Programs, Classes & Coaches (Phase 2) shipped and deployed: `TrainingProgram`/`CoachProfile`/`ClassSession`/`ClassBooking`/`MembershipPlanProgram` with capacity/waitlist handling, coach = `Employee` extension, attendance reuses the `Visit` model.
+* Every `User` account now requires a 1:1 link to an `Employee` record (enforced FK + backfill), closing a prior gap where account creation didn't require a real staff record.
+* Demo feedback pass: per-branch/tenant logos, member profile page redesign (pine/mist/volt design system), RTL phone-number display fix, shared `ui/` primitives (button, card, badge, stat-card, empty-state, page-header).
+* Member-facing auth backend built for the mobile app (Phase 5 groundwork): PIN sign-in, Redis-backed bearer sessions, `/me` and `/me/qrcode` — see `gym_mobile_roadmap.md`. Not yet deployed to production.
+* Broad UI refresh across dashboard, branches, members, employees, membership-plans, training-programs, and sign-in pages, plus a members/employees/users list-page refactor into shared, reusable list components (2026-07-21 to 2026-07-23, commits `a5c874e`/`242eaee`).
 
 Current next focus
 
-* **Phase 4 — RFID access control** (customer priority for demo): add RFID tag to member profiles, dedicated `POST /access/rfid` endpoint, turnstile grant/deny signal, access log, and member tag assignment UI. Phases 2 and 3 deferred until after the demo and real-data pilot.
+* **Phase 5 — Mobile app**: backend contract is built, deployed, and verified live (2026-07-23); next is the actual Android/Flutter client (see `gym_mobile_roadmap.md` for the recommended stack and API reference).
+* **RFID/fingerprint/face recognition**: deliberately not pursued — this customer's hardware uses QR, which is already live. Revisit only if a future customer specifically needs card/biometric access.
 
 ---
 

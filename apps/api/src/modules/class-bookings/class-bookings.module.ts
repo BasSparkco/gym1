@@ -10,3 +10,4 @@ import { ClassBookingsService } from './class-bookings.service';
   exports: [ClassBookingsService],
 })
 export class ClassBookingsModule {}
+

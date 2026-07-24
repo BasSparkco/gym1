@@ -9,6 +9,7 @@ import { ClassBookingsModule } from './modules/class-bookings/class-bookings.mod
 import { ClassSessionsModule } from './modules/class-sessions/class-sessions.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { GatesModule } from './modules/gates/gates.module';
+import { LockersModule } from './modules/lockers/lockers.module';
 import { MemberAuthModule } from './modules/member-auth/member-auth.module';
 import { MembersModule } from './modules/members/members.module';
 import { MembershipsModule } from './modules/memberships/memberships.module';
@@ -48,6 +49,7 @@ import { RedisModule } from './redis/redis.module';
     TrainingProgramsModule,
     ClassSessionsModule,
     ClassBookingsModule,
+    LockersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

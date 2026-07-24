@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -70,6 +71,27 @@ export class ClassBookingsController {
       booking: await this.classBookingsService.cancelBooking(
         session.user.tenant.id,
         bookingId,
+      ),
+    };
+  }
+
+  @Post(':bookingId/attendance')
+  async markAttendance(
+    @Req() request: Request,
+    @Param('bookingId') bookingId: string,
+    @Body() body: { status?: 'attended' | 'noShow' },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    if (body.status !== 'attended' && body.status !== 'noShow') {
+      throw new BadRequestException(
+        "Status must be 'attended' or 'noShow'.",
+      );
+    }
+    return {
+      booking: await this.classBookingsService.markAttendance(
+        session.user.tenant.id,
+        bookingId,
+        body.status,
       ),
     };
   }

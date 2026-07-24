@@ -9,6 +9,7 @@ import { toNumber } from '../../common/decimal';
 import { makeQrPublicUrl } from '../../common/qr';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DebtService } from '../debt/debt.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   Freeze,
@@ -76,6 +77,7 @@ export class MembershipsService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly basIpSyncService: BasIpSyncService,
+    private readonly debtService: DebtService,
   ) {}
 
   private async autoExpireStaleForTenant(tenantId: string): Promise<void> {
@@ -257,6 +259,8 @@ export class MembershipsService {
       },
     });
 
+    await this.debtService.recompute(membership.memberId);
+
     return this.serializeMembership(membership);
   }
 
@@ -356,6 +360,7 @@ export class MembershipsService {
     );
 
     this.syncToDevice(old.member, renewal);
+    await this.debtService.recompute(renewal.memberId);
 
     return this.serializeMembership(renewal);
   }
@@ -558,6 +563,8 @@ export class MembershipsService {
 
       this.syncToDevice(member, membership);
     }
+
+    await this.debtService.recompute(membership.memberId);
 
     return this.serializeMembership(membership);
   }

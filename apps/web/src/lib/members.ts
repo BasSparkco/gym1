@@ -26,6 +26,7 @@ export type Member = {
   emergencyContactPhone?: string;
   medicalNotes?: string;
   rfidTag?: string;
+  debt: number;
 };
 
 async function getCookieHeader() {
@@ -151,6 +152,12 @@ export function getMemberPhotoUrl(pictureUrl: string | undefined): string | null
   if (!pictureUrl) return null;
   const apiRoot = apiBaseUrl.replace(/\/api$/, "");
   return `${apiRoot}${pictureUrl}`;
+}
+
+export async function getMemberDebt(memberId: string): Promise<number> {
+  const response = await authedFetch(`/members/${memberId}/debt`);
+  const payload = (await response.json()) as { debt: number };
+  return payload.debt;
 }
 
 export async function sendMemberQr(

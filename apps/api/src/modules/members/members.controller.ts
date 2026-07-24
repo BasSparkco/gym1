@@ -168,6 +168,20 @@ export class MembersController {
     };
   }
 
+  @Get(':memberId/debt')
+  async getMemberDebt(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return {
+      debt: await this.membersService.getMemberDebt(
+        session.user.tenant.id,
+        memberId,
+      ),
+    };
+  }
+
   // GET /:memberId/qrcode — session-protected PNG for display in the web app
   @Get(':memberId/qrcode')
   async getMemberQrCode(

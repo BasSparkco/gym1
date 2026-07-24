@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -23,9 +24,18 @@ type CreateTrainingProgramRequestBody = {
   active?: boolean;
   maxMembers?: number;
   defaultCoachId?: string | null;
+  price?: number;
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
 type UpdateTrainingProgramRequestBody = CreateTrainingProgramRequestBody;
+
+type ScheduleSlotRequestBody = {
+  dayOfWeek?: number;
+  startTime?: string;
+  endTime?: string;
+};
 
 @Controller('training-programs')
 export class TrainingProgramsController {
@@ -122,35 +132,129 @@ export class TrainingProgramsController {
     };
   }
 
-  @Get(':programId/members')
-  async getEnrolledMembers(
+  @Get(':programId/schedule')
+  async getScheduleSlots(
     @Req() request: Request,
     @Param('programId') programId: string,
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     return {
-      memberIds: await this.trainingProgramsService.listEnrolledMemberIds(
+      slots: await this.trainingProgramsService.getScheduleSlots(
         session.user.tenant.id,
         programId,
       ),
     };
   }
 
-  @Patch(':programId/members')
-  async setEnrolledMembers(
+  @Patch(':programId/schedule')
+  async setScheduleSlots(
     @Req() request: Request,
     @Param('programId') programId: string,
-    @Body() body: { memberIds?: string[] },
+    @Body() body: { slots?: ScheduleSlotRequestBody[] },
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
     return {
-      memberIds: await this.trainingProgramsService.setEnrolledMembers(
+      slots: await this.trainingProgramsService.setScheduleSlots(
         session.user.tenant.id,
         programId,
-        body.memberIds ?? [],
+        body.slots ?? [],
       ),
     };
+  }
+
+  @Post(':programId/generate-sessions')
+  async generateSessions(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+    @Body() body: { branchId?: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+    return this.trainingProgramsService.generateSessions(
+      session.user.tenant.id,
+      programId,
+      body,
+    );
+  }
+
+  @Get('enrollments/member/:memberId')
+  async listEnrollmentsForMember(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return {
+      enrollments: await this.trainingProgramsService.listEnrollmentsForMember(
+        session.user.tenant.id,
+        memberId,
+      ),
+    };
+  }
+
+  @Get(':programId/enrollments')
+  async listEnrollments(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return {
+      enrollments: await this.trainingProgramsService.listEnrollments(
+        session.user.tenant.id,
+        programId,
+      ),
+    };
+  }
+
+  @Post(':programId/register')
+  async registerMember(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+    @Body() body: { memberId?: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager', 'front-desk']);
+    if (!body.memberId) {
+      throw new BadRequestException('Member is required.');
+    }
+    return {
+      enrollment: await this.trainingProgramsService.registerMember(
+        session.user.tenant.id,
+        programId,
+        body.memberId,
+      ),
+    };
+  }
+
+  @Post(':programId/unregister')
+  async unregisterMember(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+    @Body() body: { memberId?: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager', 'front-desk']);
+    if (!body.memberId) {
+      throw new BadRequestException('Member is required.');
+    }
+    await this.trainingProgramsService.unregisterMember(
+      session.user.tenant.id,
+      programId,
+      body.memberId,
+    );
+    return { success: true };
+  }
+
+  @Get(':programId/attendance-report')
+  async getAttendanceReport(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.trainingProgramsService.getAttendanceReport(
+      session.user.tenant.id,
+      programId,
+    );
   }
 
   private async getRequiredSession(cookieHeader: string | undefined) {
