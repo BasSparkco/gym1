@@ -5,6 +5,28 @@ Add the newest update at the top so the latest status is always visible first.
 
 ---
 
+## 2026-07-25 (Report — Member Debt Is Ready)
+
+**Status: ready and live in production.** This is the direct follow-up to `temp.md`'s note ("I want you work on members Debts... the owner wants to collect his money so debts is important").
+
+What's ready now:
+
+* Every member has a real, correct **debt** figure — no longer the placeholder `0` that was on the Members list before. It's the total of everything they've been charged across memberships, courses, and lockers, minus everything they've actually paid.
+* The Members list "Debt" column shows it for every member at a glance (highlighted red when they owe something).
+* The member's own profile page shows it as a badge next to their payment history.
+* The "Record Payment" screen shows the member's current debt right at the top, so staff know how much is outstanding *before* they take a payment.
+* It updates automatically the moment anything changes — a new membership, course registration, locker rental, or payment — there's nothing for staff to manually recalculate.
+* Already backfilled and verified against the real production data: 12 real members checked, 7 currently carry a real balance (from ₪30 up to ₪230), the rest correctly show ₪0.
+
+What's **not** built yet (from the same `temp.md` note, a separate follow-up if wanted):
+
+* Sending a WhatsApp/email message to a member when they have a debt.
+* Alerting staff automatically when a member with a debt checks in at the gate.
+
+Full engineering write-up (schema, how it's computed, deployment steps) is in the entry directly below.
+
+---
+
 ## 2026-07-25 (Member Debt — Real Balance Tracking Across Memberships, Courses, and Lockers)
 
 Completed

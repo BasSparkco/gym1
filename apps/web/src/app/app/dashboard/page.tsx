@@ -45,6 +45,7 @@ const actionIcon: Record<string, LucideIcon> = {
 
 export default async function DashboardPage() {
   const session = await requireSession();
+  const canViewReports = session.role === "owner" || session.role === "manager";
   const [t, lang, dashboardSummary, visits, members, settings, expiringSoon, branches] =
     await Promise.all([
       getT(),
@@ -53,7 +54,15 @@ export default async function DashboardPage() {
       listVisits(),
       listMembers(),
       getSettings(),
-      getExpiringSoonReport(7),
+      canViewReports
+        ? getExpiringSoonReport(7)
+        : Promise.resolve({
+            rows: [],
+            total: 0,
+            asOfDate: new Date().toISOString().slice(0, 10),
+            days: 7,
+            currency: undefined as unknown as string,
+          }),
       listBranches(),
     ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
@@ -174,7 +183,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* Latest check-ins + Memberships expiring soon */}
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className={`grid gap-6 ${canViewReports ? "lg:grid-cols-2" : ""}`}>
         <Card animate delay={2} className="!px-0 !py-0 border-s-4 border-s-blue-500">
           <div className="flex items-center justify-between gap-3 px-6 pt-6">
             <h2 className="text-lg font-semibold tracking-tight">{t.dashboard.latestCheckIns}</h2>
@@ -210,9 +219,11 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-foreground/60">
-                      <Badge tone={visit.checkOutTime === null ? "success" : "neutral"}>
-                        {visit.checkOutTime === null ? t.visits.inside : t.visits.checkedOut}
-                      </Badge>
+                      {settings.checkOutTrackingEnabled && (
+                        <Badge tone={visit.checkOutTime === null ? "success" : "neutral"}>
+                          {visit.checkOutTime === null ? t.visits.inside : t.visits.checkedOut}
+                        </Badge>
+                      )}
                       <span className="font-mono text-xs">{formatDateTime(visit.checkInTime, dateFormat)}</span>
                     </div>
                   </Link>
@@ -223,6 +234,7 @@ export default async function DashboardPage() {
           <div className="h-6" />
         </Card>
 
+        {canViewReports && (
         <Card animate delay={3} className="!px-0 !py-0 border-s-4 border-s-amber-500">
           <div className="flex items-center justify-between gap-3 px-6 pt-6">
             <h2 className="text-lg font-semibold tracking-tight">{t.dashboard.expiringMemberships}</h2>
@@ -258,6 +270,7 @@ export default async function DashboardPage() {
           </div>
           <div className="h-6" />
         </Card>
+        )}
       </section>
 
       {/* Branches at a glance (owners viewing all branches) */}

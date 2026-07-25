@@ -14,10 +14,12 @@ export default function WhatsAppCard({
   branchId,
   canManage,
   t,
+  className,
 }: {
   branchId: string;
   canManage: boolean;
   t: Dict;
+  className?: string;
 }) {
   const [status, setStatus] = useState<Status>("idle");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -143,7 +145,7 @@ export default function WhatsAppCard({
   }
 
   return (
-    <Card hoverable animate delay={2}>
+    <Card hoverable animate delay={2} className={className}>
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">{t.settings.whatsapp}</p>
 
       <div className="mt-4">

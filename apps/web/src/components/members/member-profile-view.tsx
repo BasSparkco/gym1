@@ -487,52 +487,6 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
           )}
         </section>
 
-        {/* Lockers */}
-        <section className="rounded-[18px] border border-line border-s-4 border-s-blue-500 bg-surface px-7 py-6 md:col-span-2">
-          <div className="flex items-center gap-2.5">
-            <h2 className={`font-mono ${sectionHead}`}>{t.members.lockers}</h2>
-            <span className="h-px flex-1 bg-line" />
-            <Link href={`/app/members/${member.id}/lockers/new`} className={panelBtnSm}>
-              <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
-              {t.members.sellLocker}
-            </Link>
-          </div>
-
-          {data.lockerRentals.length === 0 ? (
-            <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-dashed border-line bg-surface-muted px-5 py-5">
-              <p className="text-[13px] text-muted">{t.members.noLockersYet}</p>
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-2.5">
-              {data.lockerRentals
-                .slice()
-                .sort((a, b) => b.startDate.localeCompare(a.startDate))
-                .map((rental) => (
-                  <div key={rental.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-white px-4 py-4">
-                    <div className="flex min-w-[200px] flex-1 flex-col gap-0.5">
-                      <span className="flex items-center gap-1.5 text-[15px] font-semibold">
-                        <KeySquare className="h-3.5 w-3.5 text-muted" strokeWidth={2} />#{rental.lockerNumber}
-                      </span>
-                      <span className={`font-mono text-[12px] tracking-[0.04em] text-muted`}>
-                        {formatDate(rental.startDate, dateFormat)} → {formatDate(rental.endDate, dateFormat)}
-                      </span>
-                    </div>
-                    <span className={`font-mono text-[15px] font-semibold`}>
-                      {data.currencySymbol}
-                      {rental.finalPrice}
-                    </span>
-                    <span
-                      className={`font-mono inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${pillTone[rental.status] ?? defaultPillTone}`}
-                    >
-                      {rental.status === "active" && <span className="h-[6px] w-[6px] rounded-full bg-accent-strong" />}
-                      {statusLabel(t, rental.status)}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          )}
-        </section>
-
         {/* Courses */}
         <section className="rounded-[18px] border border-line border-s-4 border-s-purple-500 bg-surface px-7 py-6 md:col-span-2">
           <div className="flex items-center gap-2.5">
@@ -575,6 +529,52 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                         <span className="h-[6px] w-[6px] rounded-full bg-accent-strong" />
                       )}
                       {statusLabel(t, enrollment.status)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </section>
+
+        {/* Lockers */}
+        <section className="rounded-[18px] border border-line border-s-4 border-s-blue-500 bg-surface px-7 py-6 md:col-span-2">
+          <div className="flex items-center gap-2.5">
+            <h2 className={`font-mono ${sectionHead}`}>{t.members.lockers}</h2>
+            <span className="h-px flex-1 bg-line" />
+            <Link href={`/app/members/${member.id}/lockers/new`} className={panelBtnSm}>
+              <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
+              {t.members.sellLocker}
+            </Link>
+          </div>
+
+          {data.lockerRentals.length === 0 ? (
+            <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-dashed border-line bg-surface-muted px-5 py-5">
+              <p className="text-[13px] text-muted">{t.members.noLockersYet}</p>
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-2.5">
+              {data.lockerRentals
+                .slice()
+                .sort((a, b) => b.startDate.localeCompare(a.startDate))
+                .map((rental) => (
+                  <div key={rental.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-white px-4 py-4">
+                    <div className="flex min-w-[200px] flex-1 flex-col gap-0.5">
+                      <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+                        <KeySquare className="h-3.5 w-3.5 text-muted" strokeWidth={2} />#{rental.lockerNumber}
+                      </span>
+                      <span className={`font-mono text-[12px] tracking-[0.04em] text-muted`}>
+                        {formatDate(rental.startDate, dateFormat)} → {formatDate(rental.endDate, dateFormat)}
+                      </span>
+                    </div>
+                    <span className={`font-mono text-[15px] font-semibold`}>
+                      {data.currencySymbol}
+                      {rental.finalPrice}
+                    </span>
+                    <span
+                      className={`font-mono inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${pillTone[rental.status] ?? defaultPillTone}`}
+                    >
+                      {rental.status === "active" && <span className="h-[6px] w-[6px] rounded-full bg-accent-strong" />}
+                      {statusLabel(t, rental.status)}
                     </span>
                   </div>
                 ))}

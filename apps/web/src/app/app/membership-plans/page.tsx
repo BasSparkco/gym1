@@ -67,7 +67,7 @@ export default async function MembershipPlansPage() {
                 hoverable
                 animate
                 delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-                className={`relative flex flex-col ${isMostSubscribed ? "!border-accent-strong" : ""}`}
+                className={`relative flex flex-col border-s-4 border-s-brand-deeper ${isMostSubscribed ? "!border-accent-strong" : ""}`}
               >
                 {isMostSubscribed && (
                   <Badge

@@ -32,12 +32,13 @@ type Props = {
   employees: Employee[];
   dateFormat: DateFormat;
   t: Dict;
+  showBranchColumn?: boolean;
 };
 
 const inputCls =
   "rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
 
-export function MembersTableBody({ rows, branches, employees, dateFormat, t }: Props) {
+export function MembersTableBody({ rows, branches, employees, dateFormat, t, showBranchColumn = true }: Props) {
   const [expanded, setExpanded] = useState<{ id: string; mode: "profile" | "edit" } | null>(null);
 
   function toggleProfile(id: string) {
@@ -95,7 +96,7 @@ export function MembersTableBody({ rows, branches, employees, dateFormat, t }: P
                   <span className="text-xs text-foreground/40">{t.members.noMembershipsYet}</span>
                 )}
               </td>
-              <td className="py-3 pe-4 text-start text-foreground/70">{row.branchName}</td>
+              {showBranchColumn && <td className="py-3 pe-4 text-start text-foreground/70">{row.branchName}</td>}
               <td className={`py-3 pe-4 text-start font-mono text-xs ${row.expiryColorClass}`}>{row.expiresText}</td>
               <td className="py-3 pe-4 text-start">
                 <Badge tone={row.statusTone}>{row.statusLabelText}</Badge>
@@ -125,7 +126,7 @@ export function MembersTableBody({ rows, branches, employees, dateFormat, t }: P
 
             {(isProfile || isEdit) && (
               <tr>
-                <td colSpan={7} className="bg-surface-muted/40 px-4 py-6" onClick={(event) => event.stopPropagation()}>
+                <td colSpan={showBranchColumn ? 7 : 6} className="bg-surface-muted/40 px-4 py-6" onClick={(event) => event.stopPropagation()}>
                   {isProfile ? (
                     <MemberProfileView data={row} t={t} dateFormat={dateFormat} onEditClick={() => toggleEdit(row.member.id)} />
                   ) : (

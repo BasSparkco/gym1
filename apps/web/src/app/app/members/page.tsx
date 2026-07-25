@@ -18,8 +18,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MembersTableBody, type MemberRow } from "@/components/members/members-table-body";
+import { MembersFilterToolbar } from "@/components/members/members-filter-toolbar";
 import type { BadgeTone } from "@/components/ui/badge";
-import { UserPlus, Users, UserCheck, CalendarClock, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { UserPlus, Users, UserCheck, CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Suspense } from "react";
 
 type SearchParams = {
   q?: string;
@@ -52,7 +54,7 @@ export default async function MembersPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireSession();
+  const session = await requireSession();
   const t = await getT();
   const { q, ms, branch: branchFilter, plan: planFilter, page: pageParam } = await searchParams;
 
@@ -65,6 +67,7 @@ export default async function MembersPage({
     getSettings(),
   ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
+  const viewingAllBranches = session.role === "owner" && settings.ownerDataScope === "all";
 
   const planMap = new Map(allPlans.map((p) => [p.id, p]));
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
@@ -282,68 +285,9 @@ export default async function MembersPage({
       </section>
 
       {/* Filter toolbar */}
-      <form className="flex flex-wrap items-end gap-3 rounded-[18px] border border-line bg-surface px-6 py-5">
-        <label className="grid flex-1 gap-1 text-sm" style={{ minWidth: 220 }}>
-          <span className="text-xs font-medium text-foreground/60">{t.members.searchPlaceholder}</span>
-          <div className="relative">
-            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/35" strokeWidth={2} />
-            <input
-              type="text"
-              name="q"
-              defaultValue={q ?? ""}
-              placeholder={t.members.searchPlaceholder}
-              className="w-full rounded-[10px] border border-line bg-white py-2 ps-9 pe-4 text-sm outline-none focus:border-brand"
-            />
-          </div>
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="text-xs font-medium text-foreground/60">{t.members.homeBranch}</span>
-          <select
-            name="branch"
-            defaultValue={branchFilter ?? ""}
-            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm"
-          >
-            <option value="">{t.employees.filterAllBranches}</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="text-xs font-medium text-foreground/60">{t.reports.planCol}</span>
-          <select
-            name="plan"
-            defaultValue={planFilter ?? ""}
-            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm"
-          >
-            <option value="">{t.members.filterAllPlans}</option>
-            {allPlans.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="text-xs font-medium text-foreground/60">{t.members.statusLabel}</span>
-          <select
-            name="ms"
-            defaultValue={ms ?? ""}
-            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm"
-          >
-            <option value="">{t.members.filterAll}</option>
-            <option value="active">{t.members.filterActiveMembership}</option>
-            <option value="frozen">{t.members.filterFrozen}</option>
-            <option value="expiring">{t.members.filterExpiringSoon}</option>
-            <option value="none">{t.members.filterNoMembership}</option>
-          </select>
-        </label>
-        <Button type="submit" variant="primary" size="md" icon={<Filter className="h-4 w-4" strokeWidth={2} />}>
-          {t.reports.applyFilter}
-        </Button>
-      </form>
+      <Suspense fallback={null}>
+        <MembersFilterToolbar branches={branches} plans={allPlans} t={t} showBranchFilter={viewingAllBranches} />
+      </Suspense>
 
       {/* Result count */}
       <p className="text-sm text-foreground/60">
@@ -363,14 +307,21 @@ export default async function MembersPage({
                 <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
                   <th className="pb-3 pe-4 text-start">{t.reports.memberCol}</th>
                   <th className="pb-3 pe-4 text-start">{t.reports.planCol}</th>
-                  <th className="pb-3 pe-4 text-start">{t.members.homeBranch}</th>
+                  {viewingAllBranches && <th className="pb-3 pe-4 text-start">{t.members.homeBranch}</th>}
                   <th className="pb-3 pe-4 text-start">{t.reports.expiresCol}</th>
                   <th className="pb-3 pe-4 text-start">{t.reports.statusCol}</th>
                   <th className="pb-3 pe-4 text-start">{t.members.debt}</th>
                   <th className="pb-3 text-end">{t.actions.details}</th>
                 </tr>
               </thead>
-              <MembersTableBody rows={rows} branches={branches} employees={employees} dateFormat={dateFormat} t={t} />
+              <MembersTableBody
+                rows={rows}
+                branches={branches}
+                employees={employees}
+                dateFormat={dateFormat}
+                t={t}
+                showBranchColumn={viewingAllBranches}
+              />
             </table>
           </div>
 
