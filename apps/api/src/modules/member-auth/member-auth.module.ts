@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { MembersModule } from '../members/members.module';
+import { MembershipsModule } from '../memberships/memberships.module';
 import { MemberAuthController } from './member-auth.controller';
 import { MeController } from './me.controller';
 import { MemberAuthService } from './member-auth.service';
@@ -8,6 +9,7 @@ import { MemberAuthService } from './member-auth.service';
 @Module({
   imports: [
     MembersModule,
+    MembershipsModule,
     // Same reasoning as AuthModule: brute-force protection scoped to just
     // the member sign-in route, so only it pays the throttling cost.
     ThrottlerModule.forRoot({

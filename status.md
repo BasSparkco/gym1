@@ -5,6 +5,25 @@ Add the newest update at the top so the latest status is always visible first.
 
 ---
 
+## 2026-07-26 (Mobile Roadmap — GET /me/memberships Shipped, Getting-Started Test Account)
+
+Completed
+
+* **Trigger**: reviewing `gym_mobile_roadmap.md` against ROADMAP.md/status.md raised the question of whether that file alone is enough to hand to an external Android developer, or whether he'd also need repo access. Answer: the file is meant to be self-sufficient (base URL + endpoint contracts + stack), but it had two real gaps — the Home screen's membership card had no endpoint to read from (`GET /me/memberships` was listed as "New — not started"), and there were no working credentials for a developer with no repo/DB access to actually try the API.
+* **`GET /api/me/memberships` added** (`apps/api/src/modules/member-auth/me.controller.ts`) — thin wrapper around the existing `MembershipsService.listMembershipsForMember(tenantId, memberId)` (already used by the staff-facing member profile page), scoped to the bearer-token session instead of a staff session. `MembershipsModule` added to `MemberAuthModule`'s imports; no schema/migration changes, no circular-import issues (`MembershipsModule`'s own imports — `AccessModule`/`AuthModule`/`NotificationsModule`/`DataScopeModule`/`DebtModule` — don't reach back into `MemberAuthModule`). Returns plan name/price/duration alongside status/dates/finalPrice, everything the Home screen needs.
+* **Verified before deploying**: `tsc --noEmit` clean. Hit the known local-dev `nest start --watch` first-run race (documented previously) — worked around it the same way as before, one-shot `nest build` + running `dist/main.js` directly. Full flow confirmed against local dev Postgres: set a PIN on a seeded member via the staff endpoint, signed in as that member, confirmed `/me/memberships` returned the correct plan/price/dates, and confirmed the route still 401s with no token.
+* **Deployed to production** (2026-07-25 ~22:22 UTC): backup first (`gym_db_20260726_001920.sql.gz` + MinIO archive), `docker compose -p gym -f docker-compose.prod.yml build api`, `up -d --no-deps api` (code-only change, no migration). Confirmed live: boot log shows `Mapped {/api/me/memberships, GET} route`, `GET https://gym.sparkco.vip/api` → 200, unauthenticated `GET /api/me/memberships` → 401 (not 404).
+* **Created a dedicated test member for external developers** since there's no staging environment — `MEM-0013`, `fullName: "ZZZ TEST - Mobile API Developer Account"` (deliberately unmistakable as a fixture in any staff screen/report), one active membership (monthly plan) so `/me/memberships` has real data, PIN `246800`. Verified the full flow end-to-end against the live production API with these exact credentials: sign-in → `/me` → `/me/memberships` → `/me/qrcode`, all correct.
+* **`gym_mobile_roadmap.md` updated**: new "Getting Started" section up top with the test credentials and working `curl` examples so an external Android developer needs nothing beyond that file to start Phase 1; `GET /me/memberships` marked done in the "Backend Changes Needed" table and "API Reference" section; Phase 0/Phase 1 sections updated to drop it as an open item.
+
+Next
+
+* Phase 1 (Android): sign-in screen, Home screen, QR code screen — see `gym_mobile_roadmap.md`. No further backend blockers for Phase 1.
+* Phase 2 still needs real backend work before an Android dev can build against it: `Announcement` model + endpoints, `ClosedDate` model + endpoints, FCM device-token storage + `push` notification channel — none of these exist yet.
+* Still undecided (flagged in the roadmap doc, needs an ops decision, not a code change): how staff actually hand a member their PIN in real life (front desk verbally? printed on a card? SMS?).
+
+---
+
 ## 2026-07-25 (Report — Member Debt Is Ready)
 
 **Status: ready and live in production.** This is the direct follow-up to `temp.md`'s note ("I want you work on members Debts... the owner wants to collect his money so debts is important").

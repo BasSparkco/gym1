@@ -1,8 +1,9 @@
 # Spark Gym — Member Mobile App Roadmap
 
-*Last checked against the actual backend: 2026-07-20. Phase 0 (member auth) has now been*
-*implemented and is live in `apps/api` — see "Backend Changes Needed" and "API Reference*
-*for the Mobile Client" below for the real, working contract to build the Android app against.*
+*Last checked against the actual backend: 2026-07-26. Phase 0 (member auth) is live, and*
+*`GET /me/memberships` (needed for the Home screen) has now also shipped to production —*
+*see "Getting Started", "Backend Changes Needed", and "API Reference for the Mobile Client"*
+*below for the real, working contract to build the Android app against.*
 
 ## Project Context
 
@@ -15,6 +16,44 @@ but all of that was, until 2026-07-20, **staff-facing only**, authenticated as a
 (employee/owner) account. A separate member-auth surface now exists (`/api/member-auth`,
 `/api/me`) purpose-built for this app — see below for the endpoints and how PINs get
 assigned.
+
+---
+
+## Getting Started (for an external Android developer)
+
+Everything below is live against the real production API right now — no backend/repo
+access is needed to start building. This is the **only** environment available (there is
+no separate staging server), so a dedicated, clearly-fake test account was created for
+development so real member data is never touched:
+
+- **API base**: `https://gym.sparkco.vip/api`
+- **Test member number**: `MEM-0013` (`fullName`: "ZZZ TEST - Mobile API Developer Account" —
+  named that way so it's unmistakably a test fixture in any staff-facing screen, list, or report)
+- **Test PIN**: `246800`
+- This account has one active membership (monthly plan, `finalPrice` 150) so
+  `GET /me/memberships` and the Home screen have real, non-empty data to render.
+
+Try it directly:
+
+```bash
+curl -X POST https://gym.sparkco.vip/api/member-auth/sign-in \
+  -H 'Content-Type: application/json' \
+  -d '{"identifier":"MEM-0013","pin":"246800"}'
+# -> { "token": "...", "member": { ... } }
+
+curl https://gym.sparkco.vip/api/me \
+  -H 'Authorization: Bearer <token>'
+
+curl https://gym.sparkco.vip/api/me/memberships \
+  -H 'Authorization: Bearer <token>'
+
+curl https://gym.sparkco.vip/api/me/qrcode \
+  -H 'Authorization: Bearer <token>' -o qrcode.png
+```
+
+Do not repurpose this account for anything beyond development/testing, and don't create
+additional test members without checking first — this is a live production tenant with
+real gym members in it.
 
 ---
 
@@ -132,7 +171,7 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 | Member credentials | Hashed `pinHash` field on `Member` (migration `20260720214955_add_member_pin`) | ✅ **Done** (2026-07-20) |
 | Member sign-in | `POST /api/member-auth/sign-in` — bearer token via Redis session, not a JWT (see Sign In screen notes) | ✅ **Done** |
 | Staff assigns member PIN | `POST /api/members/:memberId/pin` (staff session, any role) | ✅ **Done** |
-| Member "me" endpoints | `GET /api/me`, `GET /api/me/qrcode` — bearer-token-guarded | ✅ **Done**. `GET /api/me/memberships` not built yet — Home screen (Phase 1) needs membership plan/expiry, so add this before or during Phase 1, not Phase 2 |
+| Member "me" endpoints | `GET /api/me`, `GET /api/me/qrcode`, `GET /api/me/memberships` — all bearer-token-guarded | ✅ **Done** (memberships endpoint shipped 2026-07-26) — Home screen has everything it needs (plan name, price, start/end date, status) |
 | Closed dates | New `ClosedDate` model + migration, `GET/POST/DELETE /branches/:id/closed-dates` | **New** — not started |
 | Announcements | New `Announcement` model + migration (tenant-scoped, distinct from `Notification`), `GET/POST /announcements` | **New** — not started |
 | Push token registration | New field/table for FCM device tokens on `Member`, `POST /me/device-token` | **New** — not started |
@@ -146,7 +185,8 @@ All under `https://gym.sparkco.vip/api` (dev: `http://localhost:3002/api`).
 - `POST /member-auth/sign-in` — body `{ identifier, pin }` → `200 { token, member: { id, tenantId, memberNumber, fullName } }`, or `401` on bad credentials. Rate-limited (10/min/IP).
 - `GET /member-auth/current-session` — `Authorization: Bearer <token>` → `200 { member }` or `401`. Useful to validate a stored token on app launch.
 - `POST /member-auth/sign-out` — revokes the token, `204`.
-- `GET /me` — full member profile + computed membership `status` (`active`/`inactive`). No membership plan/expiry details yet (see table above).
+- `GET /me` — full member profile + computed membership `status` (`active`/`inactive`).
+- `GET /me/memberships` — `{ memberships: [{ id, planId, startDate, endDate, status, finalPrice, plan: { name, price, durationDays, ... } }] }`. Everything the Home screen needs for the membership card.
 - `GET /me/qrcode` — `image/png`, the same QR the gate scanner reads.
 
 Everything above requires `Authorization: Bearer <token>` except sign-in itself.
@@ -155,17 +195,15 @@ Everything above requires `Authorization: Bearer <token>` except sign-in itself.
 
 ## Development Phases
 
-### Phase 0 — Backend: Member Auth ✅ Done (2026-07-20)
-- Hashed PIN field on `Member`, member sign-in + bearer-token sessions, `/me` and
-  `/me/qrcode` routes, staff-side PIN assignment endpoint. See "API Reference" above.
+### Phase 0 — Backend: Member Auth ✅ Done (2026-07-20, extended 2026-07-26)
+- Hashed PIN field on `Member`, member sign-in + bearer-token sessions, `/me`,
+  `/me/qrcode`, and `/me/memberships` routes, staff-side PIN assignment endpoint. See
+  "API Reference" above and "Getting Started" for working test credentials.
 - Not yet decided: how staff actually hand a PIN to a member (see Sign In screen notes)
   — settle this before Phase 1 sign-in UI, since it affects the copy on that screen.
-- Still missing for a complete Home screen: `GET /me/memberships` (plan name, expiry
-  date) — add this first thing in Phase 1.
 
 ### Phase 1 — Core (Android)
 - Project setup (Android Studio, Kotlin, Jetpack Compose)
-- Backend: add `GET /me/memberships` (plan name, expiry, status) — Home screen needs it
 - Sign-in screen wired to `/api/member-auth/sign-in`
 - Home screen: gym name, member photo, membership status
 - QR code screen (against `/api/me/qrcode`)

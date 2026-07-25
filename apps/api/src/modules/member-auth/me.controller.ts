@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { MembersService } from '../members/members.service';
+import { MembershipsService } from '../memberships/memberships.service';
 import { MemberAuthService, MemberSession } from './member-auth.service';
 import { extractBearerToken } from './extract-bearer-token';
 
@@ -18,6 +19,7 @@ export class MeController {
   constructor(
     private readonly memberAuthService: MemberAuthService,
     private readonly membersService: MembersService,
+    private readonly membershipsService: MembershipsService,
   ) {}
 
   @Get()
@@ -27,6 +29,17 @@ export class MeController {
       member: await this.membersService.getMemberForScope(
         session.tenantId,
         undefined,
+        session.id,
+      ),
+    };
+  }
+
+  @Get('memberships')
+  async getMemberships(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      memberships: await this.membershipsService.listMembershipsForMember(
+        session.tenantId,
         session.id,
       ),
     };

@@ -16,7 +16,7 @@ Current Status Snapshot (refreshed 2026-07-23)
 * Phase 2 status: Started — Training Programs, Classes & Coaches fully built and deployed (schema, backend, frontend, e2e coverage); Lockers not started
 * Phase 3 status: Not Started
 * Phase 4 status: Partial — QR-based access control, BAS-IP device sync, gate open, and multi-gate ("Smart Gates": gender restriction, per-gate assignment) are live in production. RFID/fingerprint/face recognition were superseded by QR for this customer and are not built.
-* Phase 5 status: Started — member-facing auth backend (PIN sign-in, bearer sessions, `/me`, `/me/qrcode`) is built (commit `806b8e2`, 2026-07-21) and **live in production** (verified 2026-07-23: `POST /api/member-auth/sign-in` returns 401, confirming the route is registered). No native Android/Flutter app exists yet — only the API contract it will consume, documented in `gym_mobile_roadmap.md`.
+* Phase 5 status: Started — member-facing auth backend (PIN sign-in, bearer sessions, `/me`, `/me/qrcode`, `/me/memberships`) is built and **live in production** (`/me/memberships` shipped 2026-07-26, verified against the real API). A dedicated test member (`MEM-0013`) and full "Getting Started" credentials now exist in `gym_mobile_roadmap.md` so the doc alone is enough to hand to an external Android developer. No native Android/Flutter app exists yet — only the API contract it will consume.
 * Phase 6-7 status: Not Started
 
 Current completed work
