@@ -12,6 +12,7 @@ const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;
 export type MemberSession = {
   id: string;
   tenantId: string;
+  homeBranchId: string;
   memberNumber: string;
   fullName: string;
 };
@@ -117,6 +118,7 @@ export class MemberAuthService {
     return {
       id: member.id,
       tenantId: member.tenantId,
+      homeBranchId: member.homeBranchId,
       memberNumber: member.memberNumber,
       fullName: member.fullName,
     };

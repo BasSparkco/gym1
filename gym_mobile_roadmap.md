@@ -1,8 +1,10 @@
-# Spark Gym — Member Mobile App Roadmap
+  # Spark Gym — Member Mobile App Roadmap
 
-*Last checked against the actual backend: 2026-07-26. Phase 0 (member auth) is live, and*
-*`GET /me/memberships` (needed for the Home screen) has now also shipped to production —*
-*see "Getting Started", "Backend Changes Needed", and "API Reference for the Mobile Client"*
+*Last checked against the actual backend: 2026-07-26. Phase 0 (member auth) and the Phase 2*
+*backend (Announcements, Closed Dates, push device-token storage) are all built. Real FCM*
+*push delivery is NOT wired up yet — no Firebase project exists, so pushes currently just log*
+*server-side instead of reaching a device (see "Push Notifications — Current State" below).*
+*See "Getting Started", "Backend Changes Needed", and "API Reference for the Mobile Client"*
 *below for the real, working contract to build the Android app against.*
 
 ## Project Context
@@ -143,19 +145,20 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 - Monthly calendar view
 - Gym-marked closed dates highlighted in red
 - Tapping a date shows the closure reason (holiday, maintenance, etc.)
-- No `ClosedDate` concept exists anywhere in the schema today — this needs a real
-  Prisma model (tenant + branch scoped) and migration, not just an endpoint:
-  `GET/POST/DELETE /api/branches/:id/closed-dates`
+- ✅ **Backend done** (2026-07-26): `GET /api/me/closed-dates` (bearer-token) returns every
+  upcoming closure that applies to the member — tenant-wide entries plus their own branch's
+  — sorted ascending. Staff manage the calendar in the web app under Settings → Closed Dates.
 
 ### 5. Announcements
 - List of gym announcements (title, body, date)
 - Push notification opens the relevant announcement
-- There's an existing `Notification` model/module, but it's a different concept:
-  per-member transactional messages (expiry/payment reminders) triggered by staff,
-  sent over `sms | whatsapp | email` — there's no `push` channel and no tenant-wide
-  broadcast concept. Announcements need their own model
-  (tenant-scoped, not per-member) rather than reusing `Notification`:
-  `GET/POST /api/announcements`
+- ✅ **Backend done** (2026-07-26): a new `Announcement` model, tenant-scoped and distinct
+  from the existing per-member `Notification` model (which stays sms/whatsapp/email only —
+  see "Push Notifications — Current State" below for why `push` was deliberately **not**
+  added to `Notification`'s channel gating). `GET /api/me/announcements` (bearer-token)
+  returns everything that applies to the member — tenant-wide plus their own branch — newest
+  first. Staff create/delete announcements in the web app under Announcements; creating one
+  immediately fans out a push attempt to every registered device (see below).
 
 ### 6. Profile
 - Member photo (tap to view full size)
@@ -172,11 +175,32 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 | Member sign-in | `POST /api/member-auth/sign-in` — bearer token via Redis session, not a JWT (see Sign In screen notes) | ✅ **Done** |
 | Staff assigns member PIN | `POST /api/members/:memberId/pin` (staff session, any role) | ✅ **Done** |
 | Member "me" endpoints | `GET /api/me`, `GET /api/me/qrcode`, `GET /api/me/memberships` — all bearer-token-guarded | ✅ **Done** (memberships endpoint shipped 2026-07-26) — Home screen has everything it needs (plan name, price, start/end date, status) |
-| Closed dates | New `ClosedDate` model + migration, `GET/POST/DELETE /branches/:id/closed-dates` | **New** — not started |
-| Announcements | New `Announcement` model + migration (tenant-scoped, distinct from `Notification`), `GET/POST /announcements` | **New** — not started |
-| Push token registration | New field/table for FCM device tokens on `Member`, `POST /me/device-token` | **New** — not started |
-| Push notification channel | Add `push` to the `NotificationChannel` enum (currently `sms \| whatsapp \| email` only) if announcements should reuse the existing dispatch pattern | **New** — not started |
+| Closed dates | `ClosedDate` model (tenant-scoped, optional `branchId` = tenant-wide), staff CRUD at `/closed-dates`, member read at `GET /me/closed-dates` | ✅ **Done** (2026-07-26) |
+| Announcements | `Announcement` model (tenant-scoped, optional `branchId`, distinct from `Notification`), staff CRUD at `/announcements`, member read at `GET /me/announcements` | ✅ **Done** (2026-07-26) |
+| Push token registration | `MemberDeviceToken` model, `POST /me/device-token` (bearer-token, upserts on member+token) | ✅ **Done** (2026-07-26) |
+| Push notification channel | New `FcmNotificationProvider` (same pluggable-provider pattern as SMS/WhatsApp/email) fires on every `Announcement` creation, fanning out to every matching `MemberDeviceToken`. Deliberately **not** added to the existing `Notification`/`NotificationChannel` per-event gating pipeline — see "Push Notifications — Current State" below | ✅ **Plumbing done** (2026-07-26) — ⚠️ **not connected to real FCM yet**, see below |
 | Tenant resolution at sign-in | Not a separate step — `identifier` (phone/memberNumber) is looked up without pre-selecting a tenant, same pattern staff sign-in already uses. Fine for now since there's one tenant in production; revisit if a second tenant is ever onboarded | ✅ **Decided/implemented** this way |
+
+## Push Notifications — Current State
+
+The full pipeline is built end-to-end — device-token storage, the `Announcement` model, and
+a push-fan-out on every announcement — but it does **not reach a real device yet** because no
+Firebase project exists. `FcmNotificationProvider` (`apps/api/src/modules/notifications/providers/fcm-notification.provider.ts`)
+currently just **logs** each push attempt server-side and reports success, exactly the same
+stand-in pattern already used for SMS/WhatsApp/email before their real credentials existed
+(`ConsoleNotificationProvider`). `Announcement.pushSentCount`/`pushFailedCount` (visible to
+staff on the Announcements page) reflect these stand-in sends, not real device deliveries.
+
+**To go live**, once a Firebase project exists (see "Firebase Setup" above for the Android-side
+steps): swap the body of `FcmNotificationProvider.send()` for a real `firebase-admin` HTTP v1
+call, gated on an env var (e.g. `FCM_SERVICE_ACCOUNT_JSON`) the same way `SparkcoNotificationProvider`/`SmtpNotificationProvider`
+are gated on their own credentials — no interface, call-site, schema, or Android-side change
+needed. This is a same-file follow-up, not a redesign.
+
+**On the Android side**: the app should call `POST /me/device-token` (body `{ token, platform }`,
+`platform` = `"android"`) once it has an FCM token, and again whenever FCM issues a new one
+(token-refresh callback) — the endpoint upserts on `(member, token)` so re-registering the same
+device is a no-op refresh, not a duplicate.
 
 ## API Reference for the Mobile Client
 
@@ -188,6 +212,9 @@ All under `https://gym.sparkco.vip/api` (dev: `http://localhost:3002/api`).
 - `GET /me` — full member profile + computed membership `status` (`active`/`inactive`).
 - `GET /me/memberships` — `{ memberships: [{ id, planId, startDate, endDate, status, finalPrice, plan: { name, price, durationDays, ... } }] }`. Everything the Home screen needs for the membership card.
 - `GET /me/qrcode` — `image/png`, the same QR the gate scanner reads.
+- `GET /me/announcements` — `{ announcements: [{ id, branchId, title, body, pushSentCount, pushFailedCount, createdAt }] }`, tenant-wide plus the member's own branch, newest first.
+- `GET /me/closed-dates` — `{ closedDates: [{ id, branchId, date, reason, createdAt }] }`, tenant-wide plus the member's own branch, upcoming only (`date >= today`), ascending.
+- `POST /me/device-token` — body `{ token, platform? }` (`platform`: `"android"` | `"ios"`) → `204`. Call this once an FCM token is obtained, and again on token-refresh.
 
 Everything above requires `Authorization: Bearer <token>` except sign-in itself.
 
@@ -210,11 +237,16 @@ Everything above requires `Authorization: Bearer <token>` except sign-in itself.
 - Estimated: 1 week
 
 ### Phase 2 — Notifications + Calendar
-- Backend: `Announcement` model + endpoints, `ClosedDate` model + endpoints
-- Firebase FCM integration; backend: device token storage, `push` channel, send on announcement
-- Announcements screen
-- Closed dates calendar
-- Estimated: 1.5–2 weeks (bigger than before — two new models/migrations, not just endpoints)
+- Backend: ✅ **Done** (2026-07-26) — `Announcement` model + endpoints, `ClosedDate` model +
+  endpoints, device-token storage, push fan-out on announcement creation. See "Backend Changes
+  Needed" and "Push Notifications — Current State" above.
+- Still needed on the Android side: Firebase project + `google-services.json` (see "Firebase
+  Setup" above), register the FCM token via `POST /me/device-token`, Announcements screen,
+  Closed dates calendar.
+- Still needed on the backend side: swap `FcmNotificationProvider`'s stand-in for a real
+  Firebase Admin SDK call once a Firebase project exists — see "Push Notifications — Current
+  State" above.
+- Estimated (Android UI + Firebase wiring only, backend no longer blocks this): 3–5 days
 
 ### Phase 3 — Polish + Play Store
 - Gym branding (logo, colors, splash screen)
@@ -267,7 +299,7 @@ If speed and one-codebase simplicity matter more: **go React Native from the sta
 
 ## Notes
 
-- The gym backend already sends WhatsApp and email notifications. Push notifications are additive — they do not replace those channels, they supplement them for members who install the app.
+- The gym backend already sends WhatsApp and email notifications. Push notifications are additive — they do not replace those channels, they supplement them for members who install the app. Push isn't live yet (see "Push Notifications — Current State" above) — announcements still work and are visible in-app via `GET /me/announcements` even before real push delivery is wired up.
 - Member authentication is PIN-based, entirely separate from staff login — see "API Reference for the Mobile Client" above for the live endpoints.
 - A member can't sign in until staff assigns them a PIN (`POST /api/members/:memberId/pin`). There's no member self-service flow — decide the handout process (front desk, printed on a card, etc.) before finalizing the sign-in screen's copy.
 - All API calls should go through HTTPS only (`https://gym.sparkco.vip/api`).

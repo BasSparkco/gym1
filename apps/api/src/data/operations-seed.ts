@@ -133,7 +133,10 @@ export type PaymentRecord = {
   paymentMethod: 'cash' | 'card' | 'transfer';
 };
 
-export type NotificationChannel = 'sms' | 'whatsapp' | 'email';
+// 'push' is only ever used by NotificationDeliveryInput (for announcement
+// fan-out, via FcmNotificationProvider) — NotificationRecord/the Notification
+// table below never gets a 'push' row, so no Prisma enum change is needed.
+export type NotificationChannel = 'sms' | 'whatsapp' | 'email' | 'push';
 
 export type NotificationEvent =
   | 'membershipExpiring'

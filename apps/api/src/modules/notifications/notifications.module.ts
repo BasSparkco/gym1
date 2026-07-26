@@ -7,6 +7,7 @@ import { NotificationsSchedulerService } from './notifications-scheduler.service
 import { NotificationsService } from './notifications.service';
 import { ConsoleNotificationProvider } from './providers/console-notification.provider';
 import { SparkcoNotificationProvider } from './providers/sparkco-notification.provider';
+import { FcmNotificationProvider } from './providers/fcm-notification.provider';
 
 @Module({
   imports: [AuthModule, DataScopeModule],
@@ -17,7 +18,8 @@ import { SparkcoNotificationProvider } from './providers/sparkco-notification.pr
     NotificationsSchedulerService,
     ConsoleNotificationProvider,
     SparkcoNotificationProvider,
+    FcmNotificationProvider,
   ],
-  exports: [NotificationsService],
+  exports: [NotificationsService, FcmNotificationProvider],
 })
 export class NotificationsModule {}

@@ -3,8 +3,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AccessModule } from './modules/access/access.module';
+import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BranchesModule } from './modules/branches/branches.module';
+import { ClosedDatesModule } from './modules/closed-dates/closed-dates.module';
 import { ClassBookingsModule } from './modules/class-bookings/class-bookings.module';
 import { ClassSessionsModule } from './modules/class-sessions/class-sessions.module';
 import { EmployeesModule } from './modules/employees/employees.module';
@@ -50,6 +52,8 @@ import { RedisModule } from './redis/redis.module';
     ClassSessionsModule,
     ClassBookingsModule,
     LockersModule,
+    AnnouncementsModule,
+    ClosedDatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

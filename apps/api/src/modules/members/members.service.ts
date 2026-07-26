@@ -324,6 +324,37 @@ export class MembersService {
     });
   }
 
+  /**
+   * Member-triggered (via the mobile app's own bearer session, not staff):
+   * registers/refreshes an FCM device token so announcement push sends can
+   * reach this device. Upserts on (memberId, token) — re-registering the
+   * same device just bumps lastSeenAt rather than creating a duplicate row.
+   */
+  async upsertDeviceToken(
+    memberId: string,
+    token: string,
+    platform?: string,
+  ): Promise<void> {
+    const trimmed = token.trim();
+    if (!trimmed) {
+      throw new BadRequestException('Device token is required.');
+    }
+
+    await this.prisma.memberDeviceToken.upsert({
+      where: { memberId_token: { memberId, token: trimmed } },
+      create: {
+        id: `device-token-${randomUUID()}`,
+        memberId,
+        token: trimmed,
+        platform: platform?.trim() || undefined,
+      },
+      update: {
+        platform: platform?.trim() || undefined,
+        lastSeenAt: new Date(),
+      },
+    });
+  }
+
   private async buildActiveSet(tenantId: string): Promise<Set<string>> {
     const today = new Date(localDateString());
     const activeMemberships = await this.prisma.membership.findMany({

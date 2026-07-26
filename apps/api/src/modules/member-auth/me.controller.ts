@@ -1,6 +1,9 @@
 import {
+  Body,
   Controller,
   Get,
+  HttpCode,
+  Post,
   Req,
   Res,
   UnauthorizedException,
@@ -8,8 +11,15 @@ import {
 import type { Request, Response } from 'express';
 import { MembersService } from '../members/members.service';
 import { MembershipsService } from '../memberships/memberships.service';
+import { AnnouncementsService } from '../announcements/announcements.service';
+import { ClosedDatesService } from '../closed-dates/closed-dates.service';
 import { MemberAuthService, MemberSession } from './member-auth.service';
 import { extractBearerToken } from './extract-bearer-token';
+
+type DeviceTokenRequestBody = {
+  token?: string;
+  platform?: string;
+};
 
 // The member-facing counterpart to MembersController's staff routes: same
 // underlying data, but authorized by a member's own bearer token instead of
@@ -20,6 +30,8 @@ export class MeController {
     private readonly memberAuthService: MemberAuthService,
     private readonly membersService: MembersService,
     private readonly membershipsService: MembershipsService,
+    private readonly announcementsService: AnnouncementsService,
+    private readonly closedDatesService: ClosedDatesService,
   ) {}
 
   @Get()
@@ -41,6 +53,42 @@ export class MeController {
       memberships: await this.membershipsService.listMembershipsForMember(
         session.tenantId,
         session.id,
+      ),
+    };
+  }
+
+  @Post('device-token')
+  @HttpCode(204)
+  async registerDeviceToken(
+    @Req() request: Request,
+    @Body() body: DeviceTokenRequestBody,
+  ): Promise<void> {
+    const session = await this.getRequiredMemberSession(request);
+    await this.membersService.upsertDeviceToken(
+      session.id,
+      body.token ?? '',
+      body.platform,
+    );
+  }
+
+  @Get('announcements')
+  async getAnnouncements(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      announcements: await this.announcementsService.listForMember(
+        session.tenantId,
+        session.homeBranchId,
+      ),
+    };
+  }
+
+  @Get('closed-dates')
+  async getClosedDates(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      closedDates: await this.closedDatesService.listUpcomingForMember(
+        session.tenantId,
+        session.homeBranchId,
       ),
     };
   }

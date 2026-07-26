@@ -15,6 +15,8 @@ export type Dict = {
     employees: string;
     membershipPlans: string;
     lockers: string;
+    announcements: string;
+    closedDates: string;
     members: string;
     checkIn: string;
     visits: string;
@@ -317,6 +319,35 @@ export type Dict = {
     rentalHistory: string;
     noRentalsYet: string;
     rentedBy: string;
+  };
+  announcements: {
+    title: string;
+    listDescription: string;
+    newAnnouncement: string;
+    newAnnouncementDescription: string;
+    announcementTitle: string;
+    titlePlaceholder: string;
+    body: string;
+    bodyPlaceholder: string;
+    branch: string;
+    allBranches: string;
+    sendAnnouncement: string;
+    noAnnouncements: string;
+    pushSentCount: string;
+    delete: string;
+  };
+  closedDates: {
+    title: string;
+    listDescription: string;
+    newClosedDate: string;
+    date: string;
+    branch: string;
+    allBranches: string;
+    reason: string;
+    reasonPlaceholder: string;
+    createClosedDate: string;
+    noClosedDates: string;
+    delete: string;
   };
   checkIn: {
     title: string;
@@ -774,6 +805,8 @@ const en: Dict = {
     employees: "Employees",
     membershipPlans: "Membership Plans",
     lockers: "Lockers",
+    announcements: "Announcements",
+    closedDates: "Closed Dates",
     members: "Members",
     checkIn: "Check-In",
     visits: "Visits",
@@ -1076,6 +1109,35 @@ const en: Dict = {
     rentalHistory: "Rental history",
     noRentalsYet: "No locker rentals yet.",
     rentedBy: "Rented by",
+  },
+  announcements: {
+    title: "Announcements",
+    listDescription: "{count} announcement{plural} sent to members.",
+    newAnnouncement: "New announcement",
+    newAnnouncementDescription: "Send a broadcast message to every member with the mobile app, or just one branch.",
+    announcementTitle: "Title",
+    titlePlaceholder: "e.g. New yoga class starting Tuesday",
+    body: "Message",
+    bodyPlaceholder: "Write the announcement members will see...",
+    branch: "Branch",
+    allBranches: "All branches",
+    sendAnnouncement: "Send announcement",
+    noAnnouncements: "No announcements sent yet.",
+    pushSentCount: "Sent to {count} device(s)",
+    delete: "Delete",
+  },
+  closedDates: {
+    title: "Closed Dates",
+    listDescription: "{count} closed date{plural} on the calendar.",
+    newClosedDate: "New closed date",
+    date: "Date",
+    branch: "Branch",
+    allBranches: "All branches",
+    reason: "Reason",
+    reasonPlaceholder: "e.g. Public holiday, maintenance",
+    createClosedDate: "Add closed date",
+    noClosedDates: "No closed dates yet.",
+    delete: "Delete",
   },
   checkIn: {
     title: "Check-In",
@@ -1533,6 +1595,8 @@ const ar: Dict = {
     employees: "الموظفون",
     membershipPlans: "خطط الاشتراك",
     lockers: "الخزائن",
+    announcements: "الإعلانات",
+    closedDates: "أيام الإغلاق",
     members: "الأعضاء",
     checkIn: "تسجيل الدخول",
     visits: "الزيارات",
@@ -1835,6 +1899,35 @@ const ar: Dict = {
     rentalHistory: "سجل الإيجار",
     noRentalsYet: "لا توجد إيجارات خزائن بعد.",
     rentedBy: "مستأجرة من قبل",
+  },
+  announcements: {
+    title: "الإعلانات",
+    listDescription: "{count} إعلان تم إرساله للأعضاء.",
+    newAnnouncement: "إعلان جديد",
+    newAnnouncementDescription: "أرسل رسالة عامة لجميع الأعضاء الذين لديهم تطبيق الجوال، أو لفرع واحد فقط.",
+    announcementTitle: "العنوان",
+    titlePlaceholder: "مثال: حصة يوغا جديدة تبدأ الثلاثاء",
+    body: "الرسالة",
+    bodyPlaceholder: "اكتب الإعلان الذي سيراه الأعضاء...",
+    branch: "الفرع",
+    allBranches: "جميع الفروع",
+    sendAnnouncement: "إرسال الإعلان",
+    noAnnouncements: "لم يتم إرسال أي إعلانات بعد.",
+    pushSentCount: "أُرسل إلى {count} جهاز",
+    delete: "حذف",
+  },
+  closedDates: {
+    title: "أيام الإغلاق",
+    listDescription: "{count} يوم إغلاق في التقويم.",
+    newClosedDate: "إضافة يوم إغلاق",
+    date: "التاريخ",
+    branch: "الفرع",
+    allBranches: "جميع الفروع",
+    reason: "السبب",
+    reasonPlaceholder: "مثال: عطلة رسمية، صيانة",
+    createClosedDate: "إضافة يوم إغلاق",
+    noClosedDates: "لا توجد أيام إغلاق بعد.",
+    delete: "حذف",
   },
   checkIn: {
     title: "تسجيل الدخول",
@@ -2292,6 +2385,8 @@ const he: Dict = {
     employees: "עובדים",
     membershipPlans: "תוכניות מנוי",
     lockers: "לוקרים",
+    announcements: "הודעות",
+    closedDates: "ימי סגירה",
     members: "חברים",
     checkIn: "כניסה",
     visits: "ביקורים",
@@ -2594,6 +2689,35 @@ const he: Dict = {
     rentalHistory: "היסטוריית השכרות",
     noRentalsYet: "עדיין אין השכרות לוקרים.",
     rentedBy: "מושכר על ידי",
+  },
+  announcements: {
+    title: "הודעות",
+    listDescription: "{count} הודעות נשלחו לחברים.",
+    newAnnouncement: "הודעה חדשה",
+    newAnnouncementDescription: "שלח הודעה כללית לכל החברים עם אפליקציית הנייד, או לסניף אחד בלבד.",
+    announcementTitle: "כותרת",
+    titlePlaceholder: "לדוגמה: שיעור יוגה חדש מתחיל ביום שלישי",
+    body: "הודעה",
+    bodyPlaceholder: "כתוב את ההודעה שהחברים יראו...",
+    branch: "סניף",
+    allBranches: "כל הסניפים",
+    sendAnnouncement: "שלח הודעה",
+    noAnnouncements: "עדיין לא נשלחו הודעות.",
+    pushSentCount: "נשלח ל-{count} מכשירים",
+    delete: "מחק",
+  },
+  closedDates: {
+    title: "ימי סגירה",
+    listDescription: "{count} ימי סגירה ביומן.",
+    newClosedDate: "הוסף יום סגירה",
+    date: "תאריך",
+    branch: "סניף",
+    allBranches: "כל הסניפים",
+    reason: "סיבה",
+    reasonPlaceholder: "לדוגמה: חג ציבורי, תחזוקה",
+    createClosedDate: "הוסף יום סגירה",
+    noClosedDates: "עדיין אין ימי סגירה.",
+    delete: "מחק",
   },
   checkIn: {
     title: "כניסה",
