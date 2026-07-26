@@ -16,7 +16,7 @@ Current Status Snapshot (refreshed 2026-07-23)
 * Phase 2 status: Mostly built — Training Programs, Classes & Coaches, and Lockers all built, deployed, and live in production (schema, backend, frontend); Employee attendance not started
 * Phase 3 status: Not Started
 * Phase 4 status: Partial — QR-based access control, BAS-IP device sync, gate open, and multi-gate ("Smart Gates": gender restriction, per-gate assignment) are live in production. RFID/fingerprint/face recognition were superseded by QR for this customer and are not built.
-* Phase 5 status: Started — member-facing auth backend (PIN sign-in, bearer sessions, `/me`, `/me/qrcode`, `/me/memberships`) is built and **live in production** (`/me/memberships` shipped 2026-07-26, verified against the real API). Phase 2 of the mobile roadmap (Announcements, Closed Dates, push device-token storage) is also built — schema, backend, staff web UI — but only verified in local dev so far, **not yet deployed to production**; real FCM push delivery is stubbed with a log-only stand-in pending a Firebase project. A dedicated test member (`MEM-0013`) and full "Getting Started" credentials exist in `gym_mobile_roadmap.md` so the doc alone is enough to hand to an external Android developer. No native Android/Flutter app exists yet — only the API contract it will consume.
+* Phase 5 status: Started — member-facing auth backend (PIN sign-in, bearer sessions, `/me`, `/me/qrcode`, `/me/memberships`) and the Phase 2 mobile backend (Announcements, Closed Dates, push device-token storage) are all built and **live in production** (verified 2026-07-26 against the real API). Real FCM push delivery is stubbed with a log-only stand-in pending a Firebase project from the owner. A dedicated test member (`MEM-0013`) and full "Getting Started" credentials exist in `gym_mobile_roadmap.md` so the doc alone is enough to hand to an external Android developer. No native Android/Flutter app exists yet — only the API contract it will consume.
 * Phase 6-7 status: Not Started
 
 Current completed work
@@ -54,12 +54,12 @@ Current completed work
 * Member-facing auth backend built for the mobile app (Phase 5 groundwork): PIN sign-in, Redis-backed bearer sessions, `/me` and `/me/qrcode` — see `gym_mobile_roadmap.md`. Not yet deployed to production.
 * Broad UI refresh across dashboard, branches, members, employees, membership-plans, training-programs, and sign-in pages, plus a members/employees/users list-page refactor into shared, reusable list components (2026-07-21 to 2026-07-23, commits `a5c874e`/`242eaee`).
 * `GET /me/memberships` shipped and deployed to production (2026-07-26), unblocking the mobile Home screen; a dedicated `MEM-0013` test member with full "Getting Started" credentials added to `gym_mobile_roadmap.md`.
-* Phase 2 of the mobile roadmap built (2026-07-26, local-dev-verified, not yet deployed): `Announcement` and `ClosedDate` models (both tenant-wide-or-single-branch), `MemberDeviceToken` storage, staff web UI (`/app/announcements`, `/app/closed-dates`), and `/me/announcements`/`/me/closed-dates`/`/me/device-token` for the mobile app. Push delivery itself is a log-only stand-in pending a real Firebase project.
+* Phase 2 of the mobile roadmap built and deployed to production (2026-07-26): `Announcement` and `ClosedDate` models (both tenant-wide-or-single-branch), `MemberDeviceToken` storage, staff web UI (`/app/announcements`, `/app/closed-dates`), and `/me/announcements`/`/me/closed-dates`/`/me/device-token` for the mobile app. Push delivery itself is a log-only stand-in pending a real Firebase project.
 
 Current next focus
 
-* **Deploy the 2026-07-26 Phase-2 mobile backend work** (Announcements/Closed Dates/push device tokens) to production — built and local-dev-verified, pending backup + migration + redeploy.
-* **Phase 5 — Mobile app**: backend contract (Phase 0 + Phase 2) is built; next is the actual Android/Flutter client (see `gym_mobile_roadmap.md` for the recommended stack and API reference).
+* **Phase 5 — Mobile app**: backend contract (Phase 0 + Phase 2) is built, deployed, and verified live; next is the actual Android/Flutter client (see `gym_mobile_roadmap.md` for the recommended stack, API reference, and "Getting Started" test credentials).
+* **Real FCM push delivery**: needs a Firebase project from the owner before `FcmNotificationProvider` can be upgraded from its log-only stand-in — see `gym_mobile_roadmap.md`'s "Push Notifications — Current State".
 * **RFID/fingerprint/face recognition**: deliberately not pursued — this customer's hardware uses QR, which is already live. Revisit only if a future customer specifically needs card/biometric access.
 
 ---
