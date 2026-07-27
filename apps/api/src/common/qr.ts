@@ -27,6 +27,27 @@ export function memberIdToUuid(memberId: string): string {
 }
 
 /**
+ * Same transform as memberIdToUuid, for Employee IDs ("employee-<uuid>" or
+ * seeded "employee-001"). Kept as a separate function (rather than a shared
+ * generic one) so each call site reads unambiguously about which entity's
+ * QR/gate identifier it's handling.
+ */
+export function employeeIdToUuid(employeeId: string): string {
+  const stripped = employeeId.startsWith('employee-')
+    ? employeeId.slice(9)
+    : employeeId;
+  if (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      stripped,
+    )
+  ) {
+    return stripped;
+  }
+  const hex = stripped.replace(/[^0-9a-f]/gi, '').padStart(12, '0').slice(0, 12);
+  return `00000000-0000-0000-0000-${hex}`;
+}
+
+/**
  * Returns a 32-char hex HMAC-SHA256 signature for the given memberId.
  * Used to generate and verify token-authenticated public QR download URLs.
  * Secret is taken from QR_SECRET env var, falling back to DEVICE_TOKEN.
@@ -45,4 +66,14 @@ export function makeQrPublicUrl(memberId: string): string {
   const domain = process.env.PUBLIC_DOMAIN ?? 'gym.sparkco.vip';
   const sig = generateQrSig(memberId);
   return `https://${domain}/api/members/${encodeURIComponent(memberId)}/qrcode/public?sig=${sig}`;
+}
+
+/**
+ * Builds the publicly-accessible QR code download URL for an employee.
+ * generateQrSig is generic over any ID string, so it's reused as-is here.
+ */
+export function makeEmployeeQrPublicUrl(employeeId: string): string {
+  const domain = process.env.PUBLIC_DOMAIN ?? 'gym.sparkco.vip';
+  const sig = generateQrSig(employeeId);
+  return `https://${domain}/api/employee-attendance/${encodeURIComponent(employeeId)}/qrcode/public?sig=${sig}`;
 }

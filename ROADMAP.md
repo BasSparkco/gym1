@@ -8,12 +8,12 @@ Development Standard
 
 * pnpm is the default package manager for project setup, dependency installation, and workspace scripts.
 
-Current Status Snapshot (refreshed 2026-07-23)
+Current Status Snapshot (refreshed 2026-07-28)
 
-* Overall status: MVP (Phase 0-1) complete and in production; Phase 2 (Operations) mostly built; Phase 4 (Access) partially delivered via QR/BAS-IP instead of RFID; Phase 5 (Mobile) backend groundwork started.
+* Overall status: MVP (Phase 0-1) complete and in production; Phase 2 (Operations) fully built; Phase 4 (Access) partially delivered via QR/BAS-IP instead of RFID; Phase 5 (Mobile) backend groundwork started.
 * Phase 0 status: Done
 * Phase 1 status: Done (pilot-ready MVP live in production; only Push notifications from the original MVP notification list remain unbuilt — SMS/WhatsApp/Email are live)
-* Phase 2 status: Mostly built — Training Programs, Classes & Coaches, and Lockers all built, deployed, and live in production (schema, backend, frontend); Employee attendance not started
+* Phase 2 status: Fully built — Training Programs, Classes & Coaches, Lockers, and Employee Attendance all built, deployed, and live in production (schema, backend, frontend)
 * Phase 3 status: Not Started
 * Phase 4 status: Partial — QR-based access control, BAS-IP device sync, gate open, and multi-gate ("Smart Gates": gender restriction, per-gate assignment) are live in production. RFID/fingerprint/face recognition were superseded by QR for this customer and are not built.
 * Phase 5 status: Started — member-facing auth backend (PIN sign-in, bearer sessions, `/me`, `/me/qrcode`, `/me/memberships`) and the Phase 2 mobile backend (Announcements, Closed Dates, push device-token storage) are all built and **live in production** (verified 2026-07-26 against the real API). Real FCM push delivery is stubbed with a log-only stand-in pending a Firebase project from the owner. A dedicated test member (`MEM-0013`) and full "Getting Started" credentials exist in `gym_mobile_roadmap.md` so the doc alone is enough to hand to an external Android developer. No native Android/Flutter app exists yet — only the API contract it will consume.
@@ -55,6 +55,7 @@ Current completed work
 * Broad UI refresh across dashboard, branches, members, employees, membership-plans, training-programs, and sign-in pages, plus a members/employees/users list-page refactor into shared, reusable list components (2026-07-21 to 2026-07-23, commits `a5c874e`/`242eaee`).
 * `GET /me/memberships` shipped and deployed to production (2026-07-26), unblocking the mobile Home screen; a dedicated `MEM-0013` test member with full "Getting Started" credentials added to `gym_mobile_roadmap.md`.
 * Phase 2 of the mobile roadmap built and deployed to production (2026-07-26): `Announcement` and `ClosedDate` models (both tenant-wide-or-single-branch), `MemberDeviceToken` storage, staff web UI (`/app/announcements`, `/app/closed-dates`), and `/me/announcements`/`/me/closed-dates`/`/me/device-token` for the mobile app. Push delivery itself is a log-only stand-in pending a real Firebase project.
+* Employee Attendance (Phase 2) shipped and deployed to production (2026-07-28), closing out Phase 2: each employee gets a QR code that opens gates directly via BAS-IP (same identifier-resolution path as members — `AccessService` now tries a Member first, then an Employee), per-employee gate restriction (`Employee.allowAllGates` + the previously-unused `EmployeeGate` join table, now wired up), check-in/check-out tracking (`EmployeeVisit`, kept separate from the member `Visit` table), manual staff check-in at `/app/employee-check-in`, and an attendance report at `/app/employees/attendance-report` (days present, total hours worked).
 
 Current next focus
 
@@ -162,11 +163,11 @@ Deliverables
 
 Status
 
-* Started — Training Programs & Classes design finalized, implementation in progress. See [docs/Training Programs & Classes Design.md](docs/Training%20Programs%20%26%20Classes%20Design.md) for the full architecture.
+* Done — Training Programs & Classes, Lockers, and Employee Attendance all built and deployed. See [docs/Training Programs & Classes Design.md](docs/Training%20Programs%20%26%20Classes%20Design.md) for the Training Programs architecture.
 
 Modules
 
-### Training Programs, Classes & Coaches
+### Training Programs, Classes & Coaches — Done
 
 * `TrainingProgram` — the activity/discipline (tenant-scoped, optionally branch-specific).
 * `CoachProfile` — 1:1 extension of the existing `Employee` model (specializations, certifications) rather than a duplicate person entity.
@@ -174,12 +175,12 @@ Modules
 * `ClassBooking` — member enrollment/waitlist/attendance per session, transaction-safe capacity handling, entitlement check against `MembershipPlan.allowAllPrograms` / `MembershipPlanProgram`.
 * Class scheduling, capacity management, reservations, waiting lists, attendance (reuses the existing `Visit` model rather than a second tracking pipeline).
 
-### Employee Management
+### Employee Management — Done
 
 * Employee profiles
-* Attendance
+* Attendance — `EmployeeVisit` check-in/check-out (manual at `/app/employee-check-in` or automatic via QR scan at a gate), per-employee QR code, per-employee gate restriction (`Employee.allowAllGates` + `EmployeeGate`), attendance report with days-present/total-hours at `/app/employees/attendance-report`. Deployed 2026-07-28.
 
-### Lockers
+### Lockers — Done
 
 * Locker rental
 * Rental tracking

@@ -185,6 +185,7 @@ model Branch {
   employees        Employee[]
   gates            Gate[]
   visits           Visit[]
+  employeeVisits   EmployeeVisit[]
   membersAtHome    Member[]          @relation("MemberHomeBranch")
   payments         Payment[]
   trainingPrograms TrainingProgram[]
@@ -215,8 +216,15 @@ model Employee {
   startDate      DateTime?      @db.Date
   endDate        DateTime?      @db.Date
   isUser         Boolean        @default(false)
+  // Whether this employee's QR code opens every gate at their branch
+  // (default) or only the gates explicitly listed in `gates` below —
+  // mirrors MembershipPlan.allowAllBranches/allowAllPrograms: most
+  // employees need no restriction, so the exception list only matters
+  // once this is flipped false for a specific employee.
+  allowAllGates  Boolean        @default(true)
 
   gates              EmployeeGate[]
+  employeeVisits     EmployeeVisit[]
   registeredMembers  Member[]          @relation("MemberRegisteredEmployee")
   coachProfile       CoachProfile?
   defaultForPrograms TrainingProgram[]
@@ -251,12 +259,15 @@ model Gate {
   lockNumber        Int
   enabled           Boolean @default(true)
 
-  employees EmployeeGate[]
-  visits    Visit[]
+  employees      EmployeeGate[]
+  visits         Visit[]
+  employeeVisits EmployeeVisit[]
 
   @@index([branchId])
 }
 
+// Exception list of gates an employee's QR may open, used only when
+// Employee.allowAllGates is false (mirrors MembershipPlanProgram).
 model EmployeeGate {
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -264,6 +275,25 @@ model EmployeeGate {
   gate       Gate     @relation(fields: [gateId], references: [id], onDelete: Cascade)
 
   @@id([employeeId, gateId])
+}
+
+// Staff check-in/check-out, kept separate from Visit (which requires a
+// Member) rather than loosening Visit.memberId's required FK.
+model EmployeeVisit {
+  id           String       @id
+  employeeId   String
+  employee     Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  branchId     String
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  checkInTime  DateTime
+  checkOutTime DateTime?
+  accessMethod AccessMethod
+  gateId       String?
+  gate         Gate?        @relation(fields: [gateId], references: [id], onDelete: SetNull)
+
+  @@index([employeeId])
+  @@index([branchId, checkInTime])
+  @@index([employeeId, branchId, checkOutTime])
 }
 
 // ── Members / Memberships ────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { memberIdToUuid } from '../../common/qr';
+import { employeeIdToUuid, memberIdToUuid } from '../../common/qr';
 import type { GateRecord } from '../../data/operations-seed';
 
 type DeviceConfig = {
@@ -132,6 +132,79 @@ export class BasIpSyncService {
     } catch (err) {
       this.logger.warn(
         `BAS-IP QR push failed for member ${memberId}: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Push (create or update) a QR identifier for an employee on the given
+   * gate device. Called whenever an employee is created or their gate
+   * assignment changes. Unlike a member's QR (which expires with their
+   * membership), an employee's QR is permanent — it's revoked by
+   * deactivating the employee or changing their gate assignment, not by a
+   * validity window.
+   *
+   * Returns the device's internal identifier uid on success, or null on
+   * failure / device unreachable.
+   */
+  async pushEmployeeQrIdentifier(
+    employeeId: string,
+    employeeName: string,
+    gate?: GateRecord,
+  ): Promise<number | null> {
+    const config = gate ? this.configFromGate(gate) : this.envConfig();
+    if (!config) return null;
+
+    const token = await this.authenticate(config);
+    if (!token) return null;
+
+    const linkId = employeeIdToUuid(employeeId);
+
+    const body = {
+      list_items: [
+        {
+          identifier_owner: { name: employeeName, type: 'owner' },
+          identifier_type: 'qr',
+          identifier_number: linkId,
+          lock: 'first',
+          valid: {
+            time: { is_permanent: true },
+            passes: { is_permanent: true },
+          },
+          link_id: linkId,
+          apartment_link_id: linkId,
+        },
+      ],
+    };
+
+    try {
+      const res = await fetch(
+        `${config.deviceUrl}/api/v1/access/identifier/items/link`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (!res.ok) {
+        this.logger.warn(
+          `BAS-IP QR push failed for employee ${employeeId}: HTTP ${res.status}`,
+        );
+        return null;
+      }
+
+      const uid = await this.lookupUidByLinkId(linkId, token, config);
+      this.logger.log(`Synced QR identifier for employee ${employeeId}`);
+      return uid;
+    } catch (err) {
+      this.logger.warn(
+        `BAS-IP QR push failed for employee ${employeeId}: ${(err as Error).message}`,
       );
       return null;
     }

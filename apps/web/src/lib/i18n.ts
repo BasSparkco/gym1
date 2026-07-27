@@ -19,6 +19,8 @@ export type Dict = {
     closedDates: string;
     members: string;
     checkIn: string;
+    employeeCheckIn: string;
+    attendanceReport: string;
     visits: string;
     notifications: string;
     reports: string;
@@ -495,6 +497,36 @@ export type Dict = {
     isUser: string;
     isCoach: string;
   };
+  attendance: {
+    checkInTitle: string;
+    checkInDescription: string;
+    employeeNumber: string;
+    checkInButton: string;
+    checkOutButton: string;
+    accessGranted: string;
+    accessDenied: string;
+    qrCode: string;
+    qrCodeDescription: string;
+    downloadQrCode: string;
+    printQrCode: string;
+    gateAccess: string;
+    allGates: string;
+    selectedGatesOnly: string;
+    noGatesYet: string;
+    recentAttendance: string;
+    noRecentAttendance: string;
+    checkInTime: string;
+    checkOutTime: string;
+    stillCheckedIn: string;
+    reportTitle: string;
+    reportDescription: string;
+    dateFrom: string;
+    dateTo: string;
+    filter: string;
+    totalHours: string;
+    daysPresent: string;
+    noAttendanceData: string;
+  };
   notifications: {
     title: string;
     listDescription: string;
@@ -809,6 +841,8 @@ const en: Dict = {
     closedDates: "Closed Dates",
     members: "Members",
     checkIn: "Check-In",
+    employeeCheckIn: "Staff Check-In",
+    attendanceReport: "Attendance Report",
     visits: "Visits",
     notifications: "Notifications",
     reports: "Reports",
@@ -1285,6 +1319,36 @@ const en: Dict = {
     isUser: "Has system user account",
     isCoach: "This employee is a coach (can be booked for classes)",
   },
+  attendance: {
+    checkInTitle: "Staff Check-In",
+    checkInDescription: "Check an employee in or out for their shift.",
+    employeeNumber: "Employee no.",
+    checkInButton: "Check in",
+    checkOutButton: "Check out",
+    accessGranted: "Checked in",
+    accessDenied: "Not checked in",
+    qrCode: "QR Code",
+    qrCodeDescription: "Scan this code at the gate to check in and open the gate automatically.",
+    downloadQrCode: "Download",
+    printQrCode: "Print",
+    gateAccess: "Gate Access",
+    allGates: "All gates at this branch",
+    selectedGatesOnly: "Selected gates only",
+    noGatesYet: "No gates configured for this branch yet.",
+    recentAttendance: "Recent attendance",
+    noRecentAttendance: "No check-ins recorded yet.",
+    checkInTime: "Check-in",
+    checkOutTime: "Check-out",
+    stillCheckedIn: "Still checked in",
+    reportTitle: "Attendance Report",
+    reportDescription: "Check-in/out history and hours worked per employee.",
+    dateFrom: "From",
+    dateTo: "To",
+    filter: "Filter",
+    totalHours: "Total hours",
+    daysPresent: "Days present",
+    noAttendanceData: "No attendance recorded for this period.",
+  },
   notifications: {
     title: "Notifications",
     listDescription: "{count} notification{plural} in history.",
@@ -1599,6 +1663,8 @@ const ar: Dict = {
     closedDates: "أيام الإغلاق",
     members: "الأعضاء",
     checkIn: "تسجيل الدخول",
+    employeeCheckIn: "تسجيل حضور الموظفين",
+    attendanceReport: "تقرير الحضور",
     visits: "الزيارات",
     notifications: "الإشعارات",
     reports: "التقارير",
@@ -2075,6 +2141,36 @@ const ar: Dict = {
     isUser: "لديه حساب مستخدم في النظام",
     isCoach: "هذا الموظف مدرب (يمكن حجزه للحصص)",
   },
+  attendance: {
+    checkInTitle: "تسجيل حضور الموظفين",
+    checkInDescription: "سجّل دخول أو خروج الموظف لبدء أو إنهاء دوامه.",
+    employeeNumber: "رقم الموظف",
+    checkInButton: "تسجيل دخول",
+    checkOutButton: "تسجيل خروج",
+    accessGranted: "تم تسجيل الدخول",
+    accessDenied: "لم يتم تسجيل الدخول",
+    qrCode: "رمز QR",
+    qrCodeDescription: "امسح هذا الرمز عند البوابة لتسجيل الدخول وفتح البوابة تلقائياً.",
+    downloadQrCode: "تنزيل",
+    printQrCode: "طباعة",
+    gateAccess: "صلاحية البوابات",
+    allGates: "كل بوابات هذا الفرع",
+    selectedGatesOnly: "بوابات محددة فقط",
+    noGatesYet: "لا توجد بوابات مُعدّة لهذا الفرع بعد.",
+    recentAttendance: "الحضور الأخير",
+    noRecentAttendance: "لا يوجد سجل حضور بعد.",
+    checkInTime: "الدخول",
+    checkOutTime: "الخروج",
+    stillCheckedIn: "لا يزال داخل النادي",
+    reportTitle: "تقرير الحضور",
+    reportDescription: "سجل الدخول/الخروج وساعات العمل لكل موظف.",
+    dateFrom: "من",
+    dateTo: "إلى",
+    filter: "تصفية",
+    totalHours: "إجمالي الساعات",
+    daysPresent: "أيام الحضور",
+    noAttendanceData: "لا يوجد سجل حضور لهذه الفترة.",
+  },
   notifications: {
     title: "الإشعارات",
     listDescription: "{count} إشعار في السجل.",
@@ -2389,6 +2485,8 @@ const he: Dict = {
     closedDates: "ימי סגירה",
     members: "חברים",
     checkIn: "כניסה",
+    employeeCheckIn: "נוכחות עובדים",
+    attendanceReport: "דוח נוכחות",
     visits: "ביקורים",
     notifications: "התראות",
     reports: "דוחות",
@@ -2864,6 +2962,36 @@ const he: Dict = {
     endDate: "תאריך סיום עבודה",
     isUser: "בעל חשבון משתמש במערכת",
     isCoach: "עובד זה הוא מאמן (ניתן לשבץ אותו לשיעורים)",
+  },
+  attendance: {
+    checkInTitle: "נוכחות עובדים",
+    checkInDescription: "רשום כניסה או יציאה של עובד למשמרת.",
+    employeeNumber: "מספר עובד",
+    checkInButton: "רישום כניסה",
+    checkOutButton: "רישום יציאה",
+    accessGranted: "נרשמה כניסה",
+    accessDenied: "הכניסה לא נרשמה",
+    qrCode: "קוד QR",
+    qrCodeDescription: "סרוק קוד זה בשער כדי לרשום כניסה ולפתוח את השער אוטומטית.",
+    downloadQrCode: "הורדה",
+    printQrCode: "הדפסה",
+    gateAccess: "גישה לשערים",
+    allGates: "כל השערים בסניף זה",
+    selectedGatesOnly: "שערים נבחרים בלבד",
+    noGatesYet: "טרם הוגדרו שערים לסניף זה.",
+    recentAttendance: "נוכחות אחרונה",
+    noRecentAttendance: "טרם נרשמה נוכחות.",
+    checkInTime: "כניסה",
+    checkOutTime: "יציאה",
+    stillCheckedIn: "עדיין בפנים",
+    reportTitle: "דוח נוכחות",
+    reportDescription: "היסטוריית כניסה/יציאה ושעות עבודה לכל עובד.",
+    dateFrom: "מתאריך",
+    dateTo: "עד תאריך",
+    filter: "סינון",
+    totalHours: "סה\"כ שעות",
+    daysPresent: "ימי נוכחות",
+    noAttendanceData: "לא נרשמה נוכחות לתקופה זו.",
   },
   notifications: {
     title: "התראות",

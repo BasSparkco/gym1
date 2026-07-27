@@ -9,6 +9,7 @@ import { BranchesModule } from './modules/branches/branches.module';
 import { ClosedDatesModule } from './modules/closed-dates/closed-dates.module';
 import { ClassBookingsModule } from './modules/class-bookings/class-bookings.module';
 import { ClassSessionsModule } from './modules/class-sessions/class-sessions.module';
+import { EmployeeAttendanceModule } from './modules/employee-attendance/employee-attendance.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { GatesModule } from './modules/gates/gates.module';
 import { LockersModule } from './modules/lockers/lockers.module';
@@ -54,6 +55,7 @@ import { RedisModule } from './redis/redis.module';
     LockersModule,
     AnnouncementsModule,
     ClosedDatesModule,
+    EmployeeAttendanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

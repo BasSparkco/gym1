@@ -5,6 +5,29 @@ Add the newest update at the top so the latest status is always visible first.
 
 ---
 
+## 2026-07-28 (Employee Attendance — QR Check-In/Out, Per-Gate Access, Attendance Report — Closes Phase 2)
+
+Completed
+
+* **Trigger**: `ROADMAP.md` Phase 2 ("Employee Management: Employee profiles, Attendance") had profiles but no attendance — the owner asked to build it, with three concrete requirements: a QR code per employee, check-in/check-out ("login"/"logout") tracking, and the ability to restrict which gates a given employee's QR can open. Entered plan mode first given the scope (schema change, extending the shared `AccessService`/BAS-IP flow, a security-relevant default to confirm with the owner); plan approved before writing code.
+* **Found `EmployeeGate` (an `Employee`↔`Gate` join table) already existed in the Prisma schema but was completely dead** — zero references anywhere outside the Prisma-generated client. This feature is what finally wires it up.
+* **Design decision (confirmed with the owner)**: an employee with no explicit gate assignment defaults to *all* gates at their home branch (`Employee.allowAllGates`, `@default(true)`) — the same opt-out convention already used for `allowAllBranches`/`allowAllPrograms` — rather than deny-all-until-assigned, which would have required a one-time setup pass for every existing employee.
+* **Schema** (migration `20260727212451_add_employee_attendance`): `Employee.allowAllGates`; new `EmployeeVisit` model (check-in/out, access method, gate) — kept as its own table rather than loosening `Visit.memberId`'s required FK, same reasoning already used for keeping `LockerRental`/`ProgramEnrollment` out of the `Payment` ledger.
+* **`AccessService.checkAccess`** (`apps/api/src/modules/access/access.service.ts`) now resolves a `Member` first, then falls back to an `Employee` on the same UUID-derived identifier space — one physical BAS-IP gate device serves both member and employee QR codes without needing to know which kind of person it just scanned. Split into `checkMemberAccess`/`checkEmployeeAccess`; the employee path enforces the new gate allow-list instead of the member path's gender restriction.
+* **New backend module** `apps/api/src/modules/employee-attendance/`: check-in/check-out, gate-assignment CRUD, QR code generation (session-protected + HMAC-signed public variant, mirroring the existing member QR endpoints), and an attendance report (`GET attendance-report?dateFrom&dateTo`, days-present/total-hours per employee, grouping same-day multi-session check-ins).
+* **`BasIpSyncService.pushEmployeeQrIdentifier`** added (`apps/api/src/modules/access/bas-ip-sync.service.ts`) — pushes an employee's QR identifier to the gate device with a *permanent* validity window, unlike a member's QR which expires with their membership.
+* **Frontend**: new "Gate Access" + QR-code + recent-attendance sections on the employee profile page (`employee-profile-view.tsx`, gate checkbox-grid mirrors the existing membership-plan "entitled programs" picker); `/app/employees/[employeeId]/qr`; `/app/employee-check-in` (manual staff check-in, plain identifier input — deliberately simpler than the member check-in page's searchable combobox); `/app/employees/attendance-report` (date-range filter, days-present/total-hours, per-day detail via a native `<details>` disclosure). Full en/ar/he i18n.
+* **Verified before deploying**: `tsc --noEmit` and production `next build` clean on both apps. Full curl round-trip against local dev Postgres: gate restriction correctly denies access at a non-assigned gate and grants it at an assigned one (or any gate when `allowAllGates`), double check-in rejected, check-out works, invalid gate IDs rejected with 400, session-protected and HMAC-signed public QR endpoints both work, attendance report totals correct across a check-in/check-out pair. e2e suite: 38/40 passing — the 2 failures are pre-existing and unrelated (a Training-Programs class-booking test hardcodes a session date, `2026-07-16`, now in the past; confirmed by reading the test, not caused by this work — see `[[project_ops_baseline]]`, now updated to reflect this).
+* **Deployed to production** (2026-07-28 ~00:06 UTC): fresh backup first (`gym_db_20260728_000029.sql.gz` + MinIO archive), both images built clean via `docker compose -p gym -f docker-compose.prod.yml build api web`, `up -d --no-deps api web` — the API's `prisma migrate deploy && node dist/main` boot command applied `20260727212451_add_employee_attendance` automatically (additive only: one new column, one new table). **Verified live**: boot log shows the migration applying cleanly and `EmployeeAttendanceController`'s routes all mapped; `\d "EmployeeVisit"` confirms the table and its FKs exist in the real production database; `GET https://gym.sparkco.vip/api` → 200; `GET /api/employee-attendance/visits` and `/attendance-report` → 401 (routes live, auth required, not 404); `GET /app/employee-check-in` and `/app/employees/attendance-report` → 307 to sign-in (expected, unauthenticated). Both containers healthy.
+
+Next
+
+* No further action needed for this feature — it's live and deployed. Phase 2 is now fully built per `ROADMAP.md`.
+* No real owner sign-in or live gate-restriction/check-in data was created against production beyond the health/route checks above, deliberately, to avoid writing test data into the real tenant.
+* Remaining project-wide next steps unchanged from the 2026-07-27 project review: Phase 3 (Commerce/POS/Inventory/Financials/HR) and the Payment-gateway/Public-API pieces of Phase 4 are the two open-ended, unscoped items — worth a design-doc pass before starting either, same as every other Phase 2 feature got.
+
+---
+
 ## 2026-07-26 (Phase 2 Backend — Announcements, Closed Dates, Push Device Tokens)
 
 Completed

@@ -1,7 +1,13 @@
 "use server";
 
-import { updateEmployee, upsertCoachProfile, removeCoachProfile } from "@/lib/employees";
+import { updateEmployee, upsertCoachProfile, removeCoachProfile, getCoachProfile } from "@/lib/employees";
+import { setEmployeeGates } from "@/lib/employee-attendance";
 import { revalidatePath } from "next/cache";
+
+function revalidateEmployee(employeeId: string) {
+  revalidatePath("/app/employees");
+  revalidatePath(`/app/employees/${employeeId}`);
+}
 
 export async function updateEmployeeAction(formData: FormData) {
   const employeeId = formData.get("employeeId") as string;
@@ -32,11 +38,21 @@ export async function updateEmployeeAction(formData: FormData) {
       .map((s) => s.trim())
       .filter(Boolean);
     await upsertCoachProfile(employeeId, { specializations, certifications });
-  } else {
+  } else if (await getCoachProfile(employeeId)) {
     await removeCoachProfile(employeeId);
   }
 
-  revalidatePath("/app/employees");
+  revalidateEmployee(employeeId);
+}
+
+export async function setEmployeeGatesAction(formData: FormData) {
+  const employeeId = formData.get("employeeId") as string;
+  const allowAllGates = formData.get("allowAllGates") === "true";
+  await setEmployeeGates(employeeId, {
+    allowAllGates,
+    gateIds: allowAllGates ? [] : formData.getAll("gateIds").map(String),
+  });
+  revalidateEmployee(employeeId);
 }
 
 export async function toggleEmployeeStatusAction(formData: FormData) {
@@ -45,5 +61,5 @@ export async function toggleEmployeeStatusAction(formData: FormData) {
   await updateEmployee(employeeId, {
     status: currentStatus === "active" ? "inactive" : "active",
   });
-  revalidatePath("/app/employees");
+  revalidateEmployee(employeeId);
 }

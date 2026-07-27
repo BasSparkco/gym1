@@ -9,6 +9,7 @@ import {
   Bell,
   Building2,
   CalendarCheck,
+  CalendarClock,
   CalendarOff,
   CreditCard,
   DoorOpen,
@@ -19,6 +20,7 @@ import {
   Megaphone,
   Settings,
   ShieldCheck,
+  UserCheck,
   Users,
   UsersRound,
 } from "lucide-react";
@@ -79,6 +81,13 @@ const navigationItems: NavigationItem[] = [
     group: "groupOperations",
   },
   {
+    labelKey: "employeeCheckIn",
+    href: "/app/employee-check-in",
+    icon: UserCheck,
+    roles: ["owner", "manager", "front-desk"],
+    group: "groupOperations",
+  },
+  {
     labelKey: "visits",
     href: "/app/visits",
     icon: History,
@@ -131,6 +140,13 @@ const navigationItems: NavigationItem[] = [
     labelKey: "reports",
     href: "/app/reports",
     icon: BarChart3,
+    roles: ["owner", "manager"],
+    group: "groupInsights",
+  },
+  {
+    labelKey: "attendanceReport",
+    href: "/app/employees/attendance-report",
+    icon: CalendarClock,
     roles: ["owner", "manager"],
     group: "groupInsights",
   },
