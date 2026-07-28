@@ -5,10 +5,16 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
-import { updateEmployeeAction, toggleEmployeeStatusAction } from "@/app/app/employees/actions";
+import {
+  updateEmployeeAction,
+  toggleEmployeeStatusAction,
+  setEmployeeGatesAction,
+} from "@/app/app/employees/actions";
 import { EmployeeProfileView } from "@/components/employees/employee-profile-view";
 import type { Employee, CoachProfile } from "@/lib/employees";
 import type { Branch } from "@/lib/branches";
+import type { Gate } from "@/lib/gates";
+import type { EmployeeGateAccess, EmployeeVisit } from "@/lib/employee-attendance";
 import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
 import { UserRound, PencilLine } from "lucide-react";
@@ -18,11 +24,24 @@ type Props = {
   branches: Branch[];
   branchMap: Record<string, string>;
   coachProfilesByEmployee: Record<string, CoachProfile | null>;
+  allGates: Gate[];
+  gateAccessByEmployee: Record<string, EmployeeGateAccess>;
+  recentVisitsByEmployee: Record<string, EmployeeVisit[]>;
   dateFormat: DateFormat;
   t: Dict;
 };
 
-export function EmployeeList({ employees, branches, branchMap, coachProfilesByEmployee, dateFormat, t }: Props) {
+export function EmployeeList({
+  employees,
+  branches,
+  branchMap,
+  coachProfilesByEmployee,
+  allGates,
+  gateAccessByEmployee,
+  recentVisitsByEmployee,
+  dateFormat,
+  t,
+}: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
@@ -93,6 +112,10 @@ export function EmployeeList({ employees, branches, branchMap, coachProfilesByEm
                   t={t}
                   updateAction={updateEmployeeAction}
                   toggleStatusAction={toggleEmployeeStatusAction}
+                  gates={allGates.filter((g) => g.branchId === emp.branchId)}
+                  gateAccess={gateAccessByEmployee[emp.id]}
+                  setGatesAction={setEmployeeGatesAction}
+                  recentVisits={recentVisitsByEmployee[emp.id]}
                 />
               </div>
             )}

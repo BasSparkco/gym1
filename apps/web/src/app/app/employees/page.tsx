@@ -2,6 +2,13 @@
 
 import { listEmployees, getCoachProfile, type CoachProfile } from "@/lib/employees";
 import { listBranches } from "@/lib/branches";
+import { listGates } from "@/lib/gates";
+import {
+  getEmployeeGates,
+  listEmployeeVisits,
+  type EmployeeGateAccess,
+  type EmployeeVisit,
+} from "@/lib/employee-attendance";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -45,9 +52,20 @@ export default async function EmployeesPage({ searchParams }: Props) {
     employees = employees.filter((e) => e.job === jobFilter);
   }
 
-  const coachProfiles = await Promise.all(employees.map((e) => getCoachProfile(e.id)));
+  const [coachProfiles, gateAccessList, visitsList, allGates] = await Promise.all([
+    Promise.all(employees.map((e) => getCoachProfile(e.id))),
+    Promise.all(employees.map((e) => getEmployeeGates(e.id))),
+    Promise.all(employees.map((e) => listEmployeeVisits(e.id))),
+    listGates(),
+  ]);
   const coachProfilesByEmployee: Record<string, CoachProfile | null> = Object.fromEntries(
     employees.map((e, i) => [e.id, coachProfiles[i]]),
+  );
+  const gateAccessByEmployee: Record<string, EmployeeGateAccess> = Object.fromEntries(
+    employees.map((e, i) => [e.id, gateAccessList[i]]),
+  );
+  const recentVisitsByEmployee: Record<string, EmployeeVisit[]> = Object.fromEntries(
+    employees.map((e, i) => [e.id, visitsList[i]]),
   );
 
   return (
@@ -117,6 +135,9 @@ export default async function EmployeesPage({ searchParams }: Props) {
           branches={branches}
           branchMap={branchMap}
           coachProfilesByEmployee={coachProfilesByEmployee}
+          allGates={allGates}
+          gateAccessByEmployee={gateAccessByEmployee}
+          recentVisitsByEmployee={recentVisitsByEmployee}
           dateFormat={dateFormat}
           t={t}
         />
