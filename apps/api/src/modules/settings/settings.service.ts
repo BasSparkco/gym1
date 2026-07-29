@@ -21,6 +21,7 @@ const VALID_OWNER_DATA_SCOPES = new Set<OwnerDataScope>([
 const VALID_LOGO_MODES = new Set<LogoMode>(['shared', 'perBranch']);
 
 export type UpdateSettingsInput = {
+  name?: string;
   defaultLanguage?: string;
   enabledLanguages?: string[];
   notificationSettings?: NotificationSettings;
@@ -32,21 +33,32 @@ export type UpdateSettingsInput = {
   logoMode?: string;
 };
 
+// Organization name lives on Tenant, not TenantSettings — merged in here so
+// the frontend can read/write it through the same /settings endpoint.
+export type TenantSettingsResponse = TenantSettingsRecord & { name: string };
+
 @Injectable()
 export class SettingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSettingsForTenant(tenantId: string): Promise<TenantSettingsRecord> {
-    const found = await this.prisma.tenantSettings.findUnique({
-      where: { tenantId },
-    });
+  async getSettingsForTenant(
+    tenantId: string,
+  ): Promise<TenantSettingsResponse> {
+    const [found, tenant] = await Promise.all([
+      this.prisma.tenantSettings.findUnique({ where: { tenantId } }),
+      this.prisma.tenant.findUniqueOrThrow({
+        where: { id: tenantId },
+        select: { name: true },
+      }),
+    ]);
     const defaults = getDefaultTenantSettings(tenantId);
 
     if (!found) {
-      return defaults;
+      return { ...defaults, name: tenant.name };
     }
 
     return {
+      name: tenant.name,
       tenantId: found.tenantId,
       defaultLanguage: found.defaultLanguage as Language,
       enabledLanguages: found.enabledLanguages as Language[],
@@ -71,8 +83,16 @@ export class SettingsService {
   async updateSettingsForTenant(
     tenantId: string,
     input: UpdateSettingsInput,
-  ): Promise<TenantSettingsRecord> {
+  ): Promise<TenantSettingsResponse> {
     const current = await this.getSettingsForTenant(tenantId);
+
+    if (input.name !== undefined) {
+      const name = input.name.trim();
+      if (!name) {
+        throw new BadRequestException('Organization name is required.');
+      }
+      await this.prisma.tenant.update({ where: { id: tenantId }, data: { name } });
+    }
 
     const defaultLanguage = (input.defaultLanguage ??
       current.defaultLanguage) as Language;
@@ -136,7 +156,8 @@ export class SettingsService {
       ? (rawLogoMode as LogoMode)
       : current.logoMode;
 
-    const next: TenantSettingsRecord = {
+    const next: TenantSettingsResponse = {
+      name: input.name !== undefined ? input.name.trim() : current.name,
       tenantId,
       defaultLanguage,
       enabledLanguages: uniqueEnabled,

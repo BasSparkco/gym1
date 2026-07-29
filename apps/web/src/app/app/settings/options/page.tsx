@@ -49,8 +49,10 @@ export default async function OptionsSettingsPage() {
       | string
       | null;
     const logoMode = formData.get("logoMode") as LogoMode | null;
+    const name = formData.get("name") as string | null;
 
     const saved = await updateSettings({
+      ...(name ? { name } : {}),
       defaultLanguage,
       enabledLanguages,
       dateFormat,
@@ -106,6 +108,38 @@ export default async function OptionsSettingsPage() {
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleSave} className="grid gap-8">
+          {isOwner && (
+            <>
+              {/* Organization */}
+              <div className="grid gap-4">
+                <div>
+                  <p className="text-base font-semibold">
+                    {t.settings.organizationSectionTitle}
+                  </p>
+                  <p className="mt-1 text-xs text-foreground/60">
+                    {t.settings.organizationSectionHelp}
+                  </p>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <label htmlFor="name" className="text-sm font-medium">
+                    {t.settings.organizationNameLabel}
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    defaultValue={settings.name}
+                    className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  />
+                </div>
+              </div>
+
+              <div className="h-px bg-line" />
+            </>
+          )}
+
           {/* Language */}
           <div className="grid gap-4">
             <p className="text-base font-semibold">{t.settings.languageConfig}</p>

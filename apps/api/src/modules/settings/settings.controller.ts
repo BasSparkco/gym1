@@ -23,6 +23,7 @@ import type {
 } from '../../data/settings-seed';
 
 type UpdateSettingsRequestBody = {
+  name?: string;
   defaultLanguage?: string;
   enabledLanguages?: string[];
   notificationSettings?: NotificationSettings;
@@ -60,6 +61,10 @@ export class SettingsController {
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
+
+    if (body.name !== undefined) {
+      requireRole(session.user, ['owner']);
+    }
 
     if (body.ownerDataScope !== undefined) {
       requireRole(session.user, ['owner']);

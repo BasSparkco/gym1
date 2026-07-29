@@ -168,6 +168,17 @@ model Tenant {
   closedDates      ClosedDate[]
 }
 
+// Operator-level account for onboarding new tenants (SaaS admin). Deliberately
+// has no tenantId/relation to Tenant — it's not a member of any gym's staff,
+// just the platform operator's own login.
+model PlatformAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+}
+
 // ── Branches / Employees / Gates ─────────────────────────────────────────────
 
 model Branch {

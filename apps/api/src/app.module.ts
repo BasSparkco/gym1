@@ -18,6 +18,7 @@ import { MembersModule } from './modules/members/members.module';
 import { MembershipsModule } from './modules/memberships/memberships.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
@@ -56,6 +57,7 @@ import { RedisModule } from './redis/redis.module';
     AnnouncementsModule,
     ClosedDatesModule,
     EmployeeAttendanceModule,
+    PlatformAdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

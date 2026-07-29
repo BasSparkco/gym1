@@ -64,6 +64,7 @@ export type OwnerDataScope = "all" | "activeBranch";
 export type LogoMode = "shared" | "perBranch";
 
 export type TenantSettings = {
+  name: string;
   tenantId: string;
   defaultLanguage: Language;
   enabledLanguages: Language[];
@@ -125,6 +126,7 @@ export async function getSettings(): Promise<TenantSettings> {
 }
 
 export async function updateSettings(data: {
+  name?: string;
   defaultLanguage?: Language;
   enabledLanguages?: Language[];
   notificationSettings?: NotificationSettings;

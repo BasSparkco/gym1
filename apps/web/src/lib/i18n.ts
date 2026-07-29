@@ -697,6 +697,9 @@ export type Dict = {
     whatsappReconnecting: string;
     whatsappRefreshHint: string;
     whatsappGenericError: string;
+    organizationSectionTitle: string;
+    organizationSectionHelp: string;
+    organizationNameLabel: string;
     logoSectionTitle: string;
     logoSectionHelp: string;
     logoModeLabel: string;
@@ -1519,6 +1522,9 @@ const en: Dict = {
     whatsappReconnecting: "Device disconnected — waiting for new QR code…",
     whatsappRefreshHint: "Refreshes every 3 seconds.",
     whatsappGenericError: "An error occurred.",
+    organizationSectionTitle: "Organization",
+    organizationSectionHelp: "The name shown across the app and on reports.",
+    organizationNameLabel: "Organization name",
     logoSectionTitle: "Logo",
     logoSectionHelp: "Choose whether all branches share one logo, or each branch has its own.",
     logoModeLabel: "Logo mode",
@@ -2341,6 +2347,9 @@ const ar: Dict = {
     whatsappReconnecting: "تم فصل الجهاز — بانتظار رمز QR جديد…",
     whatsappRefreshHint: "يتم التحديث كل 3 ثوانٍ.",
     whatsappGenericError: "حدث خطأ ما.",
+    organizationSectionTitle: "المؤسسة",
+    organizationSectionHelp: "الاسم الذي يظهر في التطبيق والتقارير.",
+    organizationNameLabel: "اسم المؤسسة",
     logoSectionTitle: "الشعار",
     logoSectionHelp: "اختر ما إذا كانت جميع الفروع تشترك في شعار واحد، أو أن لكل فرع شعاره الخاص.",
     logoModeLabel: "وضع الشعار",
@@ -3163,6 +3172,9 @@ const he: Dict = {
     whatsappReconnecting: "המכשיר נותק — ממתין לקוד QR חדש…",
     whatsappRefreshHint: "מתרענן כל 3 שניות.",
     whatsappGenericError: "אירעה שגיאה.",
+    organizationSectionTitle: "ארגון",
+    organizationSectionHelp: "השם המוצג באפליקציה ובדוחות.",
+    organizationNameLabel: "שם הארגון",
     logoSectionTitle: "לוגו",
     logoSectionHelp: "בחר אם לכל הסניפים יש לוגו משותף אחד, או שלכל סניף יש לוגו משלו.",
     logoModeLabel: "מצב לוגו",

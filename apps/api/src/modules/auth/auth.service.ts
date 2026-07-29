@@ -3,15 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  randomBytes,
-  randomUUID,
-  scryptSync,
-  timingSafeEqual,
-} from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
 import { UserRole as DbUserRole } from '../../generated/prisma/enums';
+import { hashPassword, passwordMatches } from '../../common/password';
+import { readSessionCookie } from '../../common/cookies';
 
 const SESSION_COOKIE_NAME = 'spark_gym_session';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
@@ -144,7 +141,7 @@ export class AuthService {
     cookieHeader: string | undefined,
   ): Promise<CurrentSession | null> {
     return this.getCurrentSession(
-      this.readSessionCookie(cookieHeader, this.getSessionCookieName()),
+      readSessionCookie(cookieHeader, this.getSessionCookieName()),
     );
   }
 
@@ -162,7 +159,7 @@ export class AuthService {
     });
     const user = users[0];
 
-    if (!user || !this.passwordMatches(user.passwordHash, input.password)) {
+    if (!user || !passwordMatches(user.passwordHash, input.password)) {
       return null;
     }
 
@@ -304,7 +301,7 @@ export class AuthService {
           username,
           name: input.name.trim(),
           role: ROLE_TO_DB[input.role],
-          passwordHash: this.hashPassword(input.password),
+          passwordHash: hashPassword(input.password),
           branchId: input.branchId,
           branchName: input.branchName,
           employeeId: input.employeeId,
@@ -408,7 +405,7 @@ export class AuthService {
             branchName: input.branchName,
           }),
           ...(input.password !== undefined && {
-            passwordHash: this.hashPassword(input.password),
+            passwordHash: hashPassword(input.password),
           }),
           ...(employeeIdChanged && { employeeId: input.employeeId }),
         },
@@ -460,44 +457,4 @@ export class AuthService {
     };
   }
 
-  private hashPassword(password: string): string {
-    const salt = randomBytes(16).toString('hex');
-    const hash = scryptSync(password, salt, 64).toString('hex');
-    return `scrypt:${salt}:${hash}`;
-  }
-
-  private passwordMatches(expectedHash: string, received: string) {
-    const [algorithm, salt, storedHash] = expectedHash.split(':');
-
-    if (algorithm !== 'scrypt' || !salt || !storedHash) {
-      return false;
-    }
-
-    const expectedBuffer = Buffer.from(storedHash, 'hex');
-    const receivedBuffer = scryptSync(received, salt, expectedBuffer.length);
-
-    if (expectedBuffer.length !== receivedBuffer.length) {
-      return false;
-    }
-
-    return timingSafeEqual(expectedBuffer, receivedBuffer);
-  }
-
-  private readSessionCookie(cookieHeader: string | undefined, name: string) {
-    if (!cookieHeader) {
-      return undefined;
-    }
-
-    const segments = cookieHeader.split(';');
-
-    for (const segment of segments) {
-      const [cookieName, ...cookieValueParts] = segment.trim().split('=');
-
-      if (cookieName === name) {
-        return decodeURIComponent(cookieValueParts.join('='));
-      }
-    }
-
-    return undefined;
-  }
 }
