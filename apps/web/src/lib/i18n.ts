@@ -1192,7 +1192,7 @@ const en: Dict = {
   },
   checkIn: {
     title: "Check-In",
-    description: "Search by name or member number to record a visit.",
+    description: "Check members in for a visit, or record staff attendance for a shift.",
     manualTitle: "Manual Check-In",
     manualDescription: "Staff override — use this when a member has forgotten or lost their access card. Search by name or member number.",
     memberNumber: "Member number",
@@ -2024,7 +2024,7 @@ const ar: Dict = {
   },
   checkIn: {
     title: "تسجيل الدخول",
-    description: "ابحث بالاسم أو رقم العضو لتسجيل زيارة.",
+    description: "سجّل دخول الأعضاء لتسجيل زيارة، أو سجّل حضور الموظفين لدوامهم.",
     manualTitle: "تسجيل دخول يدوي",
     manualDescription: "تجاوز يقوم به الموظف — استخدم هذا عندما ينسى العضو بطاقة الدخول أو يفقدها. ابحث بالاسم أو رقم العضو.",
     memberNumber: "رقم العضو",
@@ -2856,7 +2856,7 @@ const he: Dict = {
   },
   checkIn: {
     title: "כניסה",
-    description: "חפש לפי שם או מספר חבר לרישום ביקור.",
+    description: "רשום כניסת חברים לביקור, או רשום נוכחות צוות למשמרת.",
     manualTitle: "כניסה ידנית",
     manualDescription: "עקיפה על ידי הצוות — השתמש בזה כאשר חבר שכח או איבד את כרטיס הכניסה שלו. חפש לפי שם או מספר חבר.",
     memberNumber: "מספר חבר",

@@ -20,7 +20,6 @@ import {
   Megaphone,
   Settings,
   ShieldCheck,
-  UserCheck,
   Users,
   UsersRound,
 } from "lucide-react";
@@ -77,13 +76,6 @@ const navigationItems: NavigationItem[] = [
     labelKey: "checkIn",
     href: "/app/check-in",
     icon: DoorOpen,
-    roles: ["owner", "manager", "front-desk"],
-    group: "groupOperations",
-  },
-  {
-    labelKey: "employeeCheckIn",
-    href: "/app/employee-check-in",
-    icon: UserCheck,
     roles: ["owner", "manager", "front-desk"],
     group: "groupOperations",
   },
