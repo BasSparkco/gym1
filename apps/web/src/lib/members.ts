@@ -160,6 +160,13 @@ export async function getMemberDebt(memberId: string): Promise<number> {
   return payload.debt;
 }
 
+export async function setMemberPin(memberId: string, pin: string): Promise<void> {
+  await authedFetch(`/members/${memberId}/pin`, {
+    method: "POST",
+    body: JSON.stringify({ pin }),
+  });
+}
+
 export async function sendMemberQr(
   memberId: string,
 ): Promise<{ sent: boolean; reason?: string }> {

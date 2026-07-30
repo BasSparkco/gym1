@@ -30,6 +30,7 @@ import {
   PlusCircle,
   LogIn,
   KeySquare,
+  KeyRound,
   GraduationCap,
 } from "lucide-react";
 
@@ -234,6 +235,10 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
         <Link href={`/app/members/${member.id}/qr`} className={railBtn}>
           <QrCode className="h-3.5 w-3.5" strokeWidth={2} />
           {t.members.showQrCode}
+        </Link>
+        <Link href={`/app/members/${member.id}/pin`} className={railBtn}>
+          <KeyRound className="h-3.5 w-3.5" strokeWidth={2} />
+          {t.members.setAppPin}
         </Link>
         {data.hasActiveMembership ? (
           <Link href={`/app/members/${member.id}/payments/new`} className={railBtn}>

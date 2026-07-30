@@ -165,6 +165,13 @@ export type Dict = {
     sendQrWhatsApp: string;
     qrSentSuccess: string;
     qrSentFailed: string;
+    setAppPin: string;
+    appPinTitle: string;
+    appPinDescription: string;
+    newPinLabel: string;
+    confirmPinLabel: string;
+    pinMismatch: string;
+    appPinSetSuccess: string;
     filterAll: string;
     filterActiveMembership: string;
     filterFrozen: string;
@@ -990,6 +997,13 @@ const en: Dict = {
     sendQrWhatsApp: "Send via WhatsApp",
     qrSentSuccess: "QR code sent via WhatsApp!",
     qrSentFailed: "Failed to send QR code.",
+    setAppPin: "Set app PIN",
+    appPinTitle: "Mobile App PIN",
+    appPinDescription: "Set or reset the PIN this member uses to sign into the gym mobile app with their phone number.",
+    newPinLabel: "New PIN (4–8 digits)",
+    confirmPinLabel: "Confirm PIN",
+    pinMismatch: "PINs do not match.",
+    appPinSetSuccess: "PIN updated successfully.",
     filterAll: "All",
     filterActiveMembership: "Active membership",
     filterFrozen: "Frozen",
@@ -1815,6 +1829,13 @@ const ar: Dict = {
     sendQrWhatsApp: "إرسال عبر واتساب",
     qrSentSuccess: "تم إرسال رمز QR عبر واتساب!",
     qrSentFailed: "فشل إرسال رمز QR.",
+    setAppPin: "تعيين رمز PIN للتطبيق",
+    appPinTitle: "رمز PIN لتطبيق الجوال",
+    appPinDescription: "قم بتعيين أو إعادة تعيين رمز PIN الذي يستخدمه هذا العضو لتسجيل الدخول إلى تطبيق الصالة الرياضية برقم هاتفه.",
+    newPinLabel: "رمز PIN جديد (4 إلى 8 أرقام)",
+    confirmPinLabel: "تأكيد رمز PIN",
+    pinMismatch: "رمزا PIN غير متطابقين.",
+    appPinSetSuccess: "تم تحديث رمز PIN بنجاح.",
     filterAll: "الكل",
     filterActiveMembership: "عضوية نشطة",
     filterFrozen: "مجمّدة",
@@ -2640,6 +2661,13 @@ const he: Dict = {
     sendQrWhatsApp: "שלח ב-WhatsApp",
     qrSentSuccess: "קוד QR נשלח ב-WhatsApp!",
     qrSentFailed: "שליחת קוד QR נכשלה.",
+    setAppPin: "הגדרת קוד PIN לאפליקציה",
+    appPinTitle: "קוד PIN לאפליקציית הנייד",
+    appPinDescription: "הגדר או אפס את קוד ה-PIN שהחבר משתמש בו כדי להתחבר לאפליקציית חדר הכושר עם מספר הטלפון שלו.",
+    newPinLabel: "קוד PIN חדש (4–8 ספרות)",
+    confirmPinLabel: "אימות קוד PIN",
+    pinMismatch: "קודי ה-PIN אינם תואמים.",
+    appPinSetSuccess: "קוד ה-PIN עודכן בהצלחה.",
     filterAll: "הכל",
     filterActiveMembership: "מנוי פעיל",
     filterFrozen: "מוקפא",
