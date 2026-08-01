@@ -6,10 +6,13 @@ import { notFound, redirect } from "next/navigation";
 
 export default async function NewBranchPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantId: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { tenantId } = await params;
+  const { error } = await searchParams;
   const tenants = await listTenants();
   const tenant = tenants.find((t) => t.id === tenantId);
 
@@ -20,7 +23,7 @@ export default async function NewBranchPage({
   async function handleCreate(formData: FormData) {
     "use server";
 
-    await addBranch(tenantId, {
+    const input = {
       branch: {
         name: String(formData.get("branchName") ?? ""),
         address: String(formData.get("branchAddress") ?? "") || undefined,
@@ -35,7 +38,22 @@ export default async function NewBranchPage({
         username: String(formData.get("ownerUsername") ?? ""),
         password: String(formData.get("ownerPassword") ?? ""),
       },
-    });
+    };
+
+    try {
+      await addBranch(tenantId, input);
+    } catch (err) {
+      let message = err instanceof Error ? err.message : String(err);
+      try {
+        const parsed = JSON.parse(message) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // not JSON, use as-is
+      }
+      redirect(
+        `/platform-admin/tenants/${tenantId}/branches/new?error=${encodeURIComponent(message)}`,
+      );
+    }
 
     redirect(`/platform-admin/tenants/${tenantId}`);
   }
@@ -47,6 +65,12 @@ export default async function NewBranchPage({
         title="New branch"
         description="Adds another branch to this organization, with its own owner login."
       />
+
+      {error && (
+        <section className="animate-scale-in rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          {decodeURIComponent(error)}
+        </section>
+      )}
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-8">

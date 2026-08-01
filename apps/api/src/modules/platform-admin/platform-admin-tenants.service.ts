@@ -137,6 +137,23 @@ export class PlatformAdminTenantsService {
     };
   }
 
+  // Mirrors EmployeesService.createEmployee's numbering scheme so
+  // platform-admin-created owners get employeeNumbers indistinguishable from
+  // ones created through the normal /app/employees flow.
+  private async nextEmployeeNumber(tenantId: string): Promise<string> {
+    const tenantEmployees = await this.prisma.employee.findMany({
+      where: { tenantId },
+      select: { employeeNumber: true },
+    });
+
+    const maxSeq = tenantEmployees.reduce((max, e) => {
+      const match = e.employeeNumber.match(/^EMP-(\d{4})$/);
+      return match ? Math.max(max, Number(match[1])) : max;
+    }, 0);
+
+    return `EMP-${String(maxSeq + 1).padStart(4, '0')}`;
+  }
+
   async createTenant(input: CreateTenantInput): Promise<TenantSummary> {
     const tenantName = input.tenantName?.trim();
     if (!tenantName) {
@@ -148,6 +165,8 @@ export class PlatformAdminTenantsService {
 
     const tenantId = `tenant-${randomUUID()}`;
     const branchId = `branch-${randomUUID()}`;
+    const employeeId = `employee-${randomUUID()}`;
+    const employeeNumber = await this.nextEmployeeNumber(tenantId);
 
     await this.prisma.$transaction([
       this.prisma.tenant.create({
@@ -165,6 +184,22 @@ export class PlatformAdminTenantsService {
           status: 'active',
         },
       }),
+      // Every user account is someone's staff identity (see
+      // AuthService.createUser) — give the owner an Employee record here too,
+      // so they're never shown as "Not linked" like an orphan account.
+      this.prisma.employee.create({
+        data: {
+          id: employeeId,
+          tenantId,
+          branchId,
+          employeeNumber,
+          fullName: owner.ownerName,
+          status: 'active',
+          job: 'Owner',
+          startDate: new Date(),
+          isUser: true,
+        },
+      }),
       this.prisma.user.create({
         data: {
           id: `user-${randomUUID()}`,
@@ -176,7 +211,7 @@ export class PlatformAdminTenantsService {
           passwordHash: owner.passwordHash,
           branchId,
           branchName: branch.branchName,
-          employeeId: null,
+          employeeId,
         },
       }),
     ]);
@@ -230,6 +265,8 @@ export class PlatformAdminTenantsService {
     const owner = await this.validateOwnerInput(input.owner);
 
     const branchId = `branch-${randomUUID()}`;
+    const employeeId = `employee-${randomUUID()}`;
+    const employeeNumber = await this.nextEmployeeNumber(tenantId);
 
     await this.prisma.$transaction([
       this.prisma.branch.create({
@@ -244,6 +281,19 @@ export class PlatformAdminTenantsService {
           status: 'active',
         },
       }),
+      this.prisma.employee.create({
+        data: {
+          id: employeeId,
+          tenantId,
+          branchId,
+          employeeNumber,
+          fullName: owner.ownerName,
+          status: 'active',
+          job: 'Owner',
+          startDate: new Date(),
+          isUser: true,
+        },
+      }),
       this.prisma.user.create({
         data: {
           id: `user-${randomUUID()}`,
@@ -255,7 +305,7 @@ export class PlatformAdminTenantsService {
           passwordHash: owner.passwordHash,
           branchId,
           branchName: branch.branchName,
-          employeeId: null,
+          employeeId,
         },
       }),
     ]);

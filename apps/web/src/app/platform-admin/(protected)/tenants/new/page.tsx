@@ -6,11 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { redirect } from "next/navigation";
 
-export default async function NewTenantPage() {
+type Props = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function NewTenantPage({ searchParams }: Props) {
+  const { error } = await searchParams;
+
   async function handleCreate(formData: FormData) {
     "use server";
 
-    await createTenant({
+    const input = {
       tenantName: String(formData.get("tenantName") ?? ""),
       branch: {
         name: String(formData.get("branchName") ?? ""),
@@ -26,7 +32,20 @@ export default async function NewTenantPage() {
         username: String(formData.get("ownerUsername") ?? ""),
         password: String(formData.get("ownerPassword") ?? ""),
       },
-    });
+    };
+
+    try {
+      await createTenant(input);
+    } catch (err) {
+      let message = err instanceof Error ? err.message : String(err);
+      try {
+        const parsed = JSON.parse(message) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // not JSON, use as-is
+      }
+      redirect(`/platform-admin/tenants/new?error=${encodeURIComponent(message)}`);
+    }
 
     redirect("/platform-admin");
   }
@@ -38,6 +57,12 @@ export default async function NewTenantPage() {
         title="New tenant"
         description="Creates the organization, its first branch, and the owner login in one step."
       />
+
+      {error && (
+        <section className="animate-scale-in rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          {decodeURIComponent(error)}
+        </section>
+      )}
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-8">
