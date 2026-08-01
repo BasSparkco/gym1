@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -46,13 +47,15 @@ type SignInInput = {
 
 export type CreateUserInput = {
   email: string;
-  name: string;
+  username: string;
   role: SessionUser['role'];
   password: string;
   branchId: string;
   branchName: string;
   // Every account must be linked to an employee record (enforced below) —
   // an account is always someone's staff identity, not a standalone login.
+  // The account's display name is taken from that employee's fullName, not
+  // entered separately here.
   employeeId: string;
 };
 
@@ -157,10 +160,23 @@ export class AuthService {
       },
       include: { tenant: true },
     });
-    const user = users[0];
 
-    if (!user || !passwordMatches(user.passwordHash, input.password)) {
+    // The identifier may match users in more than one tenant — the password
+    // decides which account is actually being signed into.
+    const user = users.find((candidate) =>
+      passwordMatches(candidate.passwordHash, input.password),
+    );
+
+    if (!user) {
       return null;
+    }
+
+    if (user.tenant.status === 'paused') {
+      throw new ForbiddenException({
+        code: 'TENANT_PAUSED',
+        message: 'This organization has been paused.',
+        reason: user.tenant.pausedReason,
+      });
     }
 
     const sessionUser = this.toSessionUser(user);
@@ -267,20 +283,15 @@ export class AuthService {
       throw new BadRequestException('A valid email address is required.');
     }
 
-    if (!input.name?.trim()) {
-      throw new BadRequestException('Name is required.');
+    const username = input.username?.trim().toLowerCase() ?? '';
+    if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
+      throw new BadRequestException(
+        'Username must be 3-32 characters and may only contain lowercase letters, numbers, dots, hyphens, and underscores.',
+      );
     }
 
     if (!input.password || input.password.length < 6) {
       throw new BadRequestException('Password must be at least 6 characters.');
-    }
-
-    const existingUser = await this.prisma.user.findFirst({
-      where: { email },
-    });
-
-    if (existingUser) {
-      throw new BadRequestException('A user with this email already exists.');
     }
 
     if (!input.employeeId) {
@@ -288,9 +299,28 @@ export class AuthService {
         'A user account must be linked to an employee.',
       );
     }
-    await this.assertEmployeeLinkable(tenantId, input.employeeId);
+    const employee = await this.assertEmployeeLinkable(
+      tenantId,
+      input.employeeId,
+    );
 
-    const username = email.split('@')[0];
+    // Email and username must be unique across ALL tenants: sign-in matches
+    // the identifier globally, so a cross-tenant collision would make one of
+    // the accounts unreachable.
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: email, mode: 'insensitive' } },
+          { username: { equals: username, mode: 'insensitive' } },
+        ],
+      },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException(
+        'A user with this email or username already exists.',
+      );
+    }
 
     const newUser = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -299,7 +329,7 @@ export class AuthService {
           tenantId,
           email,
           username,
-          name: input.name.trim(),
+          name: employee.fullName,
           role: ROLE_TO_DB[input.role],
           passwordHash: hashPassword(input.password),
           branchId: input.branchId,
@@ -335,6 +365,7 @@ export class AuthService {
         'This employee is already linked to a user account.',
       );
     }
+    return employee;
   }
 
   async syncBranchNameForUsers(

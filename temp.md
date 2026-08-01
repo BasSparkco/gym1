@@ -21,3 +21,12 @@ If you exclude Phases 6-7 as aspirational/unscoped and just look at the concrete
 Recommended next step
 The roadmap's "Current next focus" section is entirely mobile/RFID-focused, so there's no standing next-step for the rest of the project — this is your call to make. Smallest, closest-to-done target: Employee Attendance, which would fully close out Phase 2 (it's the one missing piece next to an already-built Employee module). After that, Phase 3 (Commerce/POS) or the payment-gateway piece of Phase 4 are the two open-ended items — worth deciding which one actually matters to the business before starting, since neither has a design doc yet the way Training Programs or Lockers did before they were built.
 
+
+
+Your new demo credentials (also stored in /root/gym-demo-cred-rotation.txt, chmod 600, outside the repo, together with the old hashes as a rollback record):
+
+Account	Password
+owner@sparkgym.local	VDhcZXtw6aNdsUhX
+manager@sparkgym.local	T6AzehRSBYidWZZS
+frontdesk@sparkgym.local	EB5yETcjfxMQWxVR
+Note the passwords in the repo's seed files still say owner123 — that's intentional: those seeds only feed the e2e tests and dev environment, and production no longer accepts them.

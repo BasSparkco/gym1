@@ -26,7 +26,7 @@ const EVENTS = [
 
 type EventKey = (typeof EVENTS)[number];
 
-const CHANNELS = ["whatsapp", "email"] as const;
+const CHANNELS = ["whatsapp", "email", "app"] as const;
 type Channel = (typeof CHANNELS)[number];
 
 function buildNotificationSettings(formData: FormData): NotificationSettings {
@@ -99,6 +99,7 @@ export default async function NotificationSettingsPage() {
   const channelLabels: Record<Channel, string> = {
     whatsapp: t.settings.channelWhatsapp,
     email: t.settings.channelEmail,
+    app: t.settings.channelApp,
   };
 
   return (

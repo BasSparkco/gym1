@@ -4,21 +4,30 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { hashPassword } from '../../common/password';
 import { isValidCurrencyCode } from '../../common/currencies';
 
+export type BranchInput = {
+  name: string;
+  address?: string;
+  phone?: string;
+  countryCode?: string;
+  operatingCurrencyCode?: string;
+};
+
+export type OwnerInput = {
+  name: string;
+  email: string;
+  username: string;
+  password: string;
+};
+
 export type CreateTenantInput = {
   tenantName: string;
-  branch: {
-    name: string;
-    address?: string;
-    phone?: string;
-    countryCode?: string;
-    operatingCurrencyCode?: string;
-  };
-  owner: {
-    name: string;
-    email: string;
-    username: string;
-    password: string;
-  };
+  branch: BranchInput;
+  owner: OwnerInput;
+};
+
+export type AddBranchInput = {
+  branch: BranchInput;
+  owner: OwnerInput;
 };
 
 export type TenantSummary = {
@@ -26,6 +35,19 @@ export type TenantSummary = {
   name: string;
   createdAt: Date;
   branchCount: number;
+  ownerEmail: string | null;
+  status: 'active' | 'paused';
+  pausedReason: string | null;
+  pausedAt: Date | null;
+};
+
+export type BranchSummary = {
+  id: string;
+  name: string;
+  address: string | null;
+  countryCode: string | null;
+  operatingCurrencyCode: string;
+  status: 'active' | 'inactive';
   ownerEmail: string | null;
 };
 
@@ -48,23 +70,36 @@ export class PlatformAdminTenantsService {
       createdAt: tenant.createdAt,
       branchCount: tenant.branches.length,
       ownerEmail: tenant.users[0]?.email ?? null,
+      status: tenant.status,
+      pausedReason: tenant.pausedReason,
+      pausedAt: tenant.pausedAt,
     }));
   }
 
-  async createTenant(input: CreateTenantInput): Promise<TenantSummary> {
-    const tenantName = input.tenantName?.trim();
-    const branchName = input.branch?.name?.trim();
-    const ownerName = input.owner?.name?.trim();
-    const ownerEmail = input.owner?.email?.trim().toLowerCase();
-    const ownerUsername = input.owner?.username?.trim().toLowerCase();
-    const ownerPassword = input.owner?.password ?? '';
-
-    if (!tenantName) {
-      throw new BadRequestException('Organization name is required.');
-    }
+  private validateBranchInput(branch: BranchInput) {
+    const branchName = branch?.name?.trim();
     if (!branchName) {
-      throw new BadRequestException('First branch name is required.');
+      throw new BadRequestException('Branch name is required.');
     }
+
+    const rawCurrency = (branch.operatingCurrencyCode ?? 'ILS').trim().toUpperCase();
+    const operatingCurrencyCode = isValidCurrencyCode(rawCurrency) ? rawCurrency : 'ILS';
+
+    return {
+      branchName,
+      address: branch.address?.trim() || undefined,
+      phone: branch.phone?.trim() || undefined,
+      countryCode: branch.countryCode?.trim().toUpperCase() || undefined,
+      operatingCurrencyCode,
+    };
+  }
+
+  private async validateOwnerInput(owner: OwnerInput) {
+    const ownerName = owner?.name?.trim();
+    const ownerEmail = owner?.email?.trim().toLowerCase();
+    const ownerUsername = owner?.username?.trim().toLowerCase();
+    const ownerPassword = owner?.password ?? '';
+
     if (!ownerName || !ownerEmail?.includes('@') || !ownerUsername) {
       throw new BadRequestException(
         'Owner name, a valid email, and a username are required.',
@@ -94,16 +129,25 @@ export class PlatformAdminTenantsService {
       );
     }
 
-    const rawCurrency = (input.branch.operatingCurrencyCode ?? 'ILS')
-      .trim()
-      .toUpperCase();
-    const operatingCurrencyCode = isValidCurrencyCode(rawCurrency)
-      ? rawCurrency
-      : 'ILS';
+    return {
+      ownerName,
+      ownerEmail,
+      ownerUsername,
+      passwordHash: hashPassword(ownerPassword),
+    };
+  }
+
+  async createTenant(input: CreateTenantInput): Promise<TenantSummary> {
+    const tenantName = input.tenantName?.trim();
+    if (!tenantName) {
+      throw new BadRequestException('Organization name is required.');
+    }
+
+    const branch = this.validateBranchInput(input.branch);
+    const owner = await this.validateOwnerInput(input.owner);
 
     const tenantId = `tenant-${randomUUID()}`;
     const branchId = `branch-${randomUUID()}`;
-    const passwordHash = hashPassword(ownerPassword);
 
     await this.prisma.$transaction([
       this.prisma.tenant.create({
@@ -113,11 +157,11 @@ export class PlatformAdminTenantsService {
         data: {
           id: branchId,
           tenantId,
-          name: branchName,
-          address: input.branch.address?.trim() || undefined,
-          phone: input.branch.phone?.trim() || undefined,
-          countryCode: input.branch.countryCode?.trim().toUpperCase() || undefined,
-          operatingCurrencyCode,
+          name: branch.branchName,
+          address: branch.address,
+          phone: branch.phone,
+          countryCode: branch.countryCode,
+          operatingCurrencyCode: branch.operatingCurrencyCode,
           status: 'active',
         },
       }),
@@ -125,13 +169,13 @@ export class PlatformAdminTenantsService {
         data: {
           id: `user-${randomUUID()}`,
           tenantId,
-          email: ownerEmail,
-          username: ownerUsername,
-          name: ownerName,
+          email: owner.ownerEmail,
+          username: owner.ownerUsername,
+          name: owner.ownerName,
           role: 'owner',
-          passwordHash,
+          passwordHash: owner.passwordHash,
           branchId,
-          branchName,
+          branchName: branch.branchName,
           employeeId: null,
         },
       }),
@@ -142,7 +186,88 @@ export class PlatformAdminTenantsService {
       name: tenantName,
       createdAt: new Date(),
       branchCount: 1,
-      ownerEmail,
+      ownerEmail: owner.ownerEmail,
+      status: 'active',
+      pausedReason: null,
+      pausedAt: null,
+    };
+  }
+
+  async listBranches(tenantId: string): Promise<BranchSummary[]> {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found.');
+    }
+
+    const [branches, owners] = await Promise.all([
+      this.prisma.branch.findMany({ where: { tenantId }, orderBy: { name: 'asc' } }),
+      this.prisma.user.findMany({
+        where: { tenantId, role: 'owner' },
+        select: { branchId: true, email: true },
+      }),
+    ]);
+
+    const ownerEmailByBranchId = new Map(owners.map((owner) => [owner.branchId, owner.email]));
+
+    return branches.map((branch) => ({
+      id: branch.id,
+      name: branch.name,
+      address: branch.address,
+      countryCode: branch.countryCode,
+      operatingCurrencyCode: branch.operatingCurrencyCode,
+      status: branch.status,
+      ownerEmail: ownerEmailByBranchId.get(branch.id) ?? null,
+    }));
+  }
+
+  async addBranch(tenantId: string, input: AddBranchInput): Promise<BranchSummary> {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found.');
+    }
+
+    const branch = this.validateBranchInput(input.branch);
+    const owner = await this.validateOwnerInput(input.owner);
+
+    const branchId = `branch-${randomUUID()}`;
+
+    await this.prisma.$transaction([
+      this.prisma.branch.create({
+        data: {
+          id: branchId,
+          tenantId,
+          name: branch.branchName,
+          address: branch.address,
+          phone: branch.phone,
+          countryCode: branch.countryCode,
+          operatingCurrencyCode: branch.operatingCurrencyCode,
+          status: 'active',
+        },
+      }),
+      this.prisma.user.create({
+        data: {
+          id: `user-${randomUUID()}`,
+          tenantId,
+          email: owner.ownerEmail,
+          username: owner.ownerUsername,
+          name: owner.ownerName,
+          role: 'owner',
+          passwordHash: owner.passwordHash,
+          branchId,
+          branchName: branch.branchName,
+          employeeId: null,
+        },
+      }),
+    ]);
+
+    return {
+      id: branchId,
+      name: branch.branchName,
+      address: branch.address ?? null,
+      countryCode: branch.countryCode ?? null,
+      operatingCurrencyCode: branch.operatingCurrencyCode,
+      status: 'active',
+      ownerEmail: owner.ownerEmail,
     };
   }
 
@@ -174,6 +299,72 @@ export class PlatformAdminTenantsService {
       createdAt: updated.createdAt,
       branchCount: tenant.branches.length,
       ownerEmail: tenant.users[0]?.email ?? null,
+      status: updated.status,
+      pausedReason: updated.pausedReason,
+      pausedAt: updated.pausedAt,
+    };
+  }
+
+  async pauseTenant(tenantId: string, reason: string): Promise<TenantSummary> {
+    const trimmedReason = reason?.trim();
+    if (!trimmedReason) {
+      throw new BadRequestException('A reason is required to pause an organization.');
+    }
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        branches: { select: { id: true } },
+        users: { where: { role: 'owner' }, select: { email: true }, take: 1 },
+      },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found.');
+    }
+
+    const updated = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { status: 'paused', pausedReason: trimmedReason, pausedAt: new Date() },
+    });
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      createdAt: updated.createdAt,
+      branchCount: tenant.branches.length,
+      ownerEmail: tenant.users[0]?.email ?? null,
+      status: updated.status,
+      pausedReason: updated.pausedReason,
+      pausedAt: updated.pausedAt,
+    };
+  }
+
+  async resumeTenant(tenantId: string): Promise<TenantSummary> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        branches: { select: { id: true } },
+        users: { where: { role: 'owner' }, select: { email: true }, take: 1 },
+      },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found.');
+    }
+
+    const updated = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { status: 'active', pausedReason: null, pausedAt: null },
+    });
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      createdAt: updated.createdAt,
+      branchCount: tenant.branches.length,
+      ownerEmail: tenant.users[0]?.email ?? null,
+      status: updated.status,
+      pausedReason: updated.pausedReason,
+      pausedAt: updated.pausedAt,
     };
   }
 }

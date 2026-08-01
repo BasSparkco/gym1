@@ -7,7 +7,7 @@
 
 export type Language = 'en' | 'ar' | 'he';
 
-export type NotificationChannel = 'sms' | 'whatsapp' | 'email';
+export type NotificationChannel = 'sms' | 'whatsapp' | 'email' | 'app';
 
 export type NotificationEventRule = {
   enabled: boolean;
@@ -15,6 +15,7 @@ export type NotificationEventRule = {
     sms: boolean;
     whatsapp: boolean;
     email: boolean;
+    app: boolean;
   };
 };
 
@@ -64,27 +65,27 @@ export type TenantSettingsRecord = {
 const defaultNotificationSettings: NotificationSettings = {
   membershipExpiring: {
     enabled: true,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
     daysBefore: 3,
   },
   membershipExpired: {
     enabled: true,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
   },
   paymentPending: {
     enabled: true,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
   },
   membershipActivated: {
     enabled: true,
-    channels: { sms: false, whatsapp: true, email: true },
+    channels: { sms: false, whatsapp: true, email: true, app: false },
   },
   // Off by default: unlike the other events, this is a brand-new automatic
   // message that didn't exist before — existing tenants shouldn't suddenly
   // start messaging members without the owner opting in.
   birthday: {
     enabled: false,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
   },
 };
 

@@ -130,6 +130,13 @@ export default async function DashboardPage() {
     "payments-logged": "border-s-4 border-s-brand-deeper",
   };
 
+  const actionBorder: Record<string, string> = {
+    "Create member": "border-s-4 border-s-brand",
+    "Sell membership": "border-s-4 border-s-accent-strong",
+    "Record payment": "border-s-4 border-s-brand-deeper",
+    "Check in member": "border-s-4 border-s-blue-500",
+  };
+
   return (
     <div className="grid gap-6">
       {/* Hero */}
@@ -153,7 +160,13 @@ export default async function DashboardPage() {
               const label = actionLabel[action] ?? action;
               const Icon = actionIcon[action];
               return (
-                <Button key={action} href={href} variant="secondary" icon={Icon && <Icon className="h-4 w-4" strokeWidth={2} />}>
+                <Button
+                  key={action}
+                  href={href}
+                  variant="secondary"
+                  className={actionBorder[action]}
+                  icon={Icon && <Icon className="h-4 w-4" strokeWidth={2} />}
+                >
                   {label}
                 </Button>
               );

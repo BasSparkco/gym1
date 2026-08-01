@@ -16,12 +16,14 @@ const channelLabel: Record<string, string> = {
   sms: "SMS",
   whatsapp: "WhatsApp",
   email: "Email",
+  app: "Mobile app",
 };
 
 const channelTone: Record<string, BadgeTone> = {
   sms: "info",
   whatsapp: "success",
   email: "brand",
+  app: "accent",
 };
 
 const statusTone: Record<string, BadgeTone> = {

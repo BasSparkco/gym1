@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Arabic, Archivo, IBM_Plex_Mono } from "next/font/google";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,9 +40,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerStore = await headers();
+  const isPlatformAdmin = (headerStore.get("x-pathname") ?? "").startsWith(
+    "/platform-admin",
+  );
+
   const cookieStore = await cookies();
-  const lang = (cookieStore.get("spark_gym_lang")?.value ?? "en") as "en" | "ar" | "he";
-  const dir = lang === "ar" || lang === "he" ? "rtl" : "ltr";
+  const lang = isPlatformAdmin
+    ? "en"
+    : ((cookieStore.get("spark_gym_lang")?.value ?? "en") as "en" | "ar" | "he");
+  const dir = !isPlatformAdmin && (lang === "ar" || lang === "he") ? "rtl" : "ltr";
 
   return (
     <html

@@ -31,3 +31,20 @@ export function normalizePhone(
 
   return `+${dialCode}${local}`;
 }
+
+/**
+ * Digits of the national (local) part of a stored phone number: strips the
+ * given dial code when the number starts with it, otherwise just strips
+ * non-digits — plus leading zeros either way, so `+972500000001` (dial code
+ * 972) and a raw-stored `0500000001` both yield `500000001`.
+ */
+export function localPartDigits(
+  phone: string,
+  dialCode: string | undefined,
+): string {
+  const cleaned = phone.replace(/[\s\-().]/g, '');
+  if (dialCode && cleaned.startsWith(`+${dialCode}`)) {
+    return cleaned.slice(1 + dialCode.length).replace(/^0+/, '');
+  }
+  return cleaned.replace(/\D/g, '').replace(/^0+/, '');
+}

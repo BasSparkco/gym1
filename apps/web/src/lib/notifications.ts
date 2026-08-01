@@ -8,7 +8,7 @@ export type Notification = {
   id: string;
   tenantId: string;
   memberId: string;
-  channel: "sms" | "whatsapp" | "email";
+  channel: "sms" | "whatsapp" | "email" | "app";
   subject: string;
   body: string;
   status: "pending" | "sent" | "failed";

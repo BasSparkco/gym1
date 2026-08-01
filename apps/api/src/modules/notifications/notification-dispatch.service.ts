@@ -7,6 +7,10 @@ import { getDefaultTenantSettings, NotificationSenderSettings } from '../../data
 import { ConsoleNotificationProvider } from './providers/console-notification.provider';
 import type { NotificationProvider } from './providers/notification-provider.interface';
 import { SparkcoNotificationProvider } from './providers/sparkco-notification.provider';
+import {
+  DEAD_TOKEN_ERROR_CODES,
+  FcmNotificationProvider,
+} from './providers/fcm-notification.provider';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   Member,
@@ -26,6 +30,7 @@ export class NotificationDispatchService {
     private readonly prisma: PrismaService,
     private readonly consoleProvider: ConsoleNotificationProvider,
     private readonly sparkcoProvider: SparkcoNotificationProvider,
+    private readonly fcmProvider: FcmNotificationProvider,
   ) {}
 
   async dispatchNotificationForTenant(
@@ -80,6 +85,10 @@ export class NotificationDispatchService {
     member: Member | null,
     senders: NotificationSenderSettings,
   ): Promise<Notification> {
+    if (notification.channel === 'app') {
+      return this.deliverPush(notification);
+    }
+
     const to = this.resolveAddress(notification.channel, member);
 
     if (!to) {
@@ -124,6 +133,68 @@ export class NotificationDispatchService {
       : this.prisma.notification.update({
           where: { id: notification.id },
           data: { status: 'failed', failedReason: result.error },
+        });
+  }
+
+  /**
+   * Push has no single "address" — a member can have zero, one, or several
+   * registered devices (MemberDeviceToken), so this fans out to every token
+   * instead of resolving one recipient like the other channels. The
+   * Notification row is marked sent if at least one device received it;
+   * tokens FCM reports as dead (app uninstalled, token rotated) are deleted
+   * so future sends don't keep failing on them.
+   */
+  private async deliverPush(notification: Notification): Promise<Notification> {
+    const tokens = await this.prisma.memberDeviceToken.findMany({
+      where: { memberId: notification.memberId },
+    });
+
+    if (tokens.length === 0) {
+      return this.prisma.notification.update({
+        where: { id: notification.id },
+        data: {
+          status: 'failed',
+          failedReason: 'Member has no registered device for the app.',
+        },
+      });
+    }
+
+    let sentCount = 0;
+    let lastError: string | undefined;
+
+    for (const token of tokens) {
+      const result = await this.fcmProvider.send({
+        channel: 'push',
+        to: token.token,
+        subject: notification.subject,
+        body: notification.body,
+      });
+
+      if (result.status === 'sent') {
+        sentCount += 1;
+        continue;
+      }
+
+      lastError = result.error;
+
+      if (DEAD_TOKEN_ERROR_CODES.has(result.error)) {
+        await this.prisma.memberDeviceToken
+          .delete({ where: { id: token.id } })
+          .catch(() => undefined);
+      }
+    }
+
+    return sentCount > 0
+      ? this.prisma.notification.update({
+          where: { id: notification.id },
+          data: { status: 'sent', sentAt: new Date(), failedReason: null },
+        })
+      : this.prisma.notification.update({
+          where: { id: notification.id },
+          data: {
+            status: 'failed',
+            failedReason: lastError ?? 'Push delivery failed.',
+          },
         });
   }
 

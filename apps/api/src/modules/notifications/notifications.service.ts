@@ -44,6 +44,23 @@ export class NotificationsService {
     });
   }
 
+  // Member-facing counterpart to listNotificationsForTenant: only the
+  // 'app' channel rows are meant for the in-app feed (sms/whatsapp/email
+  // rows are the same event delivered elsewhere, not something the app
+  // should also show), and only sent ones — a still-pending row hasn't
+  // actually happened for the member yet.
+  async listAppNotificationsForMember(tenantId: string, memberId: string) {
+    return this.prisma.notification.findMany({
+      where: {
+        tenantId,
+        memberId,
+        channel: 'app',
+        status: 'sent',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getNotificationForTenant(tenantId: string, notificationId: string) {
     const notification = await this.prisma.notification.findFirst({
       where: { id: notificationId, tenantId },

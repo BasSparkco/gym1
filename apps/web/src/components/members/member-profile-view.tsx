@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { PhoneNumber } from "@/components/phone-number";
-import { formatDate } from "@/lib/date-format";
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import type { Dict } from "@/lib/i18n";
 import type { DateFormat } from "@/lib/settings";
 import type { Member } from "@/lib/members";
@@ -618,7 +618,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                       {pmt.amount}
                     </span>
                     <span className="text-[13px] capitalize text-muted">{pmt.paymentMethod}</span>
-                    <span className={`font-mono text-[12px] text-muted/70`}>{formatDate(pmt.paymentDate, dateFormat)}</span>
+                    <span className={`font-mono text-[12px] text-muted/70`}>{formatDateTime(pmt.paymentDate, dateFormat)}</span>
                   </div>
                   <span
                     className={`font-mono inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${pillTone[pmt.status] ?? defaultPillTone}`}

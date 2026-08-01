@@ -398,6 +398,101 @@ describe('API (e2e)', () => {
     });
   });
 
+  it('member app sign-in works by phone only and PIN disambiguates shared phones', async () => {
+    const signInResponse = await request(getHttpServer())
+      .post('/api/auth/sign-in')
+      .send({ identifier: 'owner@sparkgym.local', password: 'owner123' })
+      .expect(200);
+    const staffCookies = signInResponse.get('Set-Cookie');
+
+    const sharedPhone = '+970599000001';
+
+    // A PIN can't be set for a member without a phone — the app has no other
+    // way to identify them at sign-in.
+    await request(getHttpServer())
+      .post('/api/members/member-001/pin')
+      .set('Cookie', staffCookies)
+      .send({ pin: '4321' })
+      .expect(400);
+
+    await request(getHttpServer())
+      .patch('/api/members/member-001')
+      .set('Cookie', staffCookies)
+      .send({ phone: sharedPhone })
+      .expect(200);
+    await request(getHttpServer())
+      .post('/api/members/member-001/pin')
+      .set('Cookie', staffCookies)
+      .send({ pin: '4321' })
+      .expect(204);
+
+    // Phone signs in; the member number is no longer accepted as an
+    // identifier (every tenant has an MBR/MEM-0001).
+    const memberSignIn = await request(getHttpServer())
+      .post('/api/member-auth/sign-in')
+      .send({ identifier: sharedPhone, pin: '4321' })
+      .expect(200);
+    const memberSignInBody = memberSignIn.body as {
+      token: string;
+      member: { id: string; memberNumber: string };
+    };
+    expect(memberSignInBody.member.id).toBe('member-001');
+
+    const currentSession = await request(getHttpServer())
+      .get('/api/member-auth/current-session')
+      .set('Authorization', `Bearer ${memberSignInBody.token}`)
+      .expect(200);
+    expect(
+      (currentSession.body as { member: { id: string } }).member.id,
+    ).toBe('member-001');
+
+    // Local form: the member's branch country (PS, dial code 970) is implied,
+    // so 0599000001 resolves to the stored +970599000001.
+    const localSignIn = await request(getHttpServer())
+      .post('/api/member-auth/sign-in')
+      .send({ identifier: '0599000001', pin: '4321' })
+      .expect(200);
+    expect(
+      (localSignIn.body as { member: { id: string } }).member.id,
+    ).toBe('member-001');
+
+    await request(getHttpServer())
+      .post('/api/member-auth/sign-in')
+      .send({ identifier: 'MEM-0001', pin: '4321' })
+      .expect(401);
+    await request(getHttpServer())
+      .post('/api/member-auth/sign-in')
+      .send({ identifier: sharedPhone, pin: '9999' })
+      .expect(401);
+
+    // Two members may share a phone (one person, two gyms), but not the same
+    // phone + PIN pair — sign-in could no longer tell them apart.
+    await request(getHttpServer())
+      .patch('/api/members/member-002')
+      .set('Cookie', staffCookies)
+      .send({ phone: sharedPhone })
+      .expect(200);
+    await request(getHttpServer())
+      .post('/api/members/member-002/pin')
+      .set('Cookie', staffCookies)
+      .send({ pin: '4321' })
+      .expect(400);
+    await request(getHttpServer())
+      .post('/api/members/member-002/pin')
+      .set('Cookie', staffCookies)
+      .send({ pin: '8765' })
+      .expect(204);
+
+    // Same phone, different PINs -> each PIN resolves to its own member.
+    const secondSignIn = await request(getHttpServer())
+      .post('/api/member-auth/sign-in')
+      .send({ identifier: sharedPhone, pin: '8765' })
+      .expect(200);
+    expect(
+      (secondSignIn.body as { member: { id: string } }).member.id,
+    ).toBe('member-002');
+  });
+
   it('uploads a member photo to MinIO and serves it through the proxied route, requiring auth', async () => {
     const signInResponse = await request(getHttpServer())
       .post('/api/auth/sign-in')
@@ -546,7 +641,7 @@ describe('API (e2e)', () => {
       .set('Cookie', sessionCookies)
       .send({
         email: 'manager@sparkgym.local',
-        name: 'Branch Manager',
+        username: 'branch.manager',
         role: 'manager',
         password: 'manager123',
         branchId: 'Platinum Fitness',
@@ -556,12 +651,21 @@ describe('API (e2e)', () => {
       .expect(201);
 
     const createUserBody = createUserResponse.body as {
-      user: { id: string; email: string; name: string; role: string };
+      user: {
+        id: string;
+        email: string;
+        username: string;
+        name: string;
+        role: string;
+      };
     };
 
     expect(createUserBody.user).toMatchObject({
       email: 'manager@sparkgym.local',
-      name: 'Branch Manager',
+      username: 'branch.manager',
+      // Display name comes from the linked employee (emp-001), not a
+      // separately entered field.
+      name: 'Sami Haddad',
       role: 'manager',
     });
 
@@ -618,11 +722,12 @@ describe('API (e2e)', () => {
       .set('Cookie', sessionCookies)
       .send({
         email: 'owner@sparkgym.local',
-        name: 'Duplicate Owner',
+        username: 'duplicate.owner',
         role: 'owner',
         password: 'owner123',
         branchId: 'Platinum Fitness',
         branchName: 'Ramallah Main Branch',
+        employeeId: 'emp-002',
       })
       .expect(400);
   });
@@ -1692,7 +1797,7 @@ describe('API (e2e)', () => {
           branchId: 'Platinum Fitness',
           coachId: 'emp-001',
           room: 'Studio A',
-          date: '2026-07-15',
+          date: daysFromToday(1),
           startTime: '18:00',
           endTime: '19:00',
           capacity: 1,
@@ -1715,7 +1820,7 @@ describe('API (e2e)', () => {
           programId,
           branchId: 'Platinum Fitness',
           coachId: 'emp-001',
-          date: '2026-07-15',
+          date: daysFromToday(1),
           startTime: '18:30',
           endTime: '19:30',
           capacity: 5,
@@ -1740,13 +1845,23 @@ describe('API (e2e)', () => {
         programResponse.body as { program: { id: string } }
       ).program.id;
 
+      // Booking is enrollment-gated: register both members for the course
+      // BEFORE creating the session (registering after would auto-book it).
+      for (const memberId of ['member-001', 'member-002']) {
+        await request(getHttpServer())
+          .post(`/api/training-programs/${programId}/register`)
+          .set('Cookie', cookies)
+          .send({ memberId })
+          .expect(201);
+      }
+
       const sessionResponse = await request(getHttpServer())
         .post('/api/class-sessions')
         .set('Cookie', cookies)
         .send({
           programId,
           branchId: 'Platinum Fitness',
-          date: '2026-07-16',
+          date: daysFromToday(2),
           startTime: '08:00',
           endTime: '09:00',
           capacity: 1,
@@ -1808,7 +1923,7 @@ describe('API (e2e)', () => {
       ).toBe('booked');
     });
 
-    it('rejects a booking when the plan does not entitle the training program', async () => {
+    it('rejects a booking when the member is not registered for the course', async () => {
       const cookies = await signInAsOwner();
 
       const programResponse = await request(getHttpServer())
@@ -1820,20 +1935,13 @@ describe('API (e2e)', () => {
         programResponse.body as { program: { id: string } }
       ).program.id;
 
-      // member-002 is on plan-ramallah-standard; restrict it to no programs.
-      await request(getHttpServer())
-        .patch('/api/memberships/plans/plan-ramallah-standard')
-        .set('Cookie', cookies)
-        .send({ allowAllPrograms: false })
-        .expect(200);
-
       const sessionResponse = await request(getHttpServer())
         .post('/api/class-sessions')
         .set('Cookie', cookies)
         .send({
           programId,
           branchId: 'Platinum Fitness',
-          date: '2026-07-17',
+          date: daysFromToday(3),
           startTime: '10:00',
           endTime: '11:00',
           capacity: 5,
@@ -1843,24 +1951,32 @@ describe('API (e2e)', () => {
         sessionResponse.body as { classSession: { id: string } }
       ).classSession.id;
 
+      // member-002 is not registered for the course -> booking is rejected.
       await request(getHttpServer())
         .post('/api/class-bookings')
         .set('Cookie', cookies)
         .send({ classSessionId, memberId: 'member-002' })
         .expect(400);
 
-      // Entitle the plan for this specific program -> booking now succeeds.
+      // Registering for the course auto-books the upcoming session.
       await request(getHttpServer())
-        .patch('/api/training-programs/plans/plan-ramallah-standard/entitled-programs')
+        .post(`/api/training-programs/${programId}/register`)
         .set('Cookie', cookies)
-        .send({ programIds: [programId] })
-        .expect(200);
-
-      await request(getHttpServer())
-        .post('/api/class-bookings')
-        .set('Cookie', cookies)
-        .send({ classSessionId, memberId: 'member-002' })
+        .send({ memberId: 'member-002' })
         .expect(201);
+
+      const sessionBookings = await request(getHttpServer())
+        .get(`/api/class-bookings/session/${classSessionId}`)
+        .set('Cookie', cookies)
+        .expect(200);
+      const bookings = (
+        sessionBookings.body as {
+          bookings: Array<{ memberId: string; status: string }>;
+        }
+      ).bookings;
+      expect(
+        bookings.find((b) => b.memberId === 'member-002')?.status,
+      ).toBe('booked');
     });
 
     it('generates recurring class sessions sharing a recurrenceId', async () => {
@@ -1881,7 +1997,7 @@ describe('API (e2e)', () => {
         .send({
           programId,
           branchId: 'Platinum Fitness',
-          date: '2026-08-03',
+          date: daysFromToday(7),
           startTime: '07:00',
           endTime: '08:00',
           capacity: 10,
@@ -1902,9 +2018,9 @@ describe('API (e2e)', () => {
         ),
       ).toBe(true);
       expect(recurringBody.created.map((s) => s.date)).toEqual([
-        '2026-08-03',
-        '2026-08-10',
-        '2026-08-17',
+        daysFromToday(7),
+        daysFromToday(14),
+        daysFromToday(21),
       ]);
     });
   });

@@ -1,11 +1,22 @@
   # Spark Gym — Member Mobile App Roadmap
 
-*Last checked against the actual backend: 2026-07-26. Phase 0 (member auth) and the Phase 2*
+*Last checked against the actual backend: 2026-07-31. Phase 0 (member auth) and the Phase 2*
 *backend (Announcements, Closed Dates, push device-token storage) are all built. Real FCM*
 *push delivery is NOT wired up yet — no Firebase project exists, so pushes currently just log*
 *server-side instead of reaching a device (see "Push Notifications — Current State" below).*
 *See "Getting Started", "Backend Changes Needed", and "API Reference for the Mobile Client"*
 *below for the real, working contract to build the Android app against.*
+
+> ⚠️ **Contract change (2026-07-31, multi-tenant readiness):** sign-in `identifier` is now
+> the member's **phone number only** — member numbers (`MEM-0013` style) are **no longer
+> accepted** as a sign-in identifier, because they repeat across gyms once the platform
+> hosts more than one tenant. Two phone forms are accepted: **local** (`0500000001` — the
+> country code is implied by the member's branch country, which is how people actually
+> type their number) and **international** (`+972500000001` — required when the member's
+> phone has a different country code than their branch). **Deployed to production
+> 2026-07-31** — both phone forms are live and member numbers already return 401. If the app's sign-in screen offers "member
+> number or phone", change it to phone-only. See `mobile_app_update_2026-07-31.md` for the
+> exact hand-off notes sent to the app developer.
 
 ## Project Context
 
@@ -29,9 +40,12 @@ no separate staging server), so a dedicated, clearly-fake test account was creat
 development so real member data is never touched:
 
 - **API base**: `https://gym.sparkco.vip/api`
-- **Test member number**: `MEM-0013` (`fullName`: "ZZZ TEST - Mobile API Developer Account" —
-  named that way so it's unmistakably a test fixture in any staff-facing screen, list, or report)
+- **Test sign-in phone**: `+972500000001`, or the local form `0500000001` (the test
+  account's branch is in IL/+972 — the country code is implied)
 - **Test PIN**: `246800`
+- The account is `MEM-0013` (`fullName`: "ZZZ TEST - Mobile API Developer Account" —
+  named that way so it's unmistakably a test fixture in any staff-facing screen, list, or
+  report). The member number is display-only data now — it is **not** a sign-in identifier.
 - This account has one active membership (monthly plan, `finalPrice` 150) so
   `GET /me/memberships` and the Home screen have real, non-empty data to render.
 
@@ -40,7 +54,7 @@ Try it directly:
 ```bash
 curl -X POST https://gym.sparkco.vip/api/member-auth/sign-in \
   -H 'Content-Type: application/json' \
-  -d '{"identifier":"MEM-0013","pin":"246800"}'
+  -d '{"identifier":"+972500000001","pin":"246800"}'
 # -> { "token": "...", "member": { ... } }
 
 curl https://gym.sparkco.vip/api/me \
@@ -112,15 +126,23 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 ## App Screens — v1 Scope
 
 ### 1. Sign In
-- Member enters phone number or member number + 4–8 digit PIN
+- Member enters **phone number** + 4–8 digit PIN
 - `POST /api/member-auth/sign-in` with `{ identifier, pin }` → `{ token, member }`
-  (401 on bad credentials). `identifier` matches either `memberNumber` (case-insensitive)
-  or `phone` (E.164, e.g. `+972522223333`).
+  (401 on bad credentials). `identifier` is the member's **phone only**, in either form:
+  - **local**, e.g. `0522223333` — the country code is implied by the member's branch
+    country (most members' numbers share their gym's country, and nobody types `+972`);
+  - **international E.164**, e.g. `+972522223333` (normalized server-side; spaces/dashes
+    fine) — required when the member's registered phone has a **different** country code
+    than their branch.
+  **Changed 2026-07-31**: member numbers are no longer accepted — every gym has an
+  `MEM-0001`, so they aren't unique once the platform hosts more than one gym.
 - **There is no member self-service registration.** A member's PIN starts unset
   (`pinHash` is null) and sign-in fails until staff assigns one from the ERP via
   `POST /api/members/:memberId/pin` with `{ pin }` — e.g. handed out at the front desk
-  when someone asks for the app. Product/ops still needs to decide the actual handout
-  flow (print it on the QR card? SMS it? read it aloud at the desk?).
+  when someone asks for the app. Since 2026-07-31 that endpoint also requires the member
+  to have a phone number on file (it's the only sign-in identifier), and rejects a PIN
+  that another member with the same phone already uses. Product/ops still needs to decide
+  the actual handout flow (print it on the QR card? SMS it? read it aloud at the desk?).
 - Store `token` locally with DataStore; send it as `Authorization: Bearer <token>` on
   every subsequent request. It's an opaque server-side session token (Redis-backed,
   30-day TTL), not a self-contained JWT — the upside is `POST /api/member-auth/sign-out`
@@ -179,7 +201,7 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 | Announcements | `Announcement` model (tenant-scoped, optional `branchId`, distinct from `Notification`), staff CRUD at `/announcements`, member read at `GET /me/announcements` | ✅ **Done** (2026-07-26) |
 | Push token registration | `MemberDeviceToken` model, `POST /me/device-token` (bearer-token, upserts on member+token) | ✅ **Done** (2026-07-26) |
 | Push notification channel | New `FcmNotificationProvider` (same pluggable-provider pattern as SMS/WhatsApp/email) fires on every `Announcement` creation, fanning out to every matching `MemberDeviceToken`. Deliberately **not** added to the existing `Notification`/`NotificationChannel` per-event gating pipeline — see "Push Notifications — Current State" below | ✅ **Plumbing done** (2026-07-26) — ⚠️ **not connected to real FCM yet**, see below |
-| Tenant resolution at sign-in | Not a separate step — `identifier` (phone/memberNumber) is looked up without pre-selecting a tenant, same pattern staff sign-in already uses. Fine for now since there's one tenant in production; revisit if a second tenant is ever onboarded | ✅ **Decided/implemented** this way |
+| Tenant resolution at sign-in | Revisited 2026-07-31 for multi-tenant readiness: `identifier` is now **phone only** (memberNumber dropped — not unique across gyms), looked up without pre-selecting a tenant; the PIN is verified against every phone match, and PIN assignment refuses a phone+PIN pair already in use by another member anywhere, so a phone shared across two gyms stays unambiguous | ✅ **Done** (2026-07-31) |
 
 ## Push Notifications — Current State
 
@@ -206,7 +228,7 @@ device is a no-op refresh, not a duplicate.
 
 All under `https://gym.sparkco.vip/api` (dev: `http://localhost:3002/api`).
 
-- `POST /member-auth/sign-in` — body `{ identifier, pin }` → `200 { token, member: { id, tenantId, memberNumber, fullName } }`, or `401` on bad credentials. Rate-limited (10/min/IP).
+- `POST /member-auth/sign-in` — body `{ identifier, pin }` → `200 { token, member: { id, tenantId, memberNumber, fullName } }`, or `401` on bad credentials. `identifier` = the member's **phone number only**, local form (`0522223333`, branch country implied) or E.164 (`+972522223333`, required when the phone's country differs from the branch's). Changed 2026-07-31 — member numbers are no longer accepted. Rate-limited (10/min/IP).
 - `GET /member-auth/current-session` — `Authorization: Bearer <token>` → `200 { member }` or `401`. Useful to validate a stored token on app launch.
 - `POST /member-auth/sign-out` — revokes the token, `204`.
 - `GET /me` — full member profile + computed membership `status` (`active`/`inactive`).
@@ -301,5 +323,5 @@ If speed and one-codebase simplicity matter more: **go React Native from the sta
 
 - The gym backend already sends WhatsApp and email notifications. Push notifications are additive — they do not replace those channels, they supplement them for members who install the app. Push isn't live yet (see "Push Notifications — Current State" above) — announcements still work and are visible in-app via `GET /me/announcements` even before real push delivery is wired up.
 - Member authentication is PIN-based, entirely separate from staff login — see "API Reference for the Mobile Client" above for the live endpoints.
-- A member can't sign in until staff assigns them a PIN (`POST /api/members/:memberId/pin`). There's no member self-service flow — decide the handout process (front desk, printed on a card, etc.) before finalizing the sign-in screen's copy.
+- A member can't sign in until staff assigns them a PIN (`POST /api/members/:memberId/pin`), and since 2026-07-31 they also need a phone number on file — it's the only sign-in identifier. There's no member self-service flow — decide the handout process (front desk, printed on a card, etc.) before finalizing the sign-in screen's copy.
 - All API calls should go through HTTPS only (`https://gym.sparkco.vip/api`).

@@ -67,9 +67,9 @@ export class PaymentsService {
   }
 
   async createPayment(tenantId: string, branchId: string, input: CreatePaymentInput) {
-    if (!input.memberId || !input.membershipId || !input.paymentDate) {
+    if (!input.memberId || !input.paymentDate) {
       throw new BadRequestException(
-        'Member, membership, and payment date are required.',
+        'Member and payment date are required.',
       );
     }
 
@@ -87,9 +87,6 @@ export class PaymentsService {
     const member = await this.prisma.member.findFirst({
       where: { id: input.memberId, tenantId },
     });
-    const membership = await this.prisma.membership.findFirst({
-      where: { id: input.membershipId, memberId: input.memberId },
-    });
 
     if (!branch) {
       throw new BadRequestException('Branch is invalid for this tenant.');
@@ -99,8 +96,15 @@ export class PaymentsService {
       throw new BadRequestException('Member is invalid for this tenant.');
     }
 
-    if (!membership) {
-      throw new BadRequestException('Membership is invalid for this member.');
+    let membershipId: string | null = null;
+    if (input.membershipId) {
+      const membership = await this.prisma.membership.findFirst({
+        where: { id: input.membershipId, memberId: input.memberId },
+      });
+      if (!membership) {
+        throw new BadRequestException('Membership is invalid for this member.');
+      }
+      membershipId = membership.id;
     }
 
     const status = input.status ?? 'pending';
@@ -111,7 +115,7 @@ export class PaymentsService {
         tenantId,
         branchId: targetBranchId,
         memberId: input.memberId,
-        membershipId: input.membershipId,
+        membershipId,
         amount: input.amount,
         paymentDate: new Date(input.paymentDate),
         status,

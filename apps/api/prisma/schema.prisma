@@ -87,6 +87,7 @@ enum NotificationChannel {
   sms
   whatsapp
   email
+  app
 }
 
 enum NotificationEvent {
@@ -146,12 +147,20 @@ enum ProgramEnrollmentStatus {
   cancelled
 }
 
+enum TenantStatus {
+  active
+  paused
+}
+
 // ── Tenant ───────────────────────────────────────────────────────────────────
 
 model Tenant {
-  id        String   @id
-  name      String
-  createdAt DateTime @default(now())
+  id           String       @id
+  name         String
+  status       TenantStatus @default(active)
+  pausedReason String?
+  pausedAt     DateTime?
+  createdAt    DateTime     @default(now())
 
   branches         Branch[]
   employees        Employee[]
@@ -606,8 +615,8 @@ model Payment {
   branch        Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
   memberId      String
   member        Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  membershipId  String
-  membership    Membership    @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  membershipId  String?
+  membership    Membership?   @relation(fields: [membershipId], references: [id], onDelete: Restrict)
   amount        Decimal       @db.Decimal(10, 2)
   paymentDate   DateTime
   status        PaymentStatus

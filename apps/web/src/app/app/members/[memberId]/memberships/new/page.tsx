@@ -14,10 +14,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 
-type Props = { params: Promise<{ memberId: string }> };
+type Props = {
+  params: Promise<{ memberId: string }>;
+  searchParams: Promise<{ error?: string }>;
+};
 
-export default async function SellMembershipPage({ params }: Props) {
+export default async function SellMembershipPage({ params, searchParams }: Props) {
   const { memberId } = await params;
+  const { error } = await searchParams;
   await requireSession();
   const t = await getT();
 
@@ -30,7 +34,11 @@ export default async function SellMembershipPage({ params }: Props) {
   const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
-  const activeMembership = memberships.find((ms) => ms.status === "active");
+  // Matches the backend's overlap check in createMembership — active, frozen,
+  // and pre-sold draft memberships all still occupy their date range.
+  const activeMembership = memberships
+    .filter((ms) => ms.status === "active" || ms.status === "frozen" || ms.status === "draft")
+    .sort((a, b) => b.endDate.localeCompare(a.endDate))[0];
   const today = new Date().toISOString().slice(0, 10);
 
   async function handleCreate(formData: FormData) {
@@ -41,14 +49,25 @@ export default async function SellMembershipPage({ params }: Props) {
     const finalPrice = rawPrice ? Number(rawPrice) : undefined;
     const endDate = (formData.get("endDate") as string) || undefined;
 
-    await createMembership({
-      memberId,
-      planId,
-      startDate,
-      endDate,
-      finalPrice: finalPrice !== undefined && !isNaN(finalPrice) ? finalPrice : undefined,
-      status: "active",
-    });
+    try {
+      await createMembership({
+        memberId,
+        planId,
+        startDate,
+        endDate,
+        finalPrice: finalPrice !== undefined && !isNaN(finalPrice) ? finalPrice : undefined,
+        status: "active",
+      });
+    } catch (err) {
+      let message = err instanceof Error ? err.message : String(err);
+      try {
+        const parsed = JSON.parse(message) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // not JSON, use as-is
+      }
+      redirect(`/app/members/${memberId}/memberships/new?error=${encodeURIComponent(message)}`);
+    }
 
     redirect(`/app/members/${memberId}`);
   }
@@ -61,13 +80,19 @@ export default async function SellMembershipPage({ params }: Props) {
         description={member.memberNumber}
       />
 
+      {error && (
+        <section className="animate-scale-in rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          {decodeURIComponent(error)}
+        </section>
+      )}
+
       {activeMembership && (
         <section className="rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-sm">
           <p className="font-medium text-yellow-800">{t.memberships.activeMembershipExists}</p>
           <p className="mt-1 text-yellow-700">
-            This member already has an active membership ({activeMembership.plan?.name ?? activeMembership.planId},{" "}
-            ends {formatDate(activeMembership.endDate, dateFormat)}). Selling a new one will be rejected unless the active membership
-            is first expired or cancelled.
+            This member has a membership ({activeMembership.plan?.name ?? activeMembership.planId}) running through{" "}
+            {formatDate(activeMembership.endDate, dateFormat)}. You can still sell a new one starting after that date —
+            otherwise, expire or cancel the current one first.
           </p>
         </section>
       )}

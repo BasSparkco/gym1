@@ -9,7 +9,7 @@ export type Payment = {
   tenantId: string;
   branchId: string;
   memberId: string;
-  membershipId: string;
+  membershipId: string | null;
   amount: number;
   paymentDate: string;
   status: "pending" | "paid" | "failed" | "refunded" | "cancelled";
@@ -46,7 +46,7 @@ export async function listPaymentsForMember(memberId: string): Promise<Payment[]
 
 export async function createPayment(data: {
   memberId: string;
-  membershipId: string;
+  membershipId?: string;
   amount: number;
   paymentDate: string;
   status?: Payment["status"];

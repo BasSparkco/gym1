@@ -5,6 +5,58 @@ Add the newest update at the top so the latest status is always visible first.
 
 ---
 
+## 2026-07-31 (Platform-Admin Console — Pause/Resume + Branch Management; Everything Pending Deployed)
+
+Completed
+
+* **Platform-admin grand-admin control panel** (`PlatformRoadmap.md`, Phases 1-5): the owner wanted `/platform-admin` to actually be a grand-admin console (create orgs, create branch owners, pause/resume an org with a reason), not just the tenant-rename form it had grown into.
+  * **Schema**: `Tenant.status` (`active`/`paused`), `pausedReason`, `pausedAt` (migration `20260731154537_tenant_status`).
+  * **Pause/resume**: `PlatformAdminTenantsService.pauseTenant`/`resumeTenant`, `PATCH /platform-admin/tenants/:id/pause|resume`. Both `AuthService.signIn` and `MemberAuthService.signIn` now reject sign-in for a paused tenant with a distinguishable `403 { code: 'TENANT_PAUSED', reason }` instead of a generic 401 — blocks *new* sign-ins only, existing sessions aren't force-killed (deliberate, confirmed with the owner).
+  * **Paused-org screen**: staff/owner sign-in form now shows a dedicated "This organization has been paused" block with the reason instead of the normal error banner. The mobile app (separate codebase, not in this repo) still needs its own change to handle the same `TENANT_PAUSED` code — flagged, not done here.
+  * **Dashboard/detail UI**: "Paused" badge on the tenant list; tenant detail page gained a "Service status" section (pause with required reason / resume) and a "Branches" section (list branches + owners, "Add branch" form to add a branch + its owner to an *existing* tenant — previously only possible at tenant-creation time).
+  * **Fixed along the way**: the shared root layout (`apps/web/src/app/layout.tsx`) was setting `dir`/`lang` on `<html>` for every route from the `spark_gym_lang` cookie, so switching language on `/app/dashboard` also flipped `/platform-admin` to RTL. Platform-admin is internal-only and English/LTR by design — fixed via a new `apps/web/src/proxy.ts` (Next.js 16 renamed the `middleware.ts` convention to `proxy.ts`; the old name silently 404'd every route on this Next.js version, caught by testing in a real browser rather than trusting the typecheck) injecting the request path, and the root layout forcing `en`/`ltr` whenever it starts with `/platform-admin`.
+* **Verified before deploying**: `tsc --noEmit` clean on both apps, 41/41 e2e green. Full live round-trip against local dev Postgres + a throwaway platform-admin account: paused the demo tenant → owner sign-in correctly blocked with the reason shown (Playwright screenshot-confirmed) → resumed → sign-in worked again; added a branch + owner to the demo tenant → new owner signed in successfully → detail page rendered the new branch (screenshot-confirmed). All test data (branch, owner, throwaway platform-admin) cleaned up afterward.
+* **Deployed to production** (2026-07-31 ~19:47 CEST): fresh backup first (`gym_db_20260731_194555.sql.gz` + MinIO archive). This deploy also carried the day's other pending work that hadn't been deployed yet — the payments debt-selector (`Payment.membershipId` nullable, migration `20260731120000_payment_membership_optional`) and the membership date-overlap fix — since a deploy builds from the whole working tree, confirmed with the owner before proceeding. Built both images clean (`docker compose -p gym -f docker-compose.prod.yml build api web`; web's route manifest confirmed `/platform-admin/tenants/[tenantId]/branches/new` compiled and `Proxy (Middleware)` registered), `up -d --no-deps api web`. **Verified live**: boot log shows `20260731154537_tenant_status` applying cleanly (`payment_membership_optional` had already been applied to prod in an earlier same-day deploy) and all new platform-admin routes mapped; `\d "Tenant"` confirms `status`/`pausedReason`/`pausedAt` columns exist in the real production database; `GET https://gym.sparkco.vip/api` → 200; new pause/branches routes → 401 (live, auth required, not 404); `/platform-admin/login` with an `ar` language cookie still renders `lang="en" dir="ltr"` while `/signin` correctly renders `lang="ar" dir="rtl"` — confirming the LTR fix live. Both containers healthy. No test data written against the real production tenant.
+
+Next
+
+* Commit the accumulated uncommitted work (platform-admin changes, payments debt-selector, membership overlap fix, tenant-safe sign-in) — all of it is now live in prod but still sitting as working-tree state.
+* `PlatformRoadmap.md` Phase 6 (accounting/plans tied to branch count) is parked, not started.
+* Tell the mobile app developer their sign-in flow also needs to handle `{ code: 'TENANT_PAUSED', reason }` on a 403, same as the web staff sign-in now does.
+
+---
+
+## 2026-07-31 (Mobile App Ready + Tenant-Safe Sign-In — TenantRoad Phase 1.1/1.2)
+
+Completed
+
+* **Mobile app is ready** (owner-confirmed, built by a team member against `gym_mobile_roadmap.md`). Not yet independently run in this repo/session — a hand-off checklist was written to close that gap (see below).
+* **TenantRoad 1.1 — tenant-safe staff sign-in**: `AuthService.signIn` now verifies the password against *every* cross-tenant identifier match instead of `users[0]`; `AuthService.createUser` rejects an email **or** auto-derived username already used in any tenant (platform-admin owner creation already had the global check).
+* **TenantRoad 1.2 — tenant-safe member (mobile) sign-in**: `POST /api/member-auth/sign-in` is now **phone-only** — `memberNumber` dropped as an identifier (every gym has an `MEM-0001`); PIN verified against all candidates. Two phone forms accepted (owner request, same day): **local** (`0500000001` — country code implied by the member's branch country, matched by completing the typed digits with the branch dial code) and **international E.164** (`+972500000001`, required when the member's phone country differs from their branch's). `POST /api/members/:memberId/pin` now requires the member to have a phone on file and rejects a PIN already used by another member with the same phone *or same local digits* in any tenant (same phone across tenants stays allowed — one person, two gyms — distinct PINs keep sign-in unambiguous).
+* **This is a breaking change for the mobile app's sign-in screen** ("member number or phone" → phone only). Wrote `mobile_app_update_2026-07-31.md` — a self-contained brief for the app developer: what changed, updated test credentials (`+972500000001` / PIN `246800`, same `MEM-0013` account — verified live in prod with a unique phone), and a release checklist (session-restore on launch, 401/429 handling, device-token registration, APK hand-off, Firebase package name, Play Store assets). `gym_mobile_roadmap.md` updated to match the new contract.
+* **e2e suite green 41/41**: fixed the two stale class-booking tests (hardcoded mid-July dates → `daysFromToday`; rewritten for enrollment-gated booking — members must register via `/training-programs/:id/register` before booking, and registering auto-books upcoming sessions), and added a new test covering phone-only member sign-in, PIN-setup guards, and shared-phone disambiguation.
+
+* **TenantRoad 1.4 — demo tenant renamed (live in prod, same day)**: `tenant-spark-gym` renamed "Platinum Fitness" → **"Demo Gym"** directly in the prod DB (equivalent to the `/platform-admin` rename — `updateTenantName` is a plain `Tenant.name` update, no side effects; the platform-admin password wasn't on hand). Verified via live sign-in (`user.tenant.name` now "Demo Gym"); verification session signed out. Branch names untouched. **TenantRoad Phase 1 is complete** — 1.1/1.2 await deploy, 1.3/1.4 are live.
+* **TenantRoad 1.3 — demo tenant accounts hardened (live in prod, same day)**: rotated `owner@`/`manager@`/`frontdesk@sparkgym.local` to strong random passwords directly in the prod DB (the old seed passwords are hashed in the repo, so they were effectively public). Verified against the live API: old passwords → 401, new → 200. Revoked all active staff sessions. Cleared the test PINs of demo members MEM-0001/MEM-0008/MEM-0014 and revoked their app sessions; MEM-0013 (the dedicated mobile-dev test account) deliberately kept working. New credentials + old-hash rollback record in `/root/gym-demo-cred-rotation.txt` (chmod 600, outside the repo).
+
+* **Deployed to production (same day, ~10:34 CEST)**: fresh backup first (`gym_db_20260731_103152.sql.gz` + MinIO archive), API image rebuilt and rolled (`docker compose -p gym -f docker-compose.prod.yml build api && up -d --no-deps api` — API-only change, web untouched). Verified live: member sign-in works with both `+972500000001` and local `0500000001` (MEM-0013), member-number sign-in returns 401, staff sign-in works with the rotated credentials. Verification sessions signed out.
+
+Next
+
+* **Tell the app developer**: the phone-only contract is live NOW — if the app still signs in with `MEM-0013`, it's broken against prod as of today. `mobile_app_update_2026-07-31.md` updated accordingly; send it.
+* TenantRoad Phase 1 is done and deployed — next is Phase 2 (onboard the first real customer): create the tenant via `/platform-admin`, tenant-scoped CSV import, owner walkthrough, WhatsApp link, isolation smoke test, fresh backup before go-live.
+* The deployed code is uncommitted working-tree state — commit the 1.1/1.2 changes (auth.service.ts, member-auth.service.ts, members.service.ts, common/phone.ts, e2e spec, docs) when convenient.
+* From the app developer: checklist confirmations, a debug APK (or repo access), and the Android package name so the Firebase project can be created (unblocks real FCM push).
+
+---
+
+## 2026-07-29 (Mobile App — Reported Ready by Owner)
+
+* Per the owner: the member-facing mobile app (built against the API contract in `gym_mobile_roadmap.md`) has been built by a team member and is ready. This was not built or independently verified in this repo/session — recorded here per the owner's report. Still open: confirm which platform/repo it lives in, whether it's been run end-to-end against the live `/member-auth` + `/me` API (the `MEM-0013` test account exists for exactly this), and Play Store submission status if applicable.
+* The backend contract it depends on (Phase 0 member auth + Phase 2 announcements/closed-dates/device-token storage) has been live in production since 2026-07-26. Real FCM push delivery is still a log-only stand-in (`FcmNotificationProvider`) pending a Firebase project — announcements/closed-dates work in-app either way, only push alerts are affected.
+
+---
+
 ## 2026-07-28 (Employee Attendance — QR Check-In/Out, Per-Gate Access, Attendance Report — Closes Phase 2)
 
 Completed

@@ -55,7 +55,7 @@ export type PaymentRow = {
   memberId: string;
   memberName: string | null;
   memberNumber: string | null;
-  membershipId: string;
+  membershipId: string | null;
   amount: number;
   paymentDate: string;
   status: string;

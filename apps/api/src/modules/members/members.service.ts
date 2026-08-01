@@ -8,8 +8,8 @@ import { randomUUID } from 'node:crypto';
 import * as QRCode from 'qrcode';
 import { localDateString, toDateOnlyString } from '../../common/date';
 import { generateQrSig, makeQrPublicUrl, memberIdToUuid } from '../../common/qr';
-import { normalizePhone } from '../../common/phone';
-import { hashPin } from '../../common/pin-hash';
+import { localPartDigits, normalizePhone } from '../../common/phone';
+import { hashPin, pinMatches } from '../../common/pin-hash';
 import { toNumber } from '../../common/decimal';
 import { findCountryByCode } from '../../data/countries';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
@@ -313,9 +313,47 @@ export class MembersService {
         tenantId,
         ...(branchId ? { homeBranchId: branchId } : {}),
       },
+      include: { homeBranch: true },
     });
     if (!member) {
       throw new NotFoundException('Member not found.');
+    }
+
+    if (!member.phone) {
+      throw new BadRequestException(
+        'This member has no phone number on file. The app signs in by phone, so add one first.',
+      );
+    }
+
+    // The app signs in by phone (international or local form) and
+    // disambiguates by PIN, so the same identifier + PIN pair must be unique
+    // across ALL tenants (one person can be a member of two gyms with the
+    // same phone — different PINs keep the accounts distinguishable at
+    // sign-in). Matching on the local digits too is deliberately broader
+    // than exact phone equality: two numbers that only differ in country
+    // code collide on the local sign-in form.
+    const localDigits = localPartDigits(
+      member.phone,
+      this.getDialCodeForBranch(member.homeBranch),
+    );
+    const samePhoneMembers = await this.prisma.member.findMany({
+      where: {
+        OR: [
+          { phone: member.phone },
+          ...(localDigits ? [{ phone: { endsWith: localDigits } }] : []),
+        ],
+        pinHash: { not: null },
+        id: { not: memberId },
+      },
+      select: { pinHash: true },
+    });
+    const pinTaken = samePhoneMembers.some(
+      (other) => other.pinHash && pinMatches(other.pinHash, pin),
+    );
+    if (pinTaken) {
+      throw new BadRequestException(
+        'Another member with this phone number already uses this PIN. Choose a different PIN.',
+      );
     }
 
     await this.prisma.member.update({

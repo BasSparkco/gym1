@@ -64,7 +64,7 @@ export async function getUser(userId: string): Promise<StaffUser> {
 
 export async function createUser(data: {
   email: string;
-  name: string;
+  username: string;
   role: UserRole;
   password: string;
   branchId: string;

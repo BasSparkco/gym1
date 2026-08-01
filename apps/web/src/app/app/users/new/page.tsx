@@ -41,7 +41,7 @@ export default async function NewUserPage() {
 
     const user = await createUser({
       email: formData.get("email") as string,
-      name: formData.get("name") as string,
+      username: formData.get("username") as string,
       role: formData.get("role") as UserRole,
       password: formData.get("password") as string,
       branchId: branchId || session.branch.id,
@@ -56,22 +56,28 @@ export default async function NewUserPage() {
       <PageHeader
         eyebrow={t.nav.usersRoles}
         title={t.users.newStaffUser}
-        description="Create a staff account. Email, name, role, password, and a linked employee are required."
+        description="Create a staff account. Email, username, role, password, and a linked employee are required."
       />
 
       <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-5">
           <div className="grid gap-1.5">
-            <label htmlFor="name" className="text-sm font-medium">
-              {t.users.fullName} <span className="text-red-500">*</span>
+            <label htmlFor="username" className="text-sm font-medium">
+              {t.users.username} <span className="text-red-500">*</span>
             </label>
             <input
-              id="name"
-              name="name"
+              id="username"
+              name="username"
               required
-              placeholder="e.g. Rania Khalil"
+              minLength={3}
+              maxLength={32}
+              pattern="[a-z0-9._-]+"
+              placeholder="e.g. rania.k"
               className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
+            <p className="text-xs text-foreground/50">
+              Used to sign in, along with email. Lowercase letters, numbers, dots, hyphens, and underscores only.
+            </p>
           </div>
 
           <div className="grid gap-1.5">

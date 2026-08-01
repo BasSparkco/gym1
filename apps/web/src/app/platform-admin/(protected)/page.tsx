@@ -36,7 +36,14 @@ export default async function PlatformAdminDashboardPage() {
                 className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-white px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:shadow-sm"
               >
                 <div>
-                  <p className="text-sm font-semibold">{tenant.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">{tenant.name}</p>
+                    {tenant.status === "paused" ? (
+                      <span className="rounded-full border border-danger/25 bg-danger/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
+                        Paused
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-0.5 text-xs text-foreground/60">
                     {tenant.branchCount} branch{tenant.branchCount === 1 ? "" : "es"}
                     {tenant.ownerEmail ? ` · ${tenant.ownerEmail}` : ""}

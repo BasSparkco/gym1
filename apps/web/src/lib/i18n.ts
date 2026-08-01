@@ -275,15 +275,19 @@ export type Dict = {
     title: string;
     recordPayment: string;
     membership: string;
+    course: string;
+    locker: string;
     amount: string;
     paymentMethod: string;
     paymentDate: string;
     cash: string;
     card: string;
     transfer: string;
-    noActiveMembership: string;
-    noMembershipsFound: string;
-    sellMembershipFirst: string;
+    paidFor: string;
+    allDebts: string;
+    noDebtItems: string;
+    paidOfTotal: string;
+    paymentsMade: string;
     noPayments: string;
     statusLabel: string;
     currentDebt: string;
@@ -434,7 +438,6 @@ export type Dict = {
     newStaffUser: string;
     allUsers: string;
     staffDetails: string;
-    fullName: string;
     email: string;
     username: string;
     role: string;
@@ -677,6 +680,7 @@ export type Dict = {
     channelsSectionTitle: string;
     channelWhatsapp: string;
     channelEmail: string;
+    channelApp: string;
     daysBefore: string;
     daysBeforeUnit: string;
     enableEvent: string;
@@ -1124,15 +1128,19 @@ const en: Dict = {
     title: "Payments",
     recordPayment: "Record payment",
     membership: "Membership",
+    course: "Course",
+    locker: "Locker",
     amount: "Amount",
     paymentMethod: "Payment method",
     paymentDate: "Payment date",
     cash: "Cash",
     card: "Card",
     transfer: "Transfer",
-    noActiveMembership: "No active membership",
-    noMembershipsFound: "No memberships found for this member.",
-    sellMembershipFirst: "Sell a membership first.",
+    paidFor: "What is this payment for?",
+    allDebts: "All debts",
+    noDebtItems: "This member has no memberships, courses, or lockers registered.",
+    paidOfTotal: "{paid} paid of {total}",
+    paymentsMade: "Payments made",
     noPayments: "No payments recorded.",
     statusLabel: "Status",
     currentDebt: "Current debt",
@@ -1283,7 +1291,6 @@ const en: Dict = {
     newStaffUser: "New staff user",
     allUsers: "All users",
     staffDetails: "Staff details",
-    fullName: "Full name",
     email: "Email",
     username: "Username",
     role: "Role",
@@ -1526,6 +1533,7 @@ const en: Dict = {
     channelsSectionTitle: "Delivery channels",
     channelWhatsapp: "WhatsApp",
     channelEmail: "Email",
+    channelApp: "Mobile app",
     daysBefore: "Days before expiry",
     daysBeforeUnit: "days",
     enableEvent: "Enable this notification",
@@ -1973,15 +1981,19 @@ const ar: Dict = {
     title: "المدفوعات",
     recordPayment: "تسجيل دفعة",
     membership: "الاشتراك",
+    course: "الدورة",
+    locker: "الخزانة",
     amount: "المبلغ",
     paymentMethod: "طريقة الدفع",
     paymentDate: "تاريخ الدفع",
     cash: "نقدي",
     card: "بطاقة",
     transfer: "تحويل",
-    noActiveMembership: "لا يوجد اشتراك نشط",
-    noMembershipsFound: "لم يتم العثور على اشتراكات لهذا العضو.",
-    sellMembershipFirst: "بيع اشتراك أولاً.",
+    paidFor: "علام هذه الدفعة؟",
+    allDebts: "كل الديون",
+    noDebtItems: "لا يوجد اشتراكات أو دورات أو خزائن مسجلة لهذا العضو.",
+    paidOfTotal: "تم دفع {paid} من {total}",
+    paymentsMade: "الدفعات السابقة",
     noPayments: "لا توجد مدفوعات مسجلة.",
     statusLabel: "الحالة",
     currentDebt: "الدين الحالي",
@@ -2132,7 +2144,6 @@ const ar: Dict = {
     newStaffUser: "موظف جديد",
     allUsers: "جميع المستخدمين",
     staffDetails: "بيانات الموظف",
-    fullName: "الاسم الكامل",
     email: "البريد الإلكتروني",
     username: "اسم المستخدم",
     role: "الدور",
@@ -2375,6 +2386,7 @@ const ar: Dict = {
     channelsSectionTitle: "قنوات الإرسال",
     channelWhatsapp: "واتساب",
     channelEmail: "البريد الإلكتروني",
+    channelApp: "تطبيق الجوال",
     daysBefore: "أيام قبل الانتهاء",
     daysBeforeUnit: "أيام",
     enableEvent: "تفعيل هذا الإشعار",
@@ -2822,15 +2834,19 @@ const he: Dict = {
     title: "תשלומים",
     recordPayment: "רשום תשלום",
     membership: "מנוי",
+    course: "קורס",
+    locker: "לוקר",
     amount: "סכום",
     paymentMethod: "אמצעי תשלום",
     paymentDate: "תאריך תשלום",
     cash: "מזומן",
     card: "כרטיס",
     transfer: "העברה",
-    noActiveMembership: "אין מנוי פעיל",
-    noMembershipsFound: "לא נמצאו מנויים לחבר זה.",
-    sellMembershipFirst: "מכור מנוי תחילה.",
+    paidFor: "עבור מה התשלום הזה?",
+    allDebts: "כל החובות",
+    noDebtItems: "לחבר זה אין מנויים, קורסים או לוקרים רשומים.",
+    paidOfTotal: "שולם {paid} מתוך {total}",
+    paymentsMade: "תשלומים שבוצעו",
     noPayments: "לא נרשמו תשלומים.",
     statusLabel: "סטטוס",
     currentDebt: "חוב נוכחי",
@@ -2981,7 +2997,6 @@ const he: Dict = {
     newStaffUser: "איש צוות חדש",
     allUsers: "כל המשתמשים",
     staffDetails: "פרטי צוות",
-    fullName: "שם מלא",
     email: "דוא\"ל",
     username: "שם משתמש",
     role: "תפקיד",
@@ -3224,6 +3239,7 @@ const he: Dict = {
     channelsSectionTitle: "ערוצי מסירה",
     channelWhatsapp: "WhatsApp",
     channelEmail: "דוא\"ל",
+    channelApp: "אפליקציה",
     daysBefore: "ימים לפני פקיעה",
     daysBeforeUnit: "ימים",
     enableEvent: "הפעל התראה זו",

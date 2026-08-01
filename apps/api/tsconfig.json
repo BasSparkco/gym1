@@ -17,6 +17,10 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "incremental": true,
+    // Keep the buildinfo inside dist so nest's deleteOutDir wipes them
+    // together — a surviving stale buildinfo makes tsc silently emit nothing
+    // into a freshly wiped dist (MODULE_NOT_FOUND on dist/main).
+    "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo",
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,

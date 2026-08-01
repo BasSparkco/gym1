@@ -16,23 +16,45 @@ export type TenantSummary = {
   createdAt: string;
   branchCount: number;
   ownerEmail: string | null;
+  status: "active" | "paused";
+  pausedReason: string | null;
+  pausedAt: string | null;
+};
+
+export type BranchInput = {
+  name: string;
+  address?: string;
+  phone?: string;
+  countryCode?: string;
+  operatingCurrencyCode?: string;
+};
+
+export type OwnerInput = {
+  name: string;
+  email: string;
+  username: string;
+  password: string;
 };
 
 export type CreateTenantInput = {
   tenantName: string;
-  branch: {
-    name: string;
-    address?: string;
-    phone?: string;
-    countryCode?: string;
-    operatingCurrencyCode?: string;
-  };
-  owner: {
-    name: string;
-    email: string;
-    username: string;
-    password: string;
-  };
+  branch: BranchInput;
+  owner: OwnerInput;
+};
+
+export type AddBranchInput = {
+  branch: BranchInput;
+  owner: OwnerInput;
+};
+
+export type BranchSummary = {
+  id: string;
+  name: string;
+  address: string | null;
+  countryCode: string | null;
+  operatingCurrencyCode: string;
+  status: "active" | "inactive";
+  ownerEmail: string | null;
 };
 
 async function authedFetch(path: string, init?: RequestInit) {
@@ -119,4 +141,39 @@ export async function updateTenantName(tenantId: string, name: string): Promise<
   });
   const payload = (await response.json()) as { tenant: TenantSummary };
   return payload.tenant;
+}
+
+export async function pauseTenant(tenantId: string, reason: string): Promise<TenantSummary> {
+  const response = await authedFetch(`/platform-admin/tenants/${tenantId}/pause`, {
+    method: "PATCH",
+    body: JSON.stringify({ reason }),
+  });
+  const payload = (await response.json()) as { tenant: TenantSummary };
+  return payload.tenant;
+}
+
+export async function resumeTenant(tenantId: string): Promise<TenantSummary> {
+  const response = await authedFetch(`/platform-admin/tenants/${tenantId}/resume`, {
+    method: "PATCH",
+  });
+  const payload = (await response.json()) as { tenant: TenantSummary };
+  return payload.tenant;
+}
+
+export async function listBranches(tenantId: string): Promise<BranchSummary[]> {
+  const response = await authedFetch(`/platform-admin/tenants/${tenantId}/branches`);
+  const payload = (await response.json()) as { branches: BranchSummary[] };
+  return payload.branches;
+}
+
+export async function addBranch(
+  tenantId: string,
+  input: AddBranchInput,
+): Promise<BranchSummary> {
+  const response = await authedFetch(`/platform-admin/tenants/${tenantId}/branches`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  const payload = (await response.json()) as { branch: BranchSummary };
+  return payload.branch;
 }

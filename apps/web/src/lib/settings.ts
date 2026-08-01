@@ -14,6 +14,7 @@ export type NotificationEventRule = {
     sms: boolean;
     whatsapp: boolean;
     email: boolean;
+    app: boolean;
   };
 };
 
@@ -32,24 +33,24 @@ export type NotificationSettings = {
 export const defaultNotificationSettings: NotificationSettings = {
   membershipExpiring: {
     enabled: true,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
     daysBefore: 3,
   },
   membershipExpired: {
     enabled: true,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
   },
   paymentPending: {
     enabled: true,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
   },
   membershipActivated: {
     enabled: true,
-    channels: { sms: false, whatsapp: false, email: true },
+    channels: { sms: false, whatsapp: false, email: true, app: false },
   },
   birthday: {
     enabled: false,
-    channels: { sms: false, whatsapp: true, email: false },
+    channels: { sms: false, whatsapp: true, email: false, app: false },
   },
 };
 

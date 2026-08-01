@@ -19,12 +19,14 @@ export function SignInForm({ labels }: SignInFormProps) {
   const [identifier, setIdentifier] = useState("frontdesk@sparkgym.local");
   const [password, setPassword] = useState("frontdesk123");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pausedReason, setPausedReason] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
+    setPausedReason(null);
 
     try {
       const response = await fetch(`${apiBaseUrl}/auth/sign-in`, {
@@ -41,8 +43,14 @@ export function SignInForm({ labels }: SignInFormProps) {
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as
-          | { message?: string | string[] }
+          | { code?: string; message?: string | string[]; reason?: string }
           | null;
+
+        if (payload?.code === "TENANT_PAUSED") {
+          setPausedReason(payload.reason ?? "No reason given.");
+          return;
+        }
+
         const message = Array.isArray(payload?.message)
           ? payload.message[0]
           : payload?.message;
@@ -58,6 +66,16 @@ export function SignInForm({ labels }: SignInFormProps) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (pausedReason) {
+    return (
+      <div className="mt-10 grid gap-4 rounded-2xl border border-danger/25 bg-danger/[0.06] px-5 py-4 text-sm text-danger">
+        <p className="font-semibold">This organization has been paused.</p>
+        <p>{pausedReason}</p>
+        <p className="text-foreground/60">Contact your platform administrator to resolve this.</p>
+      </div>
+    );
   }
 
   return (

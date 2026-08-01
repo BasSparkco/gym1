@@ -15,7 +15,7 @@ import { AuthService } from '../auth/auth.service';
 
 type CreateUserRequestBody = {
   email?: string;
-  name?: string;
+  username?: string;
   role?: 'owner' | 'manager' | 'front-desk';
   password?: string;
   branchId?: string;
@@ -92,7 +92,7 @@ export class UsersController {
         session.user.tenant.name,
         {
           email: body.email ?? '',
-          name: body.name ?? '',
+          username: body.username ?? '',
           role: body.role ?? 'front-desk',
           password: body.password ?? '',
           branchId: body.branchId ?? session.user.branch.id,

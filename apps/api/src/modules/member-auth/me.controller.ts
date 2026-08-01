@@ -13,6 +13,7 @@ import { MembersService } from '../members/members.service';
 import { MembershipsService } from '../memberships/memberships.service';
 import { AnnouncementsService } from '../announcements/announcements.service';
 import { ClosedDatesService } from '../closed-dates/closed-dates.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { MemberAuthService, MemberSession } from './member-auth.service';
 import { extractBearerToken } from './extract-bearer-token';
 
@@ -32,6 +33,7 @@ export class MeController {
     private readonly membershipsService: MembershipsService,
     private readonly announcementsService: AnnouncementsService,
     private readonly closedDatesService: ClosedDatesService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Get()
@@ -79,6 +81,25 @@ export class MeController {
         session.tenantId,
         session.homeBranchId,
       ),
+    };
+  }
+
+  @Get('notifications')
+  async getNotifications(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    const notifications =
+      await this.notificationsService.listAppNotificationsForMember(
+        session.tenantId,
+        session.id,
+      );
+    return {
+      notifications: notifications.map((notification) => ({
+        id: notification.id,
+        event: notification.event,
+        subject: notification.subject,
+        body: notification.body,
+        createdAt: notification.sentAt ?? notification.createdAt,
+      })),
     };
   }
 

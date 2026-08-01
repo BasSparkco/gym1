@@ -80,12 +80,61 @@ export class MembershipsService {
     private readonly debtService: DebtService,
   ) {}
 
+  /**
+   * Keeps membership status in sync with the calendar: expires actives past
+   * their end date, and activates pre-sold drafts whose start date has
+   * arrived. A draft's date range never overlaps an active one (enforced at
+   * creation in `createMembership`), so by the time a draft is due its
+   * predecessor has always already expired — activation here can't collide.
+   */
   private async autoExpireStaleForTenant(tenantId: string): Promise<void> {
     const today = toDateOnly(localDateString());
     await this.prisma.membership.updateMany({
       where: { member: { tenantId }, status: 'active', endDate: { lt: today } },
       data: { status: 'expired' },
     });
+
+    const dueDrafts = await this.prisma.membership.findMany({
+      where: { member: { tenantId }, status: 'draft', startDate: { lte: today } },
+      include: { member: true, plan: true },
+    });
+
+    for (const draft of dueDrafts) {
+      const activated = await this.prisma.membership.update({
+        where: { id: draft.id },
+        data: { status: 'active' },
+      });
+      await this.activateMembership(tenantId, draft.member, draft.plan, activated);
+      await this.debtService.recompute(draft.memberId);
+    }
+  }
+
+  /** Sends the activation notification and pushes gate access for a
+   * membership that just became active — on initial sale or when a pre-sold
+   * draft's start date arrives. */
+  private async activateMembership(
+    tenantId: string,
+    member: Member,
+    plan: MembershipPlan,
+    membership: Membership,
+  ): Promise<void> {
+    const qrUrl = makeQrPublicUrl(member.id);
+    await this.notificationsService.createNotificationsForEvent(
+      tenantId,
+      'membershipActivated',
+      membership.memberId,
+      {
+        templateKey: 'membershipActivated',
+        variables: {
+          planName: plan.name,
+          endDate: toDateOnlyString(membership.endDate),
+          qrUrl,
+        },
+        relatedId: membership.id,
+      },
+    );
+
+    this.syncToDevice(member, membership);
   }
 
   async listMembershipsForTenant(tenantId: string, branchId?: string) {
@@ -515,14 +564,6 @@ export class MembershipsService {
       );
     }
 
-    const existingActive = await this.prisma.membership.findFirst({
-      where: { memberId: member.id, status: 'active' },
-    });
-
-    if (existingActive) {
-      throw new BadRequestException('Member already has an active membership.');
-    }
-
     let endDate = input.endDate;
 
     if (!endDate) {
@@ -535,7 +576,36 @@ export class MembershipsService {
       }
     }
 
-    const status = input.status ?? 'active';
+    const newStart = toDateOnly(input.startDate);
+    const newEnd = toDateOnly(endDate);
+
+    // Block only a genuine date overlap, not just "any other membership
+    // exists" — a member can be pre-sold a future membership that starts
+    // after their current (or another already pre-sold) one ends.
+    const overlapping = await this.prisma.membership.findFirst({
+      where: {
+        memberId: member.id,
+        status: { in: ['active', 'frozen', 'draft'] },
+        startDate: { lte: newEnd },
+        endDate: { gte: newStart },
+      },
+      orderBy: { endDate: 'desc' },
+    });
+
+    if (overlapping) {
+      throw new BadRequestException(
+        `Member already has a membership covering this period (through ${toDateOnlyString(overlapping.endDate)}). Choose a start date after that, or expire/cancel it first.`,
+      );
+    }
+
+    // A membership starting in the future isn't in effect yet — don't mark
+    // it active (which would grant gate access / send the activation
+    // notification) until its own start date arrives.
+    const today = toDateOnly(localDateString());
+    let status = input.status ?? 'active';
+    if (status === 'active' && newStart > today) {
+      status = 'draft';
+    }
 
     const membership = await this.prisma.membership.create({
       data: {
@@ -550,23 +620,7 @@ export class MembershipsService {
     });
 
     if (status === 'active') {
-      const qrUrl = makeQrPublicUrl(member.id);
-      await this.notificationsService.createNotificationsForEvent(
-        tenantId,
-        'membershipActivated',
-        membership.memberId,
-        {
-          templateKey: 'membershipActivated',
-          variables: {
-            planName: plan.name,
-            endDate: toDateOnlyString(membership.endDate),
-            qrUrl,
-          },
-          relatedId: membership.id,
-        },
-      );
-
-      this.syncToDevice(member, membership);
+      await this.activateMembership(tenantId, member, plan, membership);
     }
 
     await this.debtService.recompute(membership.memberId);
