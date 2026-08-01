@@ -26,6 +26,7 @@ export type NotificationSettings = {
   membershipExpired: NotificationEventRule;
   paymentPending: NotificationEventRule;
   membershipActivated: NotificationEventRule;
+  birthday: NotificationEventRule;
 };
 
 export const defaultNotificationSettings: NotificationSettings = {
@@ -45,6 +46,10 @@ export const defaultNotificationSettings: NotificationSettings = {
   membershipActivated: {
     enabled: true,
     channels: { sms: false, whatsapp: false, email: true },
+  },
+  birthday: {
+    enabled: false,
+    channels: { sms: false, whatsapp: true, email: false },
   },
 };
 

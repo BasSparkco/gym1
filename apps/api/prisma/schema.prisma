@@ -94,6 +94,7 @@ enum NotificationEvent {
   membershipExpired
   paymentPending
   membershipActivated
+  birthday
 }
 
 enum NotificationStatus {
@@ -166,6 +167,7 @@ model Tenant {
   lockers          Locker[]
   announcements    Announcement[]
   closedDates      ClosedDate[]
+  notificationTemplates NotificationTemplate[]
 }
 
 // Operator-level account for onboarding new tenants (SaaS admin). Deliberately
@@ -634,6 +636,27 @@ model Notification {
 
   @@index([tenantId, createdAt])
   @@index([memberId])
+}
+
+// Owner-editable subject/body per (templateKey, lang), overriding the
+// in-code defaults in notification-templates-seed.ts. templateKey is looser
+// than NotificationEvent on purpose: `membershipActivated` (initial sale)
+// and `membershipRenewed` (renewal) fire under the same NotificationEvent
+// (so they share one enable/channel rule in Settings) but need independently
+// editable text, so template lookup keys off templateKey, not event.
+model NotificationTemplate {
+  id          String   @id
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  templateKey String
+  lang        String
+  subject     String
+  body        String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, templateKey, lang])
+  @@index([tenantId])
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

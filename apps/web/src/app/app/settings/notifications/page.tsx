@@ -21,6 +21,7 @@ const EVENTS = [
   "membershipExpired",
   "paymentPending",
   "membershipActivated",
+  "birthday",
 ] as const;
 
 type EventKey = (typeof EVENTS)[number];
@@ -84,6 +85,7 @@ export default async function NotificationSettingsPage() {
     membershipExpired: t.settings.eventMembershipExpired,
     paymentPending: t.settings.eventPaymentPending,
     membershipActivated: t.settings.eventMembershipActivated,
+    birthday: t.settings.eventBirthday,
   };
 
   const eventHelp: Record<EventKey, string> = {
@@ -91,6 +93,7 @@ export default async function NotificationSettingsPage() {
     membershipExpired: t.settings.eventMembershipExpiredHelp,
     paymentPending: t.settings.eventPaymentPendingHelp,
     membershipActivated: t.settings.eventMembershipActivatedHelp,
+    birthday: t.settings.eventBirthdayHelp,
   };
 
   const channelLabels: Record<Channel, string> = {
@@ -123,6 +126,12 @@ export default async function NotificationSettingsPage() {
         <span className="rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white shadow-sm">
           {t.nav.notifications}
         </span>
+        <Link
+          href="/app/settings/notifications/templates"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
+        >
+          {t.settings.templates}
+        </Link>
         <Link
           href="/app/settings/gates"
           className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"

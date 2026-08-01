@@ -62,9 +62,13 @@ export class SettingsService {
       tenantId: found.tenantId,
       defaultLanguage: found.defaultLanguage as Language,
       enabledLanguages: found.enabledLanguages as Language[],
-      notificationSettings:
-        (found.notificationSettings as unknown as NotificationSettings) ??
-        defaults.notificationSettings,
+      // Merged per-key: a tenant provisioned before a new notification event
+      // existed has a stored blob missing that key, which must fall back to
+      // the default rule for that key rather than losing its other events.
+      notificationSettings: {
+        ...defaults.notificationSettings,
+        ...(found.notificationSettings as unknown as Partial<NotificationSettings> | null),
+      },
       notificationSenders:
         (found.notificationSenders as unknown as NotificationSenderSettings) ??
         defaults.notificationSenders,

@@ -28,6 +28,20 @@ export class NotificationsSchedulerService {
           `[${tenantId}] daily notification cycle failed: ${(error as Error).message}`,
         );
       }
+
+      try {
+        const result =
+          await this.notificationsService.scanForBirthdays(tenantId);
+
+        this.logger.log(
+          `[${tenantId}] birthday scan raised ${result.created} notification(s); ` +
+            `sent ${result.sent} (${result.failed} failed).`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `[${tenantId}] birthday scan failed: ${(error as Error).message}`,
+        );
+      }
     }
   }
 

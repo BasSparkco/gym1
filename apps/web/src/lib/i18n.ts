@@ -657,6 +657,23 @@ export type Dict = {
     eventMembershipExpiredHelp: string;
     eventPaymentPendingHelp: string;
     eventMembershipActivatedHelp: string;
+    eventMembershipRenewed: string;
+    eventMembershipRenewedHelp: string;
+    eventBirthday: string;
+    eventBirthdayHelp: string;
+    templates: string;
+    templatesTitle: string;
+    templatesDescription: string;
+    templatesLanguageNote: string;
+    templateLanguageLabel: string;
+    templateSubjectLabel: string;
+    templateBodyLabel: string;
+    templateVariablesLabel: string;
+    templateCustomBadge: string;
+    templateDefaultBadge: string;
+    templateSaveButton: string;
+    templateResetButton: string;
+    templateSavedMessage: string;
     channelsSectionTitle: string;
     channelWhatsapp: string;
     channelEmail: string;
@@ -1462,7 +1479,7 @@ const en: Dict = {
     language: "Language",
     languageConfig: "Language configuration",
     defaultLanguage: "Default language",
-    defaultLanguageHelp: "The language the application opens in. Must be one of the enabled languages below.",
+    defaultLanguageHelp: "The language the application opens in — and the language member notifications are sent in (edit their text under Notifications → Templates). Must be one of the enabled languages below.",
     availableLanguages: "Available languages",
     availableLanguagesHelp: "Choose which languages appear in the language picker. At least one must remain enabled. The default language cannot be disabled.",
     saveLanguageSettings: "Save language settings",
@@ -1489,6 +1506,23 @@ const en: Dict = {
     eventMembershipExpiredHelp: "Notify members on the day their membership expires.",
     eventPaymentPendingHelp: "Remind members with an outstanding balance.",
     eventMembershipActivatedHelp: "Welcome message when a new membership is activated.",
+    eventMembershipRenewed: "Membership renewed",
+    eventMembershipRenewedHelp: "Confirmation sent when an existing membership is renewed.",
+    eventBirthday: "Member birthday",
+    eventBirthdayHelp: "Send an automatic birthday greeting to members on their birthday.",
+    templates: "Templates",
+    templatesTitle: "Notification templates",
+    templatesDescription: "Edit the subject and message text sent for each notification, in each language your gym uses.",
+    templatesLanguageNote: "Notifications are actually sent in your gym's default language, set on the Options page — not chosen here. Edit each language's text below so it's ready when you switch.",
+    templateLanguageLabel: "Language",
+    templateSubjectLabel: "Subject",
+    templateBodyLabel: "Message",
+    templateVariablesLabel: "Placeholders you can use",
+    templateCustomBadge: "Customized",
+    templateDefaultBadge: "Using default text",
+    templateSaveButton: "Save",
+    templateResetButton: "Reset to default",
+    templateSavedMessage: "Template saved.",
     channelsSectionTitle: "Delivery channels",
     channelWhatsapp: "WhatsApp",
     channelEmail: "Email",
@@ -2294,7 +2328,7 @@ const ar: Dict = {
     language: "اللغة",
     languageConfig: "إعدادات اللغة",
     defaultLanguage: "اللغة الافتراضية",
-    defaultLanguageHelp: "اللغة التي يفتح بها التطبيق. يجب أن تكون من اللغات الممكّنة أدناه.",
+    defaultLanguageHelp: "اللغة التي يفتح بها التطبيق — وهي أيضًا اللغة التي تُرسل بها إشعارات الأعضاء (يمكن تعديل نصها من الإشعارات ← القوالب). يجب أن تكون من اللغات الممكّنة أدناه.",
     availableLanguages: "اللغات المتاحة",
     availableLanguagesHelp: "اختر اللغات التي تظهر في منتقي اللغة. يجب تمكين لغة واحدة على الأقل. لا يمكن تعطيل اللغة الافتراضية.",
     saveLanguageSettings: "حفظ إعدادات اللغة",
@@ -2321,6 +2355,23 @@ const ar: Dict = {
     eventMembershipExpiredHelp: "إشعار الأعضاء في يوم انتهاء اشتراكهم.",
     eventPaymentPendingHelp: "تذكير الأعضاء الذين لديهم رصيد مستحق.",
     eventMembershipActivatedHelp: "رسالة ترحيب عند تفعيل اشتراك جديد.",
+    eventMembershipRenewed: "تم تجديد الاشتراك",
+    eventMembershipRenewedHelp: "تأكيد يُرسل عند تجديد اشتراك حالي.",
+    eventBirthday: "عيد ميلاد العضو",
+    eventBirthdayHelp: "إرسال تهنئة تلقائية بعيد الميلاد للأعضاء في يوم ميلادهم.",
+    templates: "القوالب",
+    templatesTitle: "قوالب الإشعارات",
+    templatesDescription: "عدّل نص الموضوع والرسالة المرسلة لكل إشعار، بكل لغة يستخدمها ناديك.",
+    templatesLanguageNote: "تُرسل الإشعارات فعليًا باللغة الافتراضية لناديك، والتي تُحدَّد من صفحة الخيارات — وليس من هنا. عدّل نص كل لغة أدناه ليكون جاهزًا عند التبديل إليها.",
+    templateLanguageLabel: "اللغة",
+    templateSubjectLabel: "الموضوع",
+    templateBodyLabel: "الرسالة",
+    templateVariablesLabel: "العناصر النائبة المتاحة",
+    templateCustomBadge: "مخصص",
+    templateDefaultBadge: "يستخدم النص الافتراضي",
+    templateSaveButton: "حفظ",
+    templateResetButton: "إعادة إلى الافتراضي",
+    templateSavedMessage: "تم حفظ القالب.",
     channelsSectionTitle: "قنوات الإرسال",
     channelWhatsapp: "واتساب",
     channelEmail: "البريد الإلكتروني",
@@ -3126,7 +3177,7 @@ const he: Dict = {
     language: "שפה",
     languageConfig: "הגדרות שפה",
     defaultLanguage: "שפת ברירת מחדל",
-    defaultLanguageHelp: "השפה שבה נפתחת האפליקציה. חייבת להיות אחת השפות המופעלות למטה.",
+    defaultLanguageHelp: "השפה שבה נפתחת האפליקציה — וגם השפה שבה נשלחות התראות לחברים (ניתן לערוך את הטקסט שלהן בהתראות ← תבניות). חייבת להיות אחת השפות המופעלות למטה.",
     availableLanguages: "שפות זמינות",
     availableLanguagesHelp: "בחר אילו שפות מופיעות בבורר השפות. לפחות שפה אחת חייבת להישאר מופעלת. לא ניתן להשבית את שפת ברירת המחדל.",
     saveLanguageSettings: "שמור הגדרות שפה",
@@ -3153,6 +3204,23 @@ const he: Dict = {
     eventMembershipExpiredHelp: "שלח התראה לחברים ביום שבו מנויהם פג.",
     eventPaymentPendingHelp: "תזכורת לחברים עם יתרה פתוחה.",
     eventMembershipActivatedHelp: "הודעת ברוך הבא כאשר מנוי חדש מופעל.",
+    eventMembershipRenewed: "מנוי חודש",
+    eventMembershipRenewedHelp: "אישור שנשלח כאשר מנוי קיים מחודש.",
+    eventBirthday: "יום הולדת חבר",
+    eventBirthdayHelp: "שלח ברכת יום הולדת אוטומטית לחברים ביום הולדתם.",
+    templates: "תבניות",
+    templatesTitle: "תבניות התראות",
+    templatesDescription: "ערוך את הנושא וטקסט ההודעה שנשלחים לכל התראה, בכל שפה שהמכון שלך משתמש בה.",
+    templatesLanguageNote: "התראות נשלחות בפועל בשפת ברירת המחדל של המכון שלך, שנקבעת בעמוד האפשרויות — לא כאן. ערוך את הטקסט של כל שפה למטה כדי שיהיה מוכן כשתעבור אליה.",
+    templateLanguageLabel: "שפה",
+    templateSubjectLabel: "נושא",
+    templateBodyLabel: "הודעה",
+    templateVariablesLabel: "משתנים זמינים",
+    templateCustomBadge: "מותאם אישית",
+    templateDefaultBadge: "משתמש בטקסט ברירת המחדל",
+    templateSaveButton: "שמור",
+    templateResetButton: "אפס לברירת מחדל",
+    templateSavedMessage: "התבנית נשמרה.",
     channelsSectionTitle: "ערוצי מסירה",
     channelWhatsapp: "WhatsApp",
     channelEmail: "דוא\"ל",

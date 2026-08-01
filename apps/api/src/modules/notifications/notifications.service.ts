@@ -1,16 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { localDateString, toDateOnlyString } from '../../common/date';
-import { getDefaultTenantSettings, NotificationSettings } from '../../data/settings-seed';
+import {
+  getDefaultTenantSettings,
+  Language,
+  NotificationSettings,
+} from '../../data/settings-seed';
 import { NotificationDispatchService } from './notification-dispatch.service';
+import { NotificationTemplatesService } from './notification-templates.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationChannel, NotificationEvent } from '../../generated/prisma/client';
+import { NotificationTemplateKey } from '../../data/notification-templates-seed';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export type CreateNotificationContext = {
-  subject: string;
-  body: string;
+  templateKey: NotificationTemplateKey;
+  variables?: Record<string, string>;
   relatedId?: string;
 };
 
@@ -25,6 +31,7 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly dispatchService: NotificationDispatchService,
+    private readonly templatesService: NotificationTemplatesService,
   ) {}
 
   async listNotificationsForTenant(tenantId: string, branchId?: string) {
@@ -78,6 +85,14 @@ export class NotificationsService {
       return [];
     }
 
+    const lang = await this.getTenantDefaultLanguage(tenantId);
+    const { subject, body } = await this.templatesService.getRenderedTemplate(
+      tenantId,
+      context.templateKey,
+      lang,
+      context.variables ?? {},
+    );
+
     const created = await Promise.all(
       channels.map((channel) =>
         this.prisma.notification.create({
@@ -88,8 +103,8 @@ export class NotificationsService {
             channel,
             event,
             relatedId: context.relatedId,
-            subject: context.subject,
-            body: context.body,
+            subject,
+            body,
             status: 'pending' as const,
           },
         }),
@@ -147,8 +162,8 @@ export class NotificationsService {
           'membershipExpiring',
           member.id,
           {
-            subject: 'Membership expiring soon',
-            body: `Your membership expires on ${endDate}. Renew now to keep your access.`,
+            templateKey: 'membershipExpiring',
+            variables: { endDate },
             relatedId: membership.id,
           },
         );
@@ -167,13 +182,73 @@ export class NotificationsService {
           'membershipExpired',
           member.id,
           {
-            subject: 'Membership expired',
-            body: 'Your membership has expired. Visit the front desk to renew.',
+            templateKey: 'membershipExpired',
             relatedId: membership.id,
           },
         );
         summary.created += notifications.length;
       }
+    }
+
+    return summary;
+  }
+
+  /**
+   * Scans members whose birthday (month + day) is today and raises a
+   * `birthday` notification, skipping anyone already notified so far this
+   * calendar year. Unlike `scanForExpiryNotifications`, dedup can't key off
+   * `relatedId` pointing at a specific record (there isn't one — the
+   * "related" thing is the member themself, and the same member's birthday
+   * recurs every year), so it checks for an existing notification created
+   * since the start of the current year instead.
+   */
+  async scanForBirthdays(tenantId: string): Promise<ScanSummary> {
+    const settings = await this.getNotificationSettingsForTenant(tenantId);
+    const summary: ScanSummary = { created: 0, sent: 0, failed: 0 };
+
+    if (!settings.birthday.enabled) {
+      return summary;
+    }
+
+    const today = localDateString();
+    const [todayYear, todayMonth, todayDay] = today.split('-').map(Number);
+    const startOfYear = new Date(Date.UTC(todayYear, 0, 1));
+
+    const members = await this.prisma.member.findMany({
+      where: { tenantId, dateOfBirth: { not: null } },
+      select: { id: true, fullName: true, dateOfBirth: true },
+    });
+
+    for (const member of members) {
+      const dob = member.dateOfBirth!;
+      if (dob.getUTCMonth() + 1 !== todayMonth || dob.getUTCDate() !== todayDay) {
+        continue;
+      }
+
+      const alreadyNotifiedThisYear = await this.prisma.notification.findFirst({
+        where: {
+          tenantId,
+          event: 'birthday',
+          relatedId: member.id,
+          createdAt: { gte: startOfYear },
+        },
+      });
+
+      if (alreadyNotifiedThisYear) {
+        continue;
+      }
+
+      const notifications = await this.createNotificationsForEvent(
+        tenantId,
+        'birthday',
+        member.id,
+        {
+          templateKey: 'birthday',
+          variables: { memberName: member.fullName },
+          relatedId: member.id,
+        },
+      );
+      summary.created += notifications.length;
     }
 
     return summary;
@@ -186,10 +261,23 @@ export class NotificationsService {
       where: { tenantId },
     });
 
-    return (
-      (found?.notificationSettings as unknown as NotificationSettings) ??
-      getDefaultTenantSettings(tenantId).notificationSettings
-    );
+    // Merged per-key, not swapped wholesale: a tenant provisioned before a
+    // new event (e.g. `birthday`) existed has a stored JSON blob missing
+    // that key entirely, so it must fall back to the default rule for that
+    // one key rather than losing its other configured events.
+    return {
+      ...getDefaultTenantSettings(tenantId).notificationSettings,
+      ...(found?.notificationSettings as unknown as Partial<NotificationSettings> | null),
+    };
+  }
+
+  private async getTenantDefaultLanguage(tenantId: string): Promise<Language> {
+    const found = await this.prisma.tenantSettings.findUnique({
+      where: { tenantId },
+      select: { defaultLanguage: true },
+    });
+
+    return (found?.defaultLanguage as Language | undefined) ?? 'en';
   }
 
   private daysBetween(fromDate: string, toDate: string): number {

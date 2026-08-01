@@ -57,6 +57,12 @@ export default async function BranchSettingsPage() {
           {t.nav.notifications}
         </Link>
         <Link
+          href="/app/settings/notifications/templates"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
+        >
+          {t.settings.templates}
+        </Link>
+        <Link
           href="/app/settings/gates"
           className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
         >

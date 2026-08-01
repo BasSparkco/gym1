@@ -353,8 +353,11 @@ export class MembershipsService {
       'membershipActivated',
       renewal.memberId,
       {
-        subject: 'Membership renewed',
-        body: `Your ${plan.name} membership has been renewed and now runs through ${toDateOnlyString(renewal.endDate)}.`,
+        templateKey: 'membershipRenewed',
+        variables: {
+          planName: plan.name,
+          endDate: toDateOnlyString(renewal.endDate),
+        },
         relatedId: renewal.id,
       },
     );
@@ -553,10 +556,12 @@ export class MembershipsService {
         'membershipActivated',
         membership.memberId,
         {
-          subject: 'Welcome to Spark Gym',
-          body:
-            `Your ${plan.name} membership is now active and runs through ${toDateOnlyString(membership.endDate)}.\n\n` +
-            `Download your QR code (show it at the entrance to enter):\n${qrUrl}`,
+          templateKey: 'membershipActivated',
+          variables: {
+            planName: plan.name,
+            endDate: toDateOnlyString(membership.endDate),
+            qrUrl,
+          },
           relatedId: membership.id,
         },
       );

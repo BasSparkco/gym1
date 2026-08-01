@@ -60,6 +60,14 @@ export class NotificationsController {
     );
   }
 
+  @Post('scan-birthdays')
+  async scanForBirthdays(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+
+    return this.notificationsService.scanForBirthdays(session.user.tenant.id);
+  }
+
   @Post('dispatch')
   async dispatchPending(@Req() request: Request) {
     const session = await this.getRequiredSession(request.headers.cookie);

@@ -125,8 +125,11 @@ export class PaymentsService {
         'paymentPending',
         payment.memberId,
         {
-          subject: 'Payment reminder',
-          body: `You have a pending payment of ${payment.amount} due on ${input.paymentDate}. Please settle your balance at the front desk.`,
+          templateKey: 'paymentPending',
+          variables: {
+            amount: String(payment.amount),
+            paymentDate: input.paymentDate,
+          },
           relatedId: payment.id,
         },
       );

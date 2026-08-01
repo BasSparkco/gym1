@@ -27,6 +27,7 @@ export type NotificationSettings = {
   membershipExpired: NotificationEventRule;
   paymentPending: NotificationEventRule;
   membershipActivated: NotificationEventRule;
+  birthday: NotificationEventRule;
 };
 
 export type NotificationSenderSettings = {
@@ -77,6 +78,13 @@ const defaultNotificationSettings: NotificationSettings = {
   membershipActivated: {
     enabled: true,
     channels: { sms: false, whatsapp: true, email: true },
+  },
+  // Off by default: unlike the other events, this is a brand-new automatic
+  // message that didn't exist before — existing tenants shouldn't suddenly
+  // start messaging members without the owner opting in.
+  birthday: {
+    enabled: false,
+    channels: { sms: false, whatsapp: true, email: false },
   },
 };
 
