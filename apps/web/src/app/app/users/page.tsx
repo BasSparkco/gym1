@@ -2,6 +2,7 @@ import { listUsers, listRoles } from "@/lib/users";
 import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
+import { apiBaseUrl } from "@/lib/auth";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { BadgeTone } from "@/components/ui/badge";
-import { UserList } from "@/components/users/user-list";
+import { UsersGrid } from "@/components/users/users-grid";
 import type { EmployeeOption } from "@/components/employee-combobox";
 import { UserPlus, ShieldCheck } from "lucide-react";
 
@@ -79,13 +80,14 @@ export default async function UsersPage() {
       {users.length === 0 ? (
         <EmptyState icon={<ShieldCheck className="h-5 w-5" strokeWidth={2} />} title={t.users.noUsers} />
       ) : (
-        <UserList
+        <UsersGrid
           users={users}
           employeesById={employeesById}
           currentUserId={session.id}
           canEdit={canEdit}
           linkableEmployeesByUser={linkableEmployeesByUser}
           roleTone={roleTone}
+          apiBaseUrl={apiBaseUrl}
           t={t}
         />
       )}

@@ -5,7 +5,6 @@ import { getT } from "@/lib/i18n";
 import { apiBaseUrl } from "@/lib/auth";
 import { UserProfileCard } from "@/components/users/user-profile-card";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeTone } from "@/components/ui/badge";
@@ -59,37 +58,19 @@ export default async function UserDetailPage({ params }: Props) {
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <UserProfileCard
-          userId={userId}
-          user={user}
-          linkedEmployee={linkedEmployee}
-          linkableEmployees={linkableEmployees.map((e) => ({
-            id: e.id,
-            fullName: e.fullName,
-            employeeNumber: e.employeeNumber,
-          }))}
-          canEdit={canEdit}
-          apiBaseUrl={apiBaseUrl}
-          t={t}
-        />
-
-        <Card hoverable animate delay={2} className="border-s-4 border-s-muted">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">
-            System
-          </p>
-          <dl className="mt-4 grid gap-3 text-sm">
-            <div>
-              <dt className="text-foreground/55">{t.users.userId}</dt>
-              <dd className="mt-0.5 font-mono text-xs text-foreground/70">{user.id}</dd>
-            </div>
-            <div>
-              <dt className="text-foreground/55">{t.users.tenant}</dt>
-              <dd className="mt-0.5 font-medium">{user.tenant.name}</dd>
-            </div>
-          </dl>
-        </Card>
-      </section>
+      <UserProfileCard
+        userId={userId}
+        user={user}
+        linkedEmployee={linkedEmployee}
+        linkableEmployees={linkableEmployees.map((e) => ({
+          id: e.id,
+          fullName: e.fullName,
+          employeeNumber: e.employeeNumber,
+        }))}
+        canEdit={canEdit}
+        apiBaseUrl={apiBaseUrl}
+        t={t}
+      />
     </div>
   );
 }
