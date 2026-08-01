@@ -85,7 +85,7 @@ export function UsersGrid({
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-white text-foreground/30">
                     <UserRound className="h-5 w-5" strokeWidth={1.75} />
                   </div>
-                  <h2 className="mt-1.5 text-lg font-semibold tracking-tight">{user.name}</h2>
+                  <h2 className="mt-1.5 text-lg font-semibold tracking-tight">{user.username}</h2>
                 </div>
                 <Badge tone={roleTone[user.role] ?? "neutral"}>{user.role}</Badge>
               </div>
@@ -95,6 +95,11 @@ export function UsersGrid({
                 <p className="mt-0.5 text-sm text-foreground/60">
                   {t.users.homeBranch}: {user.branch.name}
                 </p>
+                {linkedEmployee && (
+                  <p className="mt-0.5 text-sm text-foreground/60">
+                    {t.users.linkedEmployee}: {linkedEmployee.fullName}
+                  </p>
+                )}
               </div>
 
               {!isSelf && (

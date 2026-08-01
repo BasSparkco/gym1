@@ -12,6 +12,18 @@ const roleTone: Record<string, BadgeTone> = {
   manager: "accent",
 };
 
+function roleLabelKey(roleId: string): "owner" | "manager" | "frontDesk" {
+  return roleId === "owner" ? "owner" : roleId === "manager" ? "manager" : "frontDesk";
+}
+
+function roleDescriptionKey(roleId: string): "ownerDescription" | "managerDescription" | "frontDeskDescription" {
+  return roleId === "owner"
+    ? "ownerDescription"
+    : roleId === "manager"
+      ? "managerDescription"
+      : "frontDeskDescription";
+}
+
 export default async function RolesPage() {
   await requireSession();
   const t = await getT();
@@ -22,7 +34,7 @@ export default async function RolesPage() {
       <PageHeader
         eyebrow={t.nav.usersRoles}
         title={t.roles.title}
-        description="MVP role definitions and their operational access levels."
+        description={t.roles.subtitle}
         actions={
           <Button href="/app/users" variant="secondary">
             {t.roles.staffUsers}
@@ -39,9 +51,11 @@ export default async function RolesPage() {
             delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
           >
             <Badge tone={roleTone[role.id] ?? "neutral"} className="font-semibold">
-              {role.label}
+              {t.roles[roleLabelKey(role.id)]}
             </Badge>
-            <p className="mt-3 text-sm leading-7 text-foreground/70">{role.description}</p>
+            <p className="mt-3 text-sm leading-7 text-foreground/70">
+              {t.roles[roleDescriptionKey(role.id)]}
+            </p>
           </Card>
         ))}
       </section>

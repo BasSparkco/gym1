@@ -462,12 +462,16 @@ export type Dict = {
   };
   roles: {
     title: string;
+    subtitle: string;
     staffUsers: string;
     mvpAccessSummary: string;
     capability: string;
     owner: string;
     manager: string;
     frontDesk: string;
+    ownerDescription: string;
+    managerDescription: string;
+    frontDeskDescription: string;
   };
   employees: {
     title: string;
@@ -1319,12 +1323,16 @@ const en: Dict = {
   },
   roles: {
     title: "Roles",
+    subtitle: "MVP role definitions and their operational access levels.",
     staffUsers: "Staff users",
     mvpAccessSummary: "MVP access summary",
     capability: "Capability",
     owner: "Owner",
     manager: "Manager",
     frontDesk: "Front Desk",
+    ownerDescription: "Full access to all tenant settings, reports, and management.",
+    managerDescription: "Access to branch operations, members, reports, and staff management.",
+    frontDeskDescription: "Access to member check-in, payments, and daily front-desk workflows.",
   },
   employees: {
     title: "Employees",
@@ -2176,12 +2184,16 @@ const ar: Dict = {
   },
   roles: {
     title: "الأدوار",
+    subtitle: "تعريفات أدوار MVP ومستويات الوصول التشغيلية الخاصة بها.",
     staffUsers: "موظفو النظام",
     mvpAccessSummary: "ملخص صلاحيات الوصول",
     capability: "الإمكانية",
     owner: "المالك",
     manager: "المدير",
     frontDesk: "الاستقبال",
+    ownerDescription: "وصول كامل لجميع إعدادات المنشأة والتقارير والإدارة.",
+    managerDescription: "وصول إلى عمليات الفرع والأعضاء والتقارير وإدارة الموظفين.",
+    frontDeskDescription: "وصول إلى تسجيل دخول الأعضاء والمدفوعات ومهام الاستقبال اليومية.",
   },
   employees: {
     title: "الموظفون",
@@ -3033,12 +3045,16 @@ const he: Dict = {
   },
   roles: {
     title: "תפקידים",
+    subtitle: "הגדרות תפקידי MVP ורמות הגישה התפעוליות שלהם.",
     staffUsers: "משתמשי צוות",
     mvpAccessSummary: "סיכום הרשאות גישה",
     capability: "יכולת",
     owner: "בעלים",
     manager: "מנהל",
     frontDesk: "קבלה",
+    ownerDescription: "גישה מלאה לכל הגדרות המתקן, הדוחות והניהול.",
+    managerDescription: "גישה לפעולות הסניף, החברים, הדוחות וניהול הצוות.",
+    frontDeskDescription: "גישה לצ'ק-אין של חברים, תשלומים ומשימות קבלה יומיות.",
   },
   employees: {
     title: "עובדים",

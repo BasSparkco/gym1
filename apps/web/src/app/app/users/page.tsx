@@ -19,6 +19,18 @@ const roleTone: Record<string, BadgeTone> = {
   manager: "accent",
 };
 
+function roleLabelKey(roleId: string): "owner" | "manager" | "frontDesk" {
+  return roleId === "owner" ? "owner" : roleId === "manager" ? "manager" : "frontDesk";
+}
+
+function roleDescriptionKey(roleId: string): "ownerDescription" | "managerDescription" | "frontDeskDescription" {
+  return roleId === "owner"
+    ? "ownerDescription"
+    : roleId === "manager"
+      ? "managerDescription"
+      : "frontDeskDescription";
+}
+
 export default async function UsersPage() {
   const session = await requireSession();
   const t = await getT();
@@ -62,16 +74,18 @@ export default async function UsersPage() {
       />
 
       {roles.length > 0 && (
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid gap-3 grid-cols-1 sm:grid-cols-3">
           {roles.map((role, index) => (
             <Card key={role.id} animate delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}>
               <Badge tone={roleTone[role.id] ?? "neutral"} className="font-semibold">
-                {role.label}
+                {t.roles[roleLabelKey(role.id)]}
               </Badge>
               <p className="mt-3 text-2xl font-bold tracking-tight font-mono">
                 {roleCounts.get(role.id) ?? 0}
               </p>
-              <p className="mt-1 text-xs text-foreground/55 line-clamp-2">{role.description}</p>
+              <p className="mt-1 text-xs text-foreground/55 line-clamp-2">
+                {t.roles[roleDescriptionKey(role.id)]}
+              </p>
             </Card>
           ))}
         </section>
