@@ -361,6 +361,7 @@ model Member {
   notifications      Notification[]
   classBookings      ClassBooking[]
   programEnrollments ProgramEnrollment[]
+  enrollmentEvents   ProgramEnrollmentEvent[]
   lockerRentals      LockerRental[]
   deviceTokens       MemberDeviceToken[]
 
@@ -500,6 +501,7 @@ model TrainingProgram {
   classSessions    ClassSession[]
   entitledForPlans MembershipPlanProgram[]
   enrolledMembers  ProgramEnrollment[]
+  enrollmentEvents ProgramEnrollmentEvent[]
   scheduleSlots    ProgramScheduleSlot[]
 
   @@index([tenantId])
@@ -536,6 +538,25 @@ model ProgramEnrollment {
   status     ProgramEnrollmentStatus @default(active)
 
   @@id([programId, memberId])
+  @@index([memberId])
+}
+
+// Append-only signup history for ProgramEnrollment. ProgramEnrollment itself
+// is keyed on (programId, memberId) and gets upserted on re-enrollment, so a
+// member signing up for the same course twice overwrites the first signup's
+// enrolledAt with no trace of it — this table exists purely so a member's
+// signup history survives that overwrite, without changing
+// ProgramEnrollment's existing "current status per course" shape (which
+// other modules like class-bookings and debt already depend on).
+model ProgramEnrollmentEvent {
+  id         String          @id
+  memberId   String
+  member     Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  programId  String
+  program    TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime        @default(now())
+  finalPrice Decimal         @db.Decimal(10, 2)
+
   @@index([memberId])
 }
 

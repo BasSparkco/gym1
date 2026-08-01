@@ -497,6 +497,21 @@ export class TrainingProgramsService {
         update: { finalPrice, status: 'active', enrolledAt: new Date() },
       });
 
+      // ProgramEnrollment is upserted (composite-keyed on programId+memberId),
+      // so a re-enrollment overwrites the prior signup's enrolledAt with no
+      // trace of it. This event row is append-only and exists purely so
+      // signup history survives that overwrite — see ProgramEnrollmentEvent
+      // in schema.prisma.
+      await tx.programEnrollmentEvent.create({
+        data: {
+          id: `enrollment-event-${randomUUID()}`,
+          programId,
+          memberId,
+          finalPrice,
+          enrolledAt: enr.enrolledAt,
+        },
+      });
+
       const today = new Date(`${localDateString()}T00:00:00.000Z`);
       const sessions = await tx.classSession.findMany({
         where: { programId, status: 'scheduled', date: { gte: today } },

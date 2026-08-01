@@ -14,6 +14,7 @@ import { MembershipsService } from '../memberships/memberships.service';
 import { AnnouncementsService } from '../announcements/announcements.service';
 import { ClosedDatesService } from '../closed-dates/closed-dates.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MemberActivityService } from '../member-activity/member-activity.service';
 import { MemberAuthService, MemberSession } from './member-auth.service';
 import { extractBearerToken } from './extract-bearer-token';
 
@@ -34,6 +35,7 @@ export class MeController {
     private readonly announcementsService: AnnouncementsService,
     private readonly closedDatesService: ClosedDatesService,
     private readonly notificationsService: NotificationsService,
+    private readonly memberActivityService: MemberActivityService,
   ) {}
 
   @Get()
@@ -100,6 +102,17 @@ export class MeController {
         body: notification.body,
         createdAt: notification.sentAt ?? notification.createdAt,
       })),
+    };
+  }
+
+  @Get('activity')
+  async getActivity(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      notifications: await this.memberActivityService.listForMember(
+        session.tenantId,
+        session.id,
+      ),
     };
   }
 
