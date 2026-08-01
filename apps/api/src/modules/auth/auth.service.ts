@@ -61,6 +61,7 @@ export type CreateUserInput = {
 
 export type UpdateUserInput = {
   name?: string;
+  email?: string;
   role?: SessionUser['role'];
   branchId?: string;
   branchName?: string;
@@ -425,11 +426,39 @@ export class AuthService {
       await this.assertEmployeeLinkable(tenantId, input.employeeId);
     }
 
+    let normalizedEmail: string | undefined;
+    if (input.email !== undefined) {
+      normalizedEmail = input.email.trim().toLowerCase();
+
+      if (!normalizedEmail || !normalizedEmail.includes('@')) {
+        throw new BadRequestException('A valid email address is required.');
+      }
+
+      if (normalizedEmail !== existing.email) {
+        // Same cross-tenant uniqueness rule as createUser (see comment there):
+        // sign-in matches the identifier globally, so this must stay unique
+        // across all tenants, not just this one.
+        const existingUser = await this.prisma.user.findFirst({
+          where: {
+            id: { not: userId },
+            email: { equals: normalizedEmail, mode: 'insensitive' },
+          },
+        });
+
+        if (existingUser) {
+          throw new BadRequestException(
+            'A user with this email already exists.',
+          );
+        }
+      }
+    }
+
     const updated = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.update({
         where: { id: userId },
         data: {
           ...(input.name !== undefined && { name: input.name.trim() }),
+          ...(normalizedEmail !== undefined && { email: normalizedEmail }),
           ...(input.role !== undefined && { role: ROLE_TO_DB[input.role] }),
           ...(input.branchId !== undefined && { branchId: input.branchId }),
           ...(input.branchName !== undefined && {

@@ -82,16 +82,16 @@ export default async function EmployeeAttendanceReportPage({ searchParams }: Pro
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.employees.fullName}</th>
-                  <th className="pb-3 pr-4 text-center">{t.attendance.daysPresent}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.employees.fullName}</th>
+                  <th className="pb-3 pe-4 text-center">{t.attendance.daysPresent}</th>
                   <th className="pb-3 text-center">{t.attendance.totalHours}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.employees.map((employee) => (
                   <tr key={employee.employeeId} className="align-top">
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4">
                       <details>
                         <summary className="cursor-pointer font-medium hover:text-brand">
                           {employee.fullName}
@@ -114,7 +114,7 @@ export default async function EmployeeAttendanceReportPage({ searchParams }: Pro
                         {employee.employeeNumber}
                       </p>
                     </td>
-                    <td className="py-3 pr-4 text-center font-mono">
+                    <td className="py-3 pe-4 text-center font-mono">
                       {employee.totals.daysPresent}
                     </td>
                     <td className="py-3 text-center font-mono">

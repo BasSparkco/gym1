@@ -42,20 +42,20 @@ export default async function MembershipStatusReportPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.statusCol}</th>
-                  <th className="pb-3 text-right">{t.reports.countCol}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.statusCol}</th>
+                  <th className="pb-3 text-end">{t.reports.countCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => (
                   <tr key={row.status} className="py-3 transition-colors hover:bg-black/[0.02]">
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4">
                       <Badge tone={statusTone[row.status] ?? "neutral"} className="capitalize">
                         {row.status}
                       </Badge>
                     </td>
-                    <td className="py-3 text-right font-medium">{row.count.toLocaleString()}</td>
+                    <td className="py-3 text-end font-medium">{row.count.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>

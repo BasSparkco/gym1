@@ -455,6 +455,10 @@ export type Dict = {
     linkedEmployee: string;
     notLinked: string;
     editLink: string;
+    name: string;
+    selectEmployee: string;
+    profileUpdated: string;
+    updateFailed: string;
   };
   roles: {
     title: string;
@@ -1308,6 +1312,10 @@ const en: Dict = {
     linkedEmployee: "Linked employee",
     notLinked: "Not linked to an employee",
     editLink: "Change linked employee",
+    name: "Name",
+    selectEmployee: "Select employee",
+    profileUpdated: "Profile updated.",
+    updateFailed: "Failed to update profile. Please try again.",
   },
   roles: {
     title: "Roles",
@@ -2161,6 +2169,10 @@ const ar: Dict = {
     linkedEmployee: "الموظف المرتبط",
     notLinked: "غير مرتبط بموظف",
     editLink: "تغيير الموظف المرتبط",
+    name: "الاسم",
+    selectEmployee: "اختر موظفًا",
+    profileUpdated: "تم تحديث الملف الشخصي.",
+    updateFailed: "فشل تحديث الملف الشخصي. حاول مرة أخرى.",
   },
   roles: {
     title: "الأدوار",
@@ -3014,6 +3026,10 @@ const he: Dict = {
     linkedEmployee: "עובד מקושר",
     notLinked: "לא מקושר לעובד",
     editLink: "שינוי העובד המקושר",
+    name: "שם",
+    selectEmployee: "בחר עובד",
+    profileUpdated: "הפרופיל עודכן.",
+    updateFailed: "עדכון הפרופיל נכשל. נסה שוב.",
   },
   roles: {
     title: "תפקידים",

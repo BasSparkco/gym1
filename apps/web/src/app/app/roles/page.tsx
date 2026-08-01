@@ -53,10 +53,10 @@ export default async function RolesPage() {
         <div className="mt-4 overflow-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-line text-left">
-                <th className="pb-3 pr-6 font-semibold">{t.roles.capability}</th>
-                <th className="pb-3 pr-6 text-center font-semibold">{t.roles.owner}</th>
-                <th className="pb-3 pr-6 text-center font-semibold">{t.roles.manager}</th>
+              <tr className="border-b border-line text-start">
+                <th className="pb-3 pe-6 font-semibold">{t.roles.capability}</th>
+                <th className="pb-3 pe-6 text-center font-semibold">{t.roles.owner}</th>
+                <th className="pb-3 pe-6 text-center font-semibold">{t.roles.manager}</th>
                 <th className="pb-3 text-center font-semibold">{t.roles.frontDesk}</th>
               </tr>
             </thead>
@@ -73,9 +73,9 @@ export default async function RolesPage() {
                 [t.nav.reports, "✓", "✓", "—"],
               ].map(([capability, owner, manager, frontDesk]) => (
                 <tr key={capability}>
-                  <td className="py-3 pr-6 font-medium">{capability}</td>
-                  <td className="py-3 pr-6 text-center text-foreground/60">{owner}</td>
-                  <td className="py-3 pr-6 text-center text-foreground/60">{manager}</td>
+                  <td className="py-3 pe-6 font-medium">{capability}</td>
+                  <td className="py-3 pe-6 text-center text-foreground/60">{owner}</td>
+                  <td className="py-3 pe-6 text-center text-foreground/60">{manager}</td>
                   <td className="py-3 text-center text-foreground/60">{frontDesk}</td>
                 </tr>
               ))}

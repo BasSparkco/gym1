@@ -97,15 +97,15 @@ export default async function RegistrationsByEmployeeReportPage({ searchParams }
               </p>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                    <th className="pb-3 pr-4">{t.reports.memberCol}</th>
+                  <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                    <th className="pb-3 pe-4">{t.reports.memberCol}</th>
                     <th className="pb-3">{t.reports.startCol}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {report.rows.map((row) => (
                     <tr key={row.memberId} className="py-3 transition-colors hover:bg-black/[0.02]">
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <Link
                           href={`/app/members/${row.memberId}`}
                           className="font-medium hover:text-brand hover:underline"
@@ -129,18 +129,18 @@ export default async function RegistrationsByEmployeeReportPage({ searchParams }
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.employeeCol}</th>
-                  <th className="pb-3 pr-4 text-right">{t.reports.countCol}</th>
-                  <th className="pb-3 text-right">{t.reports.viewMembers}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.employeeCol}</th>
+                  <th className="pb-3 pe-4 text-end">{t.reports.countCol}</th>
+                  <th className="pb-3 text-end">{t.reports.viewMembers}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => (
                   <tr key={row.employeeId} className="py-3 transition-colors hover:bg-black/[0.02]">
-                    <td className="py-3 pr-4 font-medium">{row.employeeName}</td>
-                    <td className="py-3 pr-4 text-right">{row.count.toLocaleString()}</td>
-                    <td className="py-3 text-right">
+                    <td className="py-3 pe-4 font-medium">{row.employeeName}</td>
+                    <td className="py-3 pe-4 text-end">{row.count.toLocaleString()}</td>
+                    <td className="py-3 text-end">
                       <Link
                         href={`/app/reports/registrations-by-employee?employeeId=${row.employeeId}${dateFrom ? `&dateFrom=${dateFrom}` : ""}${dateTo ? `&dateTo=${dateTo}` : ""}`}
                         className="text-xs font-medium text-brand hover:underline"
@@ -152,8 +152,8 @@ export default async function RegistrationsByEmployeeReportPage({ searchParams }
                 ))}
                 {report.unassignedCount > 0 && (
                   <tr className="py-3">
-                    <td className="py-3 pr-4 font-medium text-foreground/60">{t.reports.unassignedLabel}</td>
-                    <td className="py-3 pr-4 text-right text-foreground/60">{report.unassignedCount.toLocaleString()}</td>
+                    <td className="py-3 pe-4 font-medium text-foreground/60">{t.reports.unassignedLabel}</td>
+                    <td className="py-3 pe-4 text-end text-foreground/60">{report.unassignedCount.toLocaleString()}</td>
                     <td className="py-3" />
                   </tr>
                 )}

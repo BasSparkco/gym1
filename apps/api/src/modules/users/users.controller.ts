@@ -25,6 +25,7 @@ type CreateUserRequestBody = {
 
 type UpdateUserRequestBody = {
   name?: string;
+  email?: string;
   role?: 'owner' | 'manager' | 'front-desk';
   branchId?: string;
   branchName?: string;

@@ -66,17 +66,17 @@ export default async function NewMembersGrowthReportPage({ searchParams }: Props
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.dateCol}</th>
-                  <th className="pb-3 pr-4 text-right">{t.reports.countCol}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.dateCol}</th>
+                  <th className="pb-3 pe-4 text-end">{t.reports.countCol}</th>
                   <th className="pb-3 w-1/2" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => (
                   <tr key={row.date} className="py-3 transition-colors hover:bg-black/[0.02]">
-                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{formatDate(row.date, dateFormat)}</td>
-                    <td className="py-3 pr-4 text-right font-medium">{row.count.toLocaleString()}</td>
+                    <td className="py-3 pe-4 font-mono text-xs text-foreground/60">{formatDate(row.date, dateFormat)}</td>
+                    <td className="py-3 pe-4 text-end font-medium">{row.count.toLocaleString()}</td>
                     <td className="py-3">
                       <div className="h-2 rounded-full bg-brand/15">
                         <div

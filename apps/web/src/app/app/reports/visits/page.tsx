@@ -43,9 +43,9 @@ export default async function VisitsReportPage({ searchParams }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.memberCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.methodCol}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.memberCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.methodCol}</th>
                   <th className="pb-3">{t.reports.checkInTimeCol}</th>
                 </tr>
               </thead>
@@ -55,7 +55,7 @@ export default async function VisitsReportPage({ searchParams }: Props) {
 
                   return (
                     <tr key={row.visitId} className="py-3 transition-colors hover:bg-black/[0.02]">
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <Link
                           href={`/app/members/${row.memberId}`}
                           className="font-medium hover:text-brand hover:underline"
@@ -66,7 +66,7 @@ export default async function VisitsReportPage({ searchParams }: Props) {
                           <p className="font-mono text-xs text-foreground/50">{row.memberNumber}</p>
                         )}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <Badge tone={row.accessMethod === "qr" ? "info" : "neutral"}>
                           {row.accessMethod === "qr" ? t.visits.qrScan : t.visits.manualEntry}
                         </Badge>

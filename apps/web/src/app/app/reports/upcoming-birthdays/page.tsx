@@ -63,17 +63,17 @@ export default async function UpcomingBirthdaysReportPage({ searchParams }: Prop
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.memberCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.birthdayCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.phoneCol}</th>
-                  <th className="pb-3 text-right">{t.reports.daysUntilCol}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.memberCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.birthdayCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.phoneCol}</th>
+                  <th className="pb-3 text-end">{t.reports.daysUntilCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => (
                   <tr key={row.memberId} className="py-3 transition-colors hover:bg-black/[0.02]">
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4">
                       <Link
                         href={`/app/members/${row.memberId}`}
                         className="font-medium hover:text-brand hover:underline"
@@ -82,11 +82,11 @@ export default async function UpcomingBirthdaysReportPage({ searchParams }: Prop
                       </Link>
                       <p className="font-mono text-xs text-foreground/50">{row.memberNumber}</p>
                     </td>
-                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{formatDate(row.dateOfBirth, dateFormat)}</td>
-                    <td className="py-3 pr-4 text-foreground/70">
+                    <td className="py-3 pe-4 font-mono text-xs text-foreground/60">{formatDate(row.dateOfBirth, dateFormat)}</td>
+                    <td className="py-3 pe-4 text-foreground/70">
                       {row.phone ? <PhoneNumber value={row.phone} /> : "—"}
                     </td>
-                    <td className="py-3 text-right font-medium">
+                    <td className="py-3 text-end font-medium">
                       {row.daysUntil === 0 ? "Today" : row.daysUntil}
                     </td>
                   </tr>

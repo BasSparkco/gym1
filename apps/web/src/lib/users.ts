@@ -83,6 +83,7 @@ export async function updateUser(
   userId: string,
   data: {
     name?: string;
+    email?: string;
     role?: UserRole;
     branchId?: string;
     branchName?: string;

@@ -35,18 +35,18 @@ export default async function MembersBySexReportPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.sexCol}</th>
-                  <th className="pb-3 pr-4 text-right">{t.reports.totalCol}</th>
-                  <th className="pb-3 text-right">{t.reports.activeCol}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.sexCol}</th>
+                  <th className="pb-3 pe-4 text-end">{t.reports.totalCol}</th>
+                  <th className="pb-3 text-end">{t.reports.activeCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => (
                   <tr key={row.sex} className="py-3 transition-colors hover:bg-black/[0.02]">
-                    <td className="py-3 pr-4 font-medium">{labelFor(row.sex)}</td>
-                    <td className="py-3 pr-4 text-right">{row.total.toLocaleString()}</td>
-                    <td className="py-3 text-right text-foreground/70">{row.active.toLocaleString()}</td>
+                    <td className="py-3 pe-4 font-medium">{labelFor(row.sex)}</td>
+                    <td className="py-3 pe-4 text-end">{row.total.toLocaleString()}</td>
+                    <td className="py-3 text-end text-foreground/70">{row.active.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>

@@ -71,22 +71,22 @@ export default async function PlanPerformanceReportPage({ searchParams }: Props)
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.planCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.planTypeCol}</th>
-                  <th className="pb-3 pr-4 text-right">{t.reports.countCol}</th>
-                  <th className="pb-3 text-right">{t.reports.revenueCol}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.planCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.planTypeCol}</th>
+                  <th className="pb-3 pe-4 text-end">{t.reports.countCol}</th>
+                  <th className="pb-3 text-end">{t.reports.revenueCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {report.rows.map((row) => (
                   <tr key={row.planId} className="py-3 transition-colors hover:bg-black/[0.02]">
-                    <td className="py-3 pr-4 font-medium">{row.planName}</td>
-                    <td className="py-3 pr-4 text-foreground/70">
+                    <td className="py-3 pe-4 font-medium">{row.planName}</td>
+                    <td className="py-3 pe-4 text-foreground/70">
                       {row.planType === "duration" ? t.plans.durationBased : t.plans.sessionBased}
                     </td>
-                    <td className="py-3 pr-4 text-right">{row.count.toLocaleString()}</td>
-                    <td className="py-3 text-right font-medium">
+                    <td className="py-3 pe-4 text-end">{row.count.toLocaleString()}</td>
+                    <td className="py-3 text-end font-medium">
                       {currencySymbol}{row.revenue.toLocaleString()}
                     </td>
                   </tr>

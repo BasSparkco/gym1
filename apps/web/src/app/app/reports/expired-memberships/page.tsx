@@ -42,19 +42,19 @@ export default async function ExpiredMembershipsReportPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pr-4">{t.reports.memberCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.planCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.startCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.expiredCol}</th>
-                  <th className="pb-3 pr-4">{t.reports.statusCol}</th>
-                  <th className="pb-3 text-right">{t.reports.priceCol}</th>
+                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
+                  <th className="pb-3 pe-4">{t.reports.memberCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.planCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.startCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.expiredCol}</th>
+                  <th className="pb-3 pe-4">{t.reports.statusCol}</th>
+                  <th className="pb-3 text-end">{t.reports.priceCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {rows.map((row) => (
                   <tr key={row.membershipId} className="py-3 transition-colors hover:bg-black/[0.02]">
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4">
                       <Link
                         href={`/app/members/${row.memberId}`}
                         className="font-medium hover:text-brand hover:underline"
@@ -65,13 +65,13 @@ export default async function ExpiredMembershipsReportPage() {
                         <p className="font-mono text-xs text-foreground/50">{row.memberNumber}</p>
                       )}
                     </td>
-                    <td className="py-3 pr-4 text-foreground/70">{row.planName ?? "—"}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{formatDate(row.startDate, dateFormat)}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-foreground/60">{formatDate(row.endDate, dateFormat)}</td>
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4 text-foreground/70">{row.planName ?? "—"}</td>
+                    <td className="py-3 pe-4 font-mono text-xs text-foreground/60">{formatDate(row.startDate, dateFormat)}</td>
+                    <td className="py-3 pe-4 font-mono text-xs text-foreground/60">{formatDate(row.endDate, dateFormat)}</td>
+                    <td className="py-3 pe-4">
                       <Badge tone="neutral">{row.status}</Badge>
                     </td>
-                    <td className="py-3 text-right font-medium">
+                    <td className="py-3 text-end font-medium">
                       {currencySymbol}{row.finalPrice.toLocaleString()}
                     </td>
                   </tr>
