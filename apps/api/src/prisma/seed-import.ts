@@ -174,7 +174,6 @@ export type SettingsStoreData = {
 export type StoredUser = {
   id: string;
   email: string;
-  username: string;
   name: string;
   role: 'owner' | 'manager' | 'front-desk';
   tenant: { id: string; name: string };
@@ -437,7 +436,6 @@ export async function importJsonDataIntoPrisma(
       id: u.id,
       tenantId: u.tenant.id,
       email: u.email,
-      username: u.username,
       name: u.name,
       role: ROLE_MAP[u.role],
       passwordHash: u.passwordHash,

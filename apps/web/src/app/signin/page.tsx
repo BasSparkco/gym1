@@ -82,7 +82,7 @@ export default async function SignInPage() {
 
           <SignInForm
             labels={{
-              emailOrUsername: t.auth.emailOrUsername,
+              email: t.auth.email,
               password: t.auth.password,
               continue: t.auth.continue,
               signingIn: t.auth.signingIn,

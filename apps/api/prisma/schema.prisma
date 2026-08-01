@@ -713,7 +713,6 @@ model User {
   tenantId     String
   tenant       Tenant    @relation(fields: [tenantId], references: [id])
   email        String
-  username     String
   name         String
   role         UserRole
   passwordHash String
@@ -726,7 +725,6 @@ model User {
   employee     Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
 
   @@unique([tenantId, email])
-  @@unique([tenantId, username])
 }
 
 // Session records now live in Redis (see src/redis/), not Postgres — see

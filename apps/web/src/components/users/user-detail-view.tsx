@@ -34,10 +34,6 @@ export function UserDetailView({ user, linkedEmployee, t, headerAction }: Props)
             <dd className="mt-0.5 font-medium">{user.email}</dd>
           </div>
           <div>
-            <dt className="text-foreground/55">{t.users.username}</dt>
-            <dd className="mt-0.5 font-mono">{user.username}</dd>
-          </div>
-          <div>
             <dt className="text-foreground/55">{t.users.role}</dt>
             <dd className="mt-0.5 font-medium capitalize">{user.role}</dd>
           </div>

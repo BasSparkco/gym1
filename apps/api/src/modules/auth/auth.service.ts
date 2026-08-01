@@ -17,7 +17,6 @@ const SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
 export type SessionUser = {
   id: string;
   email: string;
-  username: string;
   name: string;
   role: 'owner' | 'manager' | 'front-desk';
   // Employee record this account belongs to, if any — used e.g. to default a
@@ -47,7 +46,6 @@ type SignInInput = {
 
 export type CreateUserInput = {
   email: string;
-  username: string;
   role: SessionUser['role'];
   password: string;
   branchId: string;
@@ -90,7 +88,6 @@ export const defaultAuthSeed = {
     {
       id: 'user-owner-001',
       email: 'owner@sparkgym.local',
-      username: 'owner',
       passwordHash:
         'scrypt:7dd174123a6767616d8bbbd028f4c5f1:04fef104953bb3c1df97d712e62e9f00ea9a5bdfc74de175d84ab87b427d941c6f367d26e445851f6a7c1172450b9a770da0470d6e06a478f52c711f10aa314f',
       name: 'Spark Gym Owner',
@@ -107,7 +104,6 @@ export const defaultAuthSeed = {
     {
       id: 'user-frontdesk-001',
       email: 'frontdesk@sparkgym.local',
-      username: 'frontdesk',
       passwordHash:
         'scrypt:006e979410fbccb0600f59871608d011:192ceb1ce366f13d6a46c0ae49243f53e53bbf49b0d60eb6fef528967d7c23fc0b6d2fe0c8d4a07781c5e59751136d09f95c57272b8426ee7131e9b914422543',
       name: 'Front Desk User',
@@ -153,17 +149,13 @@ export class AuthService {
     const normalizedIdentifier = input.identifier.trim().toLowerCase();
 
     const users = await this.prisma.user.findMany({
-      where: {
-        OR: [
-          { email: { equals: normalizedIdentifier, mode: 'insensitive' } },
-          { username: { equals: normalizedIdentifier, mode: 'insensitive' } },
-        ],
-      },
+      where: { email: { equals: normalizedIdentifier, mode: 'insensitive' } },
       include: { tenant: true },
     });
 
-    // The identifier may match users in more than one tenant — the password
-    // decides which account is actually being signed into.
+    // Email is meant to be globally unique (enforced in createUser/updateUser),
+    // but this still tries every match by password rather than assuming
+    // there's exactly one — defensive against any pre-existing duplicates.
     const user = users.find((candidate) =>
       passwordMatches(candidate.passwordHash, input.password),
     );
@@ -284,13 +276,6 @@ export class AuthService {
       throw new BadRequestException('A valid email address is required.');
     }
 
-    const username = input.username?.trim().toLowerCase() ?? '';
-    if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
-      throw new BadRequestException(
-        'Username must be 3-32 characters and may only contain lowercase letters, numbers, dots, hyphens, and underscores.',
-      );
-    }
-
     if (!input.password || input.password.length < 6) {
       throw new BadRequestException('Password must be at least 6 characters.');
     }
@@ -305,21 +290,16 @@ export class AuthService {
       input.employeeId,
     );
 
-    // Email and username must be unique across ALL tenants: sign-in matches
-    // the identifier globally, so a cross-tenant collision would make one of
-    // the accounts unreachable.
+    // Email must be unique across ALL tenants: sign-in matches the identifier
+    // globally, so a cross-tenant collision would make one of the accounts
+    // unreachable.
     const existingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: { equals: email, mode: 'insensitive' } },
-          { username: { equals: username, mode: 'insensitive' } },
-        ],
-      },
+      where: { email: { equals: email, mode: 'insensitive' } },
     });
 
     if (existingUser) {
       throw new BadRequestException(
-        'A user with this email or username already exists.',
+        'A user with this email already exists.',
       );
     }
 
@@ -329,7 +309,6 @@ export class AuthService {
           id: `user-${randomUUID()}`,
           tenantId,
           email,
-          username,
           name: employee.fullName,
           role: ROLE_TO_DB[input.role],
           passwordHash: hashPassword(input.password),
@@ -496,7 +475,6 @@ export class AuthService {
   private toSessionUser(user: {
     id: string;
     email: string;
-    username: string;
     name: string;
     role: DbUserRole;
     tenantId: string;
@@ -508,7 +486,6 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
-      username: user.username,
       name: user.name,
       role: ROLE_FROM_DB[user.role],
       employeeId: user.employeeId,

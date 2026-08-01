@@ -43,7 +43,7 @@ export type Dict = {
   auth: {
     signIn: string;
     signOut: string;
-    emailOrUsername: string;
+    email: string;
     password: string;
     continue: string;
     signingIn: string;
@@ -439,7 +439,6 @@ export type Dict = {
     allUsers: string;
     staffDetails: string;
     email: string;
-    username: string;
     role: string;
     homeBranch: string;
     password: string;
@@ -904,7 +903,7 @@ const en: Dict = {
   auth: {
     signIn: "Sign In",
     signOut: "Sign out",
-    emailOrUsername: "Email or username",
+    email: "Email",
     password: "Password",
     continue: "Continue",
     signingIn: "Signing in...",
@@ -1300,7 +1299,6 @@ const en: Dict = {
     allUsers: "All users",
     staffDetails: "Staff details",
     email: "Email",
-    username: "Username",
     role: "Role",
     homeBranch: "Home branch",
     password: "Password",
@@ -1765,7 +1763,7 @@ const ar: Dict = {
   auth: {
     signIn: "تسجيل الدخول",
     signOut: "تسجيل الخروج",
-    emailOrUsername: "البريد الإلكتروني أو اسم المستخدم",
+    email: "البريد الإلكتروني",
     password: "كلمة المرور",
     continue: "متابعة",
     signingIn: "جارٍ تسجيل الدخول...",
@@ -2161,7 +2159,6 @@ const ar: Dict = {
     allUsers: "جميع المستخدمين",
     staffDetails: "بيانات الموظف",
     email: "البريد الإلكتروني",
-    username: "اسم المستخدم",
     role: "الدور",
     homeBranch: "الفرع الرئيسي",
     password: "كلمة المرور",
@@ -2626,7 +2623,7 @@ const he: Dict = {
   auth: {
     signIn: "כניסה",
     signOut: "יציאה",
-    emailOrUsername: "דוא\"ל או שם משתמש",
+    email: "דוא\"ל",
     password: "סיסמה",
     continue: "המשך",
     signingIn: "מתחבר...",
@@ -3022,7 +3019,6 @@ const he: Dict = {
     allUsers: "כל המשתמשים",
     staffDetails: "פרטי צוות",
     email: "דוא\"ל",
-    username: "שם משתמש",
     role: "תפקיד",
     homeBranch: "סניף בית",
     password: "סיסמה",

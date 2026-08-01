@@ -15,7 +15,6 @@ export type BranchInput = {
 export type OwnerInput = {
   name: string;
   email: string;
-  username: string;
   password: string;
 };
 
@@ -97,12 +96,11 @@ export class PlatformAdminTenantsService {
   private async validateOwnerInput(owner: OwnerInput) {
     const ownerName = owner?.name?.trim();
     const ownerEmail = owner?.email?.trim().toLowerCase();
-    const ownerUsername = owner?.username?.trim().toLowerCase();
     const ownerPassword = owner?.password ?? '';
 
-    if (!ownerName || !ownerEmail?.includes('@') || !ownerUsername) {
+    if (!ownerName || !ownerEmail?.includes('@')) {
       throw new BadRequestException(
-        'Owner name, a valid email, and a username are required.',
+        'Owner name and a valid email are required.',
       );
     }
     if (ownerPassword.length < 6) {
@@ -111,28 +109,24 @@ export class PlatformAdminTenantsService {
       );
     }
 
-    // Sign-in looks up users by email/username across ALL tenants with no
-    // tenant-scoping (see AuthService.signIn) — two tenants sharing a
-    // username would make one of them permanently unable to sign in. Not a
-    // full fix (that needs tenant-scoped sign-in), but stops new collisions.
+    // Sign-in looks up users by email across ALL tenants with no
+    // tenant-scoping (see AuthService.signIn) — two tenants sharing an email
+    // would make one of them permanently unable to sign in. Not a full fix
+    // (that needs tenant-scoped sign-in), but stops new collisions. This is
+    // deliberate: each gym's staff accounts are meant to be fully separate
+    // logins, even for the same person working at two tenants.
     const existing = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: { equals: ownerEmail, mode: 'insensitive' } },
-          { username: { equals: ownerUsername, mode: 'insensitive' } },
-        ],
-      },
+      where: { email: { equals: ownerEmail, mode: 'insensitive' } },
     });
     if (existing) {
       throw new BadRequestException(
-        'That owner email or username is already in use by another tenant.',
+        'That owner email is already in use by another organization.',
       );
     }
 
     return {
       ownerName,
       ownerEmail,
-      ownerUsername,
       passwordHash: hashPassword(ownerPassword),
     };
   }
@@ -205,7 +199,6 @@ export class PlatformAdminTenantsService {
           id: `user-${randomUUID()}`,
           tenantId,
           email: owner.ownerEmail,
-          username: owner.ownerUsername,
           name: owner.ownerName,
           role: 'owner',
           passwordHash: owner.passwordHash,
@@ -299,7 +292,6 @@ export class PlatformAdminTenantsService {
           id: `user-${randomUUID()}`,
           tenantId,
           email: owner.ownerEmail,
-          username: owner.ownerUsername,
           name: owner.ownerName,
           role: 'owner',
           passwordHash: owner.passwordHash,

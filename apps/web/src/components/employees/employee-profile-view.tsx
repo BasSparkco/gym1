@@ -318,8 +318,8 @@ export function EmployeeProfileView({
           </div>
           {employee.user && (
             <div>
-              <dt className="text-foreground/55">{t.users.username}</dt>
-              <dd className="mt-0.5 font-mono">{employee.user.username}</dd>
+              <dt className="text-foreground/55">{t.users.email}</dt>
+              <dd className="mt-0.5 font-mono">{employee.user.email}</dd>
             </div>
           )}
         </dl>

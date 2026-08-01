@@ -3,7 +3,6 @@ export type UserRole = "owner" | "manager" | "front-desk";
 export type SessionUser = {
   id: string;
   email: string;
-  username: string;
   name: string;
   role: UserRole;
   employeeId: string | null;

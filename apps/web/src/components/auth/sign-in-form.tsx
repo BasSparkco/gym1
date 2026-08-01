@@ -7,7 +7,7 @@ import { AlertCircle, ArrowRight, Loader2, Lock, User } from "lucide-react";
 
 type SignInFormProps = {
   labels: {
-    emailOrUsername: string;
+    email: string;
     password: string;
     continue: string;
     signingIn: string;
@@ -81,7 +81,7 @@ export function SignInForm({ labels }: SignInFormProps) {
   return (
     <form className="mt-10 grid gap-5" onSubmit={handleSubmit}>
       <label className="grid gap-2 text-sm font-medium">
-        {labels.emailOrUsername}
+        {labels.email}
         <div className="relative">
           <User
             className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/35"
@@ -90,10 +90,10 @@ export function SignInForm({ labels }: SignInFormProps) {
           <input
             className="w-full rounded-[10px] border border-line bg-surface py-3 pl-11 pr-4 outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-brand/20"
             placeholder="frontdesk@sparkgym.local"
-            type="text"
+            type="email"
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
-            autoComplete="username"
+            autoComplete="email"
           />
         </div>
       </label>

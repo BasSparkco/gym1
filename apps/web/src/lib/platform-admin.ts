@@ -32,7 +32,6 @@ export type BranchInput = {
 export type OwnerInput = {
   name: string;
   email: string;
-  username: string;
   password: string;
 };
 

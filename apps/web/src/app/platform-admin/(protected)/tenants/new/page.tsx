@@ -29,7 +29,6 @@ export default async function NewTenantPage({ searchParams }: Props) {
       owner: {
         name: String(formData.get("ownerName") ?? ""),
         email: String(formData.get("ownerEmail") ?? ""),
-        username: String(formData.get("ownerUsername") ?? ""),
         password: String(formData.get("ownerPassword") ?? ""),
       },
     };
@@ -177,18 +176,6 @@ export default async function NewTenantPage({ searchParams }: Props) {
                   id="ownerEmail"
                   name="ownerEmail"
                   type="email"
-                  required
-                  className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <label htmlFor="ownerUsername" className="text-sm font-medium">
-                  Username
-                </label>
-                <input
-                  id="ownerUsername"
-                  name="ownerUsername"
-                  type="text"
                   required
                   className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />

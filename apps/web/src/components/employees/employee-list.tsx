@@ -79,7 +79,7 @@ export function EmployeeList({
                 </p>
                 {emp.user && (
                   <p className="mt-0.5 text-sm text-foreground/60">
-                    {t.users.username}: <span className="font-mono">{emp.user.username}</span>
+                    {t.users.email}: <span className="font-mono">{emp.user.email}</span>
                   </p>
                 )}
               </div>

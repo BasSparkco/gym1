@@ -21,7 +21,7 @@ export type Employee = {
   startDate?: string;
   endDate?: string;
   isUser?: boolean;
-  user?: { id: string; username: string } | null;
+  user?: { id: string; email: string } | null;
 };
 
 async function getCookieHeader() {

@@ -210,7 +210,6 @@ async function main() {
           id: 'user-owner-001',
           tenantId: 'tenant-spark-gym',
           email: 'owner@sparkgym.local',
-          username: 'owner',
           name: 'نور أبو علي',
           role: 'owner',
           passwordHash:
@@ -223,7 +222,6 @@ async function main() {
           id: 'user-manager-001',
           tenantId: 'tenant-spark-gym',
           email: 'manager@sparkgym.local',
-          username: 'manager',
           name: 'خالد منصور',
           role: 'manager',
           passwordHash:
@@ -236,7 +234,6 @@ async function main() {
           id: 'user-frontdesk-001',
           tenantId: 'tenant-spark-gym',
           email: 'frontdesk@sparkgym.local',
-          username: 'frontdesk',
           name: 'رشا بركات',
           role: 'frontDesk',
           passwordHash:

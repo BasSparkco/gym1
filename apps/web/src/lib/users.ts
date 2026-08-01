@@ -7,7 +7,6 @@ import { redirect } from "next/navigation";
 export type StaffUser = {
   id: string;
   email: string;
-  username: string;
   name: string;
   role: UserRole;
   employeeId: string | null;
@@ -64,7 +63,6 @@ export async function getUser(userId: string): Promise<StaffUser> {
 
 export async function createUser(data: {
   email: string;
-  username: string;
   role: UserRole;
   password: string;
   branchId: string;

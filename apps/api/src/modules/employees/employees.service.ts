@@ -50,7 +50,7 @@ export class EmployeesService {
   async listEmployeesForTenant(tenantId: string, branchId?: string) {
     const employees = await this.prisma.employee.findMany({
       where: { tenantId, ...(branchId ? { branchId } : {}) },
-      include: { user: { select: { id: true, username: true } } },
+      include: { user: { select: { id: true, email: true } } },
     });
     return employees.map((e) => this.serialize(e));
   }
@@ -136,7 +136,7 @@ export class EmployeesService {
   async getEmployeeForTenant(tenantId: string, employeeId: string) {
     const employee = await this.prisma.employee.findFirst({
       where: { id: employeeId, tenantId },
-      include: { user: { select: { id: true, username: true } } },
+      include: { user: { select: { id: true, email: true } } },
     });
     if (!employee) throw new NotFoundException('Employee not found.');
     return this.serialize(employee);
@@ -231,7 +231,7 @@ export class EmployeesService {
   // `.toLocaleString()` on salary and displays dates as plain text) expects
   // a plain number and "YYYY-MM-DD" strings, same as the old JSON store.
   private serialize(
-    employee: Employee & { user?: { id: string; username: string } | null },
+    employee: Employee & { user?: { id: string; email: string } | null },
   ) {
     return {
       ...employee,
