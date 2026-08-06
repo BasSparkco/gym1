@@ -16,6 +16,7 @@ import { LockersModule } from './modules/lockers/lockers.module';
 import { MemberAuthModule } from './modules/member-auth/member-auth.module';
 import { MembersModule } from './modules/members/members.module';
 import { MembershipsModule } from './modules/memberships/memberships.module';
+import { MessagesModule } from './modules/messages/messages.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
@@ -25,6 +26,7 @@ import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { TrainingProgramsModule } from './modules/training-programs/training-programs.module';
 import { UsersModule } from './modules/users/users.module';
 import { VisitsModule } from './modules/visits/visits.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { MinioModule } from './minio/minio.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
@@ -44,6 +46,7 @@ import { RedisModule } from './redis/redis.module';
     MembersModule,
     MemberAuthModule,
     MembershipsModule,
+    MessagesModule,
     PaymentsModule,
     VisitsModule,
     NotificationsModule,
@@ -58,6 +61,7 @@ import { RedisModule } from './redis/redis.module';
     ClosedDatesModule,
     EmployeeAttendanceModule,
     PlatformAdminModule,
+    WebhooksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

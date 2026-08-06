@@ -177,6 +177,7 @@ model Tenant {
   announcements    Announcement[]
   closedDates      ClosedDate[]
   notificationTemplates NotificationTemplate[]
+  messages         Message[]
 }
 
 // Operator-level account for onboarding new tenants (SaaS admin). Deliberately
@@ -364,6 +365,7 @@ model Member {
   enrollmentEvents   ProgramEnrollmentEvent[]
   lockerRentals      LockerRental[]
   deviceTokens       MemberDeviceToken[]
+  messages           Message[]
 
   @@unique([tenantId, memberNumber])
   @@unique([tenantId, rfidTag])
@@ -668,6 +670,34 @@ model Notification {
   @@index([memberId])
 }
 
+enum MessageSenderType {
+  staff
+  member
+}
+
+// Two-way conversation thread between staff and a member, distinct from the
+// one-way Notification/Announcement models above. Read state is tracked
+// per-side (readByStaffAt / readByMemberAt) since staff and the member read
+// independently — a message can be unread by one side and read by the other.
+model Message {
+  id             String            @id
+  tenantId       String
+  tenant         Tenant            @relation(fields: [tenantId], references: [id])
+  memberId       String
+  member         Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  senderType     MessageSenderType
+  // Set when senderType = staff (who sent it); null when senderType = member.
+  senderUserId   String?
+  senderUser     User?             @relation(fields: [senderUserId], references: [id], onDelete: SetNull)
+  body           String            @db.Text
+  readByStaffAt  DateTime?
+  readByMemberAt DateTime?
+  createdAt      DateTime          @default(now())
+
+  @@index([tenantId, memberId, createdAt])
+  @@index([tenantId, readByStaffAt])
+}
+
 // Owner-editable subject/body per (templateKey, lang), overriding the
 // in-code defaults in notification-templates-seed.ts. templateKey is looser
 // than NotificationEvent on purpose: `membershipActivated` (initial sale)
@@ -723,6 +753,7 @@ model User {
   // the owner, have no employee record). @unique = one account per employee.
   employeeId   String?   @unique
   employee     Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  sentMessages Message[]
 
   @@unique([tenantId, email])
 }

@@ -20,6 +20,8 @@ import { MinioService } from '../../minio/minio.service';
 import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { MembersService } from './members.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { MessagesService } from '../messages/messages.service';
 
 type CreateMemberRequestBody = {
   fullName?: string;
@@ -66,6 +68,8 @@ export class MembersController {
     private readonly membersService: MembersService,
     private readonly minioService: MinioService,
     private readonly dataScopeService: DataScopeService,
+    private readonly notificationsService: NotificationsService,
+    private readonly messagesService: MessagesService,
   ) {}
 
   @Get()
@@ -278,6 +282,60 @@ export class MembersController {
       branchId,
       memberId,
       body.pin ?? '',
+    );
+  }
+
+  // Staff sends a one-off push notification ('app' channel) to this
+  // member's mobile app. Distinct from Messages below: this is one-way and
+  // shows up in the staff Notifications history, not a reply-able thread.
+  @Post(':memberId/notifications')
+  async sendMemberNotification(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+    @Body() body: { subject?: string; body?: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    return {
+      notification: await this.notificationsService.createManualAppNotification(
+        session.user.tenant.id,
+        branchId,
+        memberId,
+        body,
+      ),
+    };
+  }
+
+  @Get(':memberId/messages')
+  async getMemberMessages(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    return {
+      messages: await this.messagesService.getThreadForStaff(
+        session.user.tenant.id,
+        branchId,
+        memberId,
+      ),
+    };
+  }
+
+  @Post(':memberId/messages')
+  async postMemberMessage(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+    @Body() body: { body?: string },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    return this.messagesService.sendFromStaff(
+      session.user.tenant.id,
+      branchId,
+      memberId,
+      session.user.id,
+      body.body,
     );
   }
 

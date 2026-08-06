@@ -13,13 +13,24 @@ import {
   getUpcomingBirthdaysReport,
   getNewMembersGrowthReport,
 } from "@/lib/reports";
+import { getEmployeeAttendanceReport } from "@/lib/employee-attendance";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 
+function defaultAttendanceDateRange() {
+  const now = new Date();
+  const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  return {
+    dateFrom: first.toISOString().slice(0, 10),
+    dateTo: now.toISOString().slice(0, 10),
+  };
+}
+
 export default async function ReportsPage() {
   await requireSession();
   const t = await getT();
+  const defaultAttendanceRange = defaultAttendanceDateRange();
 
   const [
     active,
@@ -33,6 +44,7 @@ export default async function ReportsPage() {
     expiringSoon,
     upcomingBirthdays,
     newMembersGrowth,
+    attendance,
   ] = await Promise.all([
     getActiveMembershipsReport(),
     getExpiredMembershipsReport(),
@@ -45,7 +57,13 @@ export default async function ReportsPage() {
     getExpiringSoonReport(),
     getUpcomingBirthdaysReport(),
     getNewMembersGrowthReport(),
+    getEmployeeAttendanceReport(defaultAttendanceRange.dateFrom, defaultAttendanceRange.dateTo),
   ]);
+
+  const attendanceCount = attendance.employees.reduce(
+    (sum, employee) => sum + employee.totals.daysPresent,
+    0,
+  );
 
   const reports = [
     {
@@ -113,6 +131,12 @@ export default async function ReportsPage() {
       title: t.reports.newMembersGrowth,
       description: t.reports.newMembersGrowthCardDescription,
       count: newMembersGrowth.total,
+    },
+    {
+      href: "/app/employees/attendance-report",
+      title: t.nav.attendanceReport,
+      description: t.attendance.reportDescription,
+      count: attendanceCount,
     },
   ];
 

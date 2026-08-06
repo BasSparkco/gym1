@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Dumbbell, Menu, X } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MemberSearchInput } from "@/components/layout/member-search-input";
+import { MessagesBell } from "@/components/layout/messages-bell";
 import { NavMenu } from "@/components/layout/nav-menu";
 import type { SessionUser, UserRole } from "@/lib/auth";
 import type { Dict } from "@/lib/i18n";
@@ -112,7 +113,10 @@ export function MobileHeader({ user, t, languageSwitcher }: MobileHeaderProps) {
             <div className="mt-6 space-y-4 border-t border-white/15 pt-6">
               <MemberSearchInput placeholder={t.shell.searchMembers} />
 
-              {languageSwitcher}
+              <div className="flex items-center justify-between">
+                <MessagesBell label={t.nav.messages} variant="dark" />
+                {languageSwitcher}
+              </div>
 
               <SignOutButton
                 name={user.name}

@@ -187,6 +187,20 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 - Name, phone, email, member number
 - Membership history list
 
+### 7. Messages (Contact Us) — new, 2026-08-03
+- A real two-way thread with staff, distinct from the one-way Announcements feed: staff
+  message the member from the ERP's new "Contact Us" inbox, the member replies in-app,
+  staff can reply again.
+- ✅ **Backend done** (2026-08-03): new `Message` model, staff endpoints (conversations
+  inbox + per-member thread, in the ERP), member endpoints `GET/POST /me/messages` +
+  `GET /me/messages/unread-count` (see "API Reference" below).
+- Still needed on the Android side: a chat-style thread screen + nav entry with an unread
+  badge. See `mobile_app_update_2026-08-03_messages.md` for the full spec and suggested
+  refresh pattern (no push trigger yet — poll/refresh-on-open, same as Announcements).
+- Also newly relevant: `GET /me/notifications` (the member-facing read endpoint for
+  one-off staff-sent pushes) existed in the backend but wasn't documented here until now —
+  see "API Reference" below.
+
 ---
 
 ## Backend Changes Needed
@@ -202,6 +216,8 @@ Write UI in Kotlin functions instead of XML layouts. Faster to build, easier to 
 | Push token registration | `MemberDeviceToken` model, `POST /me/device-token` (bearer-token, upserts on member+token) | ✅ **Done** (2026-07-26) |
 | Push notification channel | New `FcmNotificationProvider` (same pluggable-provider pattern as SMS/WhatsApp/email) fires on every `Announcement` creation, fanning out to every matching `MemberDeviceToken`. Deliberately **not** added to the existing `Notification`/`NotificationChannel` per-event gating pipeline — see "Push Notifications — Current State" below | ✅ **Plumbing done** (2026-07-26) — ⚠️ **not connected to real FCM yet**, see below |
 | Tenant resolution at sign-in | Revisited 2026-07-31 for multi-tenant readiness: `identifier` is now **phone only** (memberNumber dropped — not unique across gyms), looked up without pre-selecting a tenant; the PIN is verified against every phone match, and PIN assignment refuses a phone+PIN pair already in use by another member anywhere, so a phone shared across two gyms stays unambiguous | ✅ **Done** (2026-07-31) |
+| Two-way Messages | New `Message` model (distinct from the one-way `Notification`/`Announcement` models), staff CRUD + inbox in the ERP ("Contact Us"), member read/send at `GET/POST /me/messages` + unread count at `GET /me/messages/unread-count` | ✅ **Done** (2026-08-03) — Android screen still needed, see `mobile_app_update_2026-08-03_messages.md` |
+| Staff-sent one-off push | `POST /members/:memberId/notifications` (staff, ERP-side) creates an `app`-channel `Notification` and dispatches it through the existing push pipeline; member reads history via `GET /me/notifications` (endpoint existed already, newly documented) | ✅ **Done** (2026-08-03) |
 
 ## Push Notifications — Current State
 
@@ -237,6 +253,10 @@ All under `https://gym.sparkco.vip/api` (dev: `http://localhost:3002/api`).
 - `GET /me/announcements` — `{ announcements: [{ id, branchId, title, body, pushSentCount, pushFailedCount, createdAt }] }`, tenant-wide plus the member's own branch, newest first.
 - `GET /me/closed-dates` — `{ closedDates: [{ id, branchId, date, reason, createdAt }] }`, tenant-wide plus the member's own branch, upcoming only (`date >= today`), ascending.
 - `POST /me/device-token` — body `{ token, platform? }` (`platform`: `"android"` | `"ios"`) → `204`. Call this once an FCM token is obtained, and again on token-refresh.
+- `GET /me/notifications` — `{ notifications: [{ id, event, subject, body, createdAt }] }`, newest first. Only delivered (`sent`) `app`-channel `Notification` rows — staff-sent one-off pushes (see "Messages" below) plus any future event-triggered app notifications. Distinct from `GET /me/announcements` (tenant-wide broadcasts, different model).
+- `GET /me/messages` — `{ messages: [{ id, senderType: "staff" | "member", body, createdAt, readByMemberAt }] }`, oldest first. **Marks every unread staff message as read as a side effect** — call it when the member opens the Messages screen, no separate mark-read call.
+- `POST /me/messages` — body `{ body: string }` → `{ message: {...} }`. Sends a message from the member to staff.
+- `GET /me/messages/unread-count` — `{ unreadCount: number }` — staff messages the member hasn't read yet, for a nav badge without opening the full thread.
 
 Everything above requires `Authorization: Bearer <token>` except sign-in itself.
 

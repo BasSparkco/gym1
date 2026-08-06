@@ -1,6 +1,7 @@
 import { Dumbbell } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MemberSearchInput } from "@/components/layout/member-search-input";
+import { MessagesBell } from "@/components/layout/messages-bell";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { NavMenu } from "@/components/layout/nav-menu";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
@@ -89,6 +90,7 @@ export function AppShell({ children, user, t, viewingAllBranches, logoUrl }: App
 
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 <MemberSearchInput placeholder={t.shell.searchMembers} />
+                <MessagesBell label={t.nav.messages} />
                 <LanguageSwitcher />
                 <SignOutButton name={user.name} role={user.role} label={t.auth.signOut} />
               </div>

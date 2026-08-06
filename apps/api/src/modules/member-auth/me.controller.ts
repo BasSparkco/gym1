@@ -14,6 +14,7 @@ import { MembershipsService } from '../memberships/memberships.service';
 import { AnnouncementsService } from '../announcements/announcements.service';
 import { ClosedDatesService } from '../closed-dates/closed-dates.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MessagesService } from '../messages/messages.service';
 import { MemberActivityService } from '../member-activity/member-activity.service';
 import { MemberAuthService, MemberSession } from './member-auth.service';
 import { extractBearerToken } from './extract-bearer-token';
@@ -35,6 +36,7 @@ export class MeController {
     private readonly announcementsService: AnnouncementsService,
     private readonly closedDatesService: ClosedDatesService,
     private readonly notificationsService: NotificationsService,
+    private readonly messagesService: MessagesService,
     private readonly memberActivityService: MemberActivityService,
   ) {}
 
@@ -102,6 +104,43 @@ export class MeController {
         body: notification.body,
         createdAt: notification.sentAt ?? notification.createdAt,
       })),
+    };
+  }
+
+  @Get('messages')
+  async getMessages(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      messages: await this.messagesService.getThreadForMember(
+        session.tenantId,
+        session.id,
+      ),
+    };
+  }
+
+  @Post('messages')
+  async postMessage(
+    @Req() request: Request,
+    @Body() body: { body?: string },
+  ) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      message: await this.messagesService.sendFromMember(
+        session.tenantId,
+        session.id,
+        body.body,
+      ),
+    };
+  }
+
+  @Get('messages/unread-count')
+  async getMessagesUnreadCount(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      unreadCount: await this.messagesService.countUnreadForMember(
+        session.tenantId,
+        session.id,
+      ),
     };
   }
 

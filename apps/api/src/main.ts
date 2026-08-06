@@ -2,7 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody: true keeps the raw request Buffer around (in req.rawBody)
+  // alongside Nest's normal parsed body — needed to verify the SparkCo
+  // webhook's HMAC signature, which is computed over the exact bytes sent.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Traefik terminates TLS one hop in front of us; trust it so req.ip is the
   // real client address (sign-in throttling keys on it).

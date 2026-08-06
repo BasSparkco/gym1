@@ -17,6 +17,7 @@ export type Dict = {
     lockers: string;
     announcements: string;
     closedDates: string;
+    messages: string;
     members: string;
     checkIn: string;
     employeeCheckIn: string;
@@ -166,6 +167,8 @@ export type Dict = {
     qrSentSuccess: string;
     qrSentFailed: string;
     setAppPin: string;
+    sendMessage: string;
+    sendNotification: string;
     appPinTitle: string;
     appPinDescription: string;
     newPinLabel: string;
@@ -561,6 +564,26 @@ export type Dict = {
     noNotifications: string;
     viewMemberProfile: string;
   };
+  messages: {
+    title: string;
+    contactUsDescription: string;
+    noConversations: string;
+    loading: string;
+    loadError: string;
+    sendError: string;
+    noMessagesYet: string;
+    typeMessagePlaceholder: string;
+    send: string;
+    close: string;
+    notificationSubjectLabel: string;
+    notificationSubjectPlaceholder: string;
+    notificationBodyLabel: string;
+    notificationBodyPlaceholder: string;
+    notificationSendButton: string;
+    notificationSendError: string;
+    notificationSent: string;
+    whatsappDeliveryFailed: string;
+  };
   reports: {
     title: string;
     allReports: string;
@@ -724,6 +747,7 @@ export type Dict = {
     whatsappConnectButton: string;
     whatsappConnecting: string;
     whatsappConnected: string;
+    whatsappConnectedNumber: string;
     whatsappDisconnect: string;
     whatsappDisconnectConfirm: string;
     whatsappScanInstruction: string;
@@ -877,6 +901,7 @@ const en: Dict = {
     lockers: "Lockers",
     announcements: "Announcements",
     closedDates: "Closed Dates",
+    messages: "Messages",
     members: "Members",
     checkIn: "Check-In",
     employeeCheckIn: "Staff Check-In",
@@ -1026,6 +1051,8 @@ const en: Dict = {
     qrSentSuccess: "QR code sent via WhatsApp!",
     qrSentFailed: "Failed to send QR code.",
     setAppPin: "Set app PIN",
+    sendMessage: "Send message",
+    sendNotification: "Send notification",
     appPinTitle: "Mobile App PIN",
     appPinDescription: "Set or reset the PIN this member uses to sign into the gym mobile app with their phone number.",
     newPinLabel: "New PIN (4–8 digits)",
@@ -1421,6 +1448,26 @@ const en: Dict = {
     noNotifications: "No notifications recorded yet.",
     viewMemberProfile: "View member profile →",
   },
+  messages: {
+    title: "Messages",
+    contactUsDescription: "Messages staff send here are delivered to the member's WhatsApp.",
+    noConversations: "No conversations yet.",
+    loading: "Loading messages…",
+    loadError: "Couldn't load messages. Try again.",
+    sendError: "Couldn't send. Try again.",
+    noMessagesYet: "No messages yet — say hello.",
+    typeMessagePlaceholder: "Type a message…",
+    send: "Send",
+    close: "Close",
+    notificationSubjectLabel: "Subject",
+    notificationSubjectPlaceholder: "e.g. Membership reminder",
+    notificationBodyLabel: "Message",
+    notificationBodyPlaceholder: "Write the notification text…",
+    notificationSendButton: "Send notification",
+    notificationSendError: "Couldn't send the notification. Try again.",
+    notificationSent: "Notification sent to the member's app.",
+    whatsappDeliveryFailed: "Saved here, but WhatsApp delivery failed.",
+  },
   reports: {
     title: "Reports",
     allReports: "All reports",
@@ -1584,6 +1631,7 @@ const en: Dict = {
     whatsappConnectButton: "Connect WhatsApp",
     whatsappConnecting: "Starting session…",
     whatsappConnected: "Connected",
+    whatsappConnectedNumber: "Connected number",
     whatsappDisconnect: "Disconnect",
     whatsappDisconnectConfirm: "Disconnect WhatsApp? Notifications will fall back to the platform number.",
     whatsappScanInstruction: "Open WhatsApp on your phone → Linked Devices → Link a device → scan this QR code.",
@@ -1737,6 +1785,7 @@ const ar: Dict = {
     lockers: "الخزائن",
     announcements: "الإعلانات",
     closedDates: "أيام الإغلاق",
+    messages: "الرسائل",
     members: "الأعضاء",
     checkIn: "تسجيل الدخول",
     employeeCheckIn: "تسجيل حضور الموظفين",
@@ -1886,6 +1935,8 @@ const ar: Dict = {
     qrSentSuccess: "تم إرسال رمز QR عبر واتساب!",
     qrSentFailed: "فشل إرسال رمز QR.",
     setAppPin: "تعيين رمز PIN للتطبيق",
+    sendMessage: "إرسال رسالة",
+    sendNotification: "إرسال إشعار",
     appPinTitle: "رمز PIN لتطبيق الجوال",
     appPinDescription: "قم بتعيين أو إعادة تعيين رمز PIN الذي يستخدمه هذا العضو لتسجيل الدخول إلى تطبيق الصالة الرياضية برقم هاتفه.",
     newPinLabel: "رمز PIN جديد (4 إلى 8 أرقام)",
@@ -2281,6 +2332,26 @@ const ar: Dict = {
     noNotifications: "لا توجد إشعارات مسجلة بعد.",
     viewMemberProfile: "عرض ملف العضو ←",
   },
+  messages: {
+    title: "الرسائل",
+    contactUsDescription: "الرسائل التي يرسلها الموظفون من هنا تصل إلى واتساب العضو.",
+    noConversations: "لا توجد محادثات بعد.",
+    loading: "جارٍ تحميل الرسائل…",
+    loadError: "تعذر تحميل الرسائل. حاول مرة أخرى.",
+    sendError: "تعذر الإرسال. حاول مرة أخرى.",
+    noMessagesYet: "لا توجد رسائل بعد — ابدأ المحادثة.",
+    typeMessagePlaceholder: "اكتب رسالة…",
+    send: "إرسال",
+    close: "إغلاق",
+    notificationSubjectLabel: "الموضوع",
+    notificationSubjectPlaceholder: "مثال: تذكير بالاشتراك",
+    notificationBodyLabel: "الرسالة",
+    notificationBodyPlaceholder: "اكتب نص الإشعار…",
+    notificationSendButton: "إرسال إشعار",
+    notificationSendError: "تعذر إرسال الإشعار. حاول مرة أخرى.",
+    notificationSent: "تم إرسال الإشعار إلى تطبيق العضو.",
+    whatsappDeliveryFailed: "تم الحفظ هنا، لكن الإرسال عبر واتساب فشل.",
+  },
   reports: {
     title: "التقارير",
     allReports: "جميع التقارير",
@@ -2444,6 +2515,7 @@ const ar: Dict = {
     whatsappConnectButton: "ربط واتساب",
     whatsappConnecting: "جارٍ بدء الجلسة…",
     whatsappConnected: "متصل",
+    whatsappConnectedNumber: "الرقم المتصل",
     whatsappDisconnect: "قطع الاتصال",
     whatsappDisconnectConfirm: "هل تريد قطع اتصال واتساب؟ ستُرسل الإشعارات من رقم المنصة.",
     whatsappScanInstruction: "افتح واتساب على هاتفك ← الأجهزة المرتبطة ← ربط جهاز ← امسح رمز QR.",
@@ -2597,6 +2669,7 @@ const he: Dict = {
     lockers: "לוקרים",
     announcements: "הודעות",
     closedDates: "ימי סגירה",
+    messages: "התכתבויות",
     members: "חברים",
     checkIn: "כניסה",
     employeeCheckIn: "נוכחות עובדים",
@@ -2746,6 +2819,8 @@ const he: Dict = {
     qrSentSuccess: "קוד QR נשלח ב-WhatsApp!",
     qrSentFailed: "שליחת קוד QR נכשלה.",
     setAppPin: "הגדרת קוד PIN לאפליקציה",
+    sendMessage: "שליחת הודעה",
+    sendNotification: "שליחת התראה",
     appPinTitle: "קוד PIN לאפליקציית הנייד",
     appPinDescription: "הגדר או אפס את קוד ה-PIN שהחבר משתמש בו כדי להתחבר לאפליקציית חדר הכושר עם מספר הטלפון שלו.",
     newPinLabel: "קוד PIN חדש (4–8 ספרות)",
@@ -3141,6 +3216,26 @@ const he: Dict = {
     noNotifications: "לא נרשמו התראות עדיין.",
     viewMemberProfile: "הצג פרופיל חבר ←",
   },
+  messages: {
+    title: "התכתבויות",
+    contactUsDescription: "הודעות שהצוות שולח מכאן מגיעות לוואטסאפ של החבר.",
+    noConversations: "אין עדיין שיחות.",
+    loading: "טוען הודעות…",
+    loadError: "טעינת ההודעות נכשלה. נסה שוב.",
+    sendError: "השליחה נכשלה. נסה שוב.",
+    noMessagesYet: "אין עדיין הודעות — אמור שלום.",
+    typeMessagePlaceholder: "כתוב הודעה…",
+    send: "שליחה",
+    close: "סגירה",
+    notificationSubjectLabel: "נושא",
+    notificationSubjectPlaceholder: "לדוגמה: תזכורת מנוי",
+    notificationBodyLabel: "הודעה",
+    notificationBodyPlaceholder: "כתוב את טקסט ההתראה…",
+    notificationSendButton: "שליחת התראה",
+    notificationSendError: "שליחת ההתראה נכשלה. נסה שוב.",
+    notificationSent: "ההתראה נשלחה לאפליקציית החבר.",
+    whatsappDeliveryFailed: "נשמר כאן, אך שליחת ה-WhatsApp נכשלה.",
+  },
   reports: {
     title: "דוחות",
     allReports: "כל הדוחות",
@@ -3304,6 +3399,7 @@ const he: Dict = {
     whatsappConnectButton: "חבר WhatsApp",
     whatsappConnecting: "מפעיל סשן…",
     whatsappConnected: "מחובר",
+    whatsappConnectedNumber: "מספר מחובר",
     whatsappDisconnect: "נתק",
     whatsappDisconnectConfirm: "לנתק WhatsApp? ההתראות יישלחו ממספר הפלטפורמה.",
     whatsappScanInstruction: "פתח WhatsApp בטלפון ← מכשירים מקושרים ← קשר מכשיר ← סרוק את קוד ה-QR.",

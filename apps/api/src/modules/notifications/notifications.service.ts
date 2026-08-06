@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { localDateString, toDateOnlyString } from '../../common/date';
 import {
@@ -269,6 +269,55 @@ export class NotificationsService {
     }
 
     return summary;
+  }
+
+  /**
+   * Staff-triggered one-off push to a single member — distinct from
+   * createNotificationsForEvent (template/event-driven, fans out to every
+   * enabled channel). This always targets the 'app' channel directly with
+   * staff-typed text, then dispatches immediately via the same deliverPush
+   * path createNotificationsForEvent's dispatch eventually reaches.
+   */
+  async createManualAppNotification(
+    tenantId: string,
+    branchId: string | undefined,
+    memberId: string,
+    input: { subject?: string; body?: string },
+  ) {
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
+    });
+    if (!member) {
+      throw new NotFoundException('Member not found.');
+    }
+
+    const subject = input.subject?.trim();
+    const body = input.body?.trim();
+    if (!subject || !body) {
+      throw new BadRequestException('Subject and body are required.');
+    }
+
+    const notification = await this.prisma.notification.create({
+      data: {
+        id: `notif-${randomUUID()}`,
+        tenantId,
+        memberId,
+        channel: 'app',
+        event: null,
+        subject,
+        body,
+        status: 'pending' as const,
+      },
+    });
+
+    return this.dispatchService.dispatchNotificationForTenant(
+      tenantId,
+      notification.id,
+    );
   }
 
   private async getNotificationSettingsForTenant(
