@@ -87,13 +87,13 @@ export default async function SignInPage() {
               continue: t.auth.continue,
               signingIn: t.auth.signingIn,
             }}
+            pilotCredentialsLabel={t.auth.pilotCredentials}
+            pilotCredentialsHint={t.auth.pilotCredentialsHint}
+            pilotAccounts={[
+              { roleLabel: t.roles.owner, email: "owner@sparkgym.local", password: "Owner@Spark2026" },
+              { roleLabel: t.roles.frontDesk, email: "frontdesk@sparkgym.local", password: "Desk@Spark2026" },
+            ]}
           />
-
-          <div className="mt-8 rounded-3xl border border-dashed border-line bg-surface-muted/60 p-5 text-sm leading-7 text-foreground/70">
-            <p className="font-semibold text-foreground">{t.auth.pilotCredentials}</p>
-            <p className="mt-2">Front desk: frontdesk@sparkgym.local / frontdesk123</p>
-            <p>Owner: owner@sparkgym.local / owner123</p>
-          </div>
         </section>
       </div>
     </main>

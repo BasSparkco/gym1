@@ -51,6 +51,7 @@ export type Dict = {
     accessConsole: string;
     signInDescription: string;
     pilotCredentials: string;
+    pilotCredentialsHint: string;
     mvpFocus: string;
     access: string;
     reporting: string;
@@ -935,6 +936,7 @@ const en: Dict = {
     accessConsole: "Access the operations console",
     signInDescription: "Sign in with a seeded pilot account to enter the protected shell and verify the first Sprint 1 auth flow.",
     pilotCredentials: "Pilot credentials",
+    pilotCredentialsHint: "Tap a role to fill in its login.",
     mvpFocus: "MVP Focus",
     access: "Access",
     reporting: "Reporting",
@@ -1819,6 +1821,7 @@ const ar: Dict = {
     accessConsole: "الوصول إلى لوحة العمليات",
     signInDescription: "سجّل دخولك باستخدام حساب تجريبي للدخول إلى النظام.",
     pilotCredentials: "بيانات الاعتماد التجريبية",
+    pilotCredentialsHint: "اضغط على الدور لتعبئة بيانات الدخول الخاصة به.",
     mvpFocus: "محور المنتج",
     access: "الوصول",
     reporting: "التقارير",
@@ -2703,6 +2706,7 @@ const he: Dict = {
     accessConsole: "גישה למסוף התפעולי",
     signInDescription: "התחבר עם חשבון פיילוט לכניסה למערכת המוגנת.",
     pilotCredentials: "פרטי כניסה לפיילוט",
+    pilotCredentialsHint: "לחץ על תפקיד כדי למלא את פרטי הכניסה שלו.",
     mvpFocus: "מיקוד MVP",
     access: "גישה",
     reporting: "דיווח",

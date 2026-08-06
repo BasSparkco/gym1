@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { AlertCircle, ArrowRight, Loader2, Lock, User } from "lucide-react";
 
+export type PilotAccount = {
+  roleLabel: string;
+  email: string;
+  password: string;
+};
+
 type SignInFormProps = {
   labels: {
     email: string;
@@ -12,12 +18,20 @@ type SignInFormProps = {
     continue: string;
     signingIn: string;
   };
+  pilotAccounts?: PilotAccount[];
+  pilotCredentialsLabel?: string;
+  pilotCredentialsHint?: string;
 };
 
-export function SignInForm({ labels }: SignInFormProps) {
+export function SignInForm({
+  labels,
+  pilotAccounts,
+  pilotCredentialsLabel,
+  pilotCredentialsHint,
+}: SignInFormProps) {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("frontdesk@sparkgym.local");
-  const [password, setPassword] = useState("frontdesk123");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pausedReason, setPausedReason] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,6 +149,34 @@ export function SignInForm({ labels }: SignInFormProps) {
         )}
         {isSubmitting ? labels.signingIn : labels.continue}
       </button>
+
+      {pilotAccounts && pilotAccounts.length > 0 && (
+        <div className="mt-2 rounded-3xl border border-dashed border-line bg-surface-muted/60 p-5 text-sm leading-6 text-foreground/70">
+          {pilotCredentialsLabel && (
+            <p className="font-semibold text-foreground">{pilotCredentialsLabel}</p>
+          )}
+          {pilotCredentialsHint && <p className="mt-1 text-foreground/50">{pilotCredentialsHint}</p>}
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {pilotAccounts.map((account) => (
+              <button
+                key={account.email}
+                type="button"
+                onClick={() => {
+                  setIdentifier(account.email);
+                  setPassword(account.password);
+                  setErrorMessage(null);
+                }}
+                className="rounded-2xl border border-line bg-surface px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:shadow-sm"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand">
+                  {account.roleLabel}
+                </p>
+                <p className="mt-1 truncate font-mono text-xs text-foreground/70">{account.email}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </form>
   );
 }
