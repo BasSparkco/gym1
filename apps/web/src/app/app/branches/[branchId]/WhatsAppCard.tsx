@@ -24,6 +24,7 @@ export default function WhatsAppCard({
   const [status, setStatus] = useState<Status>("idle");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevStatusRef = useRef<string | null>(null);
 
@@ -46,13 +47,18 @@ export default function WhatsAppCard({
       const statusRes = await fetch(`${base}/verify`, { method: "POST" });
       if (!statusRes.ok) return;
 
-      const { status: waStatus } = (await statusRes.json()) as { ok: boolean; status: string };
+      const { status: waStatus, phone: waPhone } = (await statusRes.json()) as {
+        ok: boolean;
+        status: string;
+        phone?: string | null;
+      };
       const wasConnected = prevStatusRef.current === "connected";
       prevStatusRef.current = waStatus;
 
       if (waStatus === "connected") {
         setStatus("connected");
         setQrDataUrl(null);
+        setPhone(waPhone ?? null);
         // Switch to slow heartbeat poll — detects if device is removed
         if (!pollRef.current || (pollRef.current && wasConnected === false)) {
           startPolling(8_000);
@@ -92,10 +98,15 @@ export default function WhatsAppCard({
       try {
         const res = await fetch(`${base}/verify`, { method: "POST" });
         if (!res.ok) return;
-        const { status: waStatus } = (await res.json()) as { ok: boolean; status: string };
+        const { status: waStatus, phone: waPhone } = (await res.json()) as {
+          ok: boolean;
+          status: string;
+          phone?: string | null;
+        };
         prevStatusRef.current = waStatus;
         if (waStatus === "connected") {
           setStatus("connected");
+          setPhone(waPhone ?? null);
           startPolling(8_000); // slow heartbeat when already connected
         } else if (waStatus === "qr_required" || waStatus === "disconnected") {
           // Session exists but QR is pending or reconnecting
@@ -114,6 +125,7 @@ export default function WhatsAppCard({
   async function handleConnect() {
     setStatus("connecting");
     setErrorMsg(null);
+    setPhone(null);
     try {
       const res = await fetch(base, { method: "PUT" });
       if (!res.ok) {
@@ -142,6 +154,7 @@ export default function WhatsAppCard({
     }
     setStatus("idle");
     setQrDataUrl(null);
+    setPhone(null);
   }
 
   return (
@@ -214,11 +227,21 @@ export default function WhatsAppCard({
         )}
 
         {status === "connected" && (
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge tone="success">
-              <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-              {t.settings.whatsappConnected}
-            </Badge>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge tone="success">
+                <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                {t.settings.whatsappConnected}
+              </Badge>
+              {phone && (
+                <div className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-sm">
+                  <span className="text-foreground/50">{t.settings.whatsappConnectedNumber}:</span>
+                  <span dir="ltr" className="font-mono font-medium tracking-wide">
+                    +{phone}
+                  </span>
+                </div>
+              )}
+            </div>
             {canManage && (
               <Button onClick={() => void handleDisconnect()} variant="danger" size="sm">
                 {t.settings.whatsappDisconnect}

@@ -3,6 +3,11 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 const SPARKCO_API_KEY = process.env.SPARKCO_API_KEY;
 const SPARKCO_BASE_URL = process.env.SPARKCO_API_URL ?? 'https://api.sparkco.vip/api/v1';
 
+// SparkCo wraps every response as { success, data } | { success: false, error }
+// (see COMMUNICATION_SERVICE_MANUAL.md) — callers here want the unwrapped
+// payload (e.g. { qr } / { ok, status }), not the envelope.
+type SparkcoEnvelope = { success: boolean; data?: unknown; error?: string };
+
 async function sparkcoFetch(path: string, method = 'GET') {
   if (!SPARKCO_API_KEY) {
     throw new InternalServerErrorException('SparkCo is not configured (set SPARKCO_API_KEY).');
@@ -11,11 +16,13 @@ async function sparkcoFetch(path: string, method = 'GET') {
     method,
     headers: { 'X-API-Key': SPARKCO_API_KEY },
   });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new InternalServerErrorException(`SparkCo error ${res.status}: ${text}`);
+  const payload = (await res.json().catch(() => null)) as SparkcoEnvelope | null;
+  if (!res.ok || !payload?.success) {
+    throw new InternalServerErrorException(
+      `SparkCo error ${res.status}: ${payload?.error ?? res.statusText}`,
+    );
   }
-  return res.json();
+  return payload.data;
 }
 
 @Injectable()
