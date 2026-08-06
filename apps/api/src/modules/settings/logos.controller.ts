@@ -10,6 +10,7 @@ import {
 import type { Request, Response } from 'express';
 import { MinioService } from '../../minio/minio.service';
 import { AuthService } from '../auth/auth.service';
+import { contentTypeForStoredFilename } from '../../common/image-upload';
 
 @Controller('uploads/logos')
 export class LogosController {
@@ -36,6 +37,8 @@ export class LogosController {
         this.minioService.getBucket(),
         filename,
       );
+      res.setHeader('Content-Type', contentTypeForStoredFilename(filename));
+      res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Cache-Control', 'private, max-age=86400');
       stream.pipe(res);
     } catch {

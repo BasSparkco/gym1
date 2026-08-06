@@ -14,10 +14,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
-import { extname } from 'node:path';
 import { requireRole } from '../../common/require-role';
 import { AuthService } from '../auth/auth.service';
 import { MinioService } from '../../minio/minio.service';
+import { validateImageUpload } from '../../common/image-upload';
 import { BranchesService } from './branches.service';
 
 type CreateBranchRequestBody = {
@@ -129,14 +129,14 @@ export class BranchesController {
     const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
 
-    const ext = extname(file.originalname) || '.png';
-    const filename = `logo-branch-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
+    const { extension, contentType } = validateImageUpload(file);
+    const filename = `logo-branch-${Date.now()}-${Math.round(Math.random() * 1e6)}${extension}`;
     await this.minioService.client.putObject(
       this.minioService.getBucket(),
       filename,
       file.buffer,
       file.buffer.length,
-      { 'Content-Type': file.mimetype },
+      { 'Content-Type': contentType },
     );
 
     return {

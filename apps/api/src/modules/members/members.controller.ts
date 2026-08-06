@@ -15,9 +15,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
-import { extname } from 'node:path';
 import { MinioService } from '../../minio/minio.service';
 import { DataScopeService } from '../../common/data-scope.service';
+import { validateImageUpload } from '../../common/image-upload';
 import { AuthService } from '../auth/auth.service';
 import { MembersService } from './members.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -246,14 +246,14 @@ export class MembersController {
     const session = await this.getRequiredSession(request.headers.cookie);
     const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
-    const ext = extname(file.originalname) || '.jpg';
-    const filename = `photo-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
+    const { extension, contentType } = validateImageUpload(file);
+    const filename = `photo-${Date.now()}-${Math.round(Math.random() * 1e6)}${extension}`;
     await this.minioService.client.putObject(
       this.minioService.getBucket(),
       filename,
       file.buffer,
       file.buffer.length,
-      { 'Content-Type': file.mimetype },
+      { 'Content-Type': contentType },
     );
 
     const pictureUrl = `/api/uploads/members/${filename}`;

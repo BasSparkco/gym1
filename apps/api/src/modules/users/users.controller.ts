@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -85,6 +86,11 @@ export class UsersController {
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
+    // A manager can create staff accounts but must not be able to mint
+    // themselves (or anyone else) a full-access owner account.
+    if (body.role === 'owner' && session.user.role !== 'owner') {
+      throw new ForbiddenException('Only an owner can assign the owner role.');
+    }
 
     return {
       user: await this.authService.createUser(
@@ -123,6 +129,11 @@ export class UsersController {
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
+    // Same reasoning as createUser: a manager must not be able to promote
+    // an existing account to owner.
+    if (body.role === 'owner' && session.user.role !== 'owner') {
+      throw new ForbiddenException('Only an owner can assign the owner role.');
+    }
 
     return {
       user: await this.authService.updateUser(
