@@ -584,6 +584,13 @@ export type Dict = {
     notificationSendError: string;
     notificationSent: string;
     whatsappDeliveryFailed: string;
+    searchConversationsPlaceholder: string;
+    recentSearches: string;
+    clearAll: string;
+    noSearchResults: string;
+    selectConversationTitle: string;
+    selectConversationHint: string;
+    backToChats: string;
   };
   reports: {
     title: string;
@@ -1469,6 +1476,13 @@ const en: Dict = {
     notificationSendError: "Couldn't send the notification. Try again.",
     notificationSent: "Notification sent to the member's app.",
     whatsappDeliveryFailed: "Saved here, but WhatsApp delivery failed.",
+    searchConversationsPlaceholder: "Search conversations…",
+    recentSearches: "Recent",
+    clearAll: "Clear all",
+    noSearchResults: "No conversations match your search.",
+    selectConversationTitle: "Select a conversation",
+    selectConversationHint: "Choose a member from the list to view and send WhatsApp messages.",
+    backToChats: "Back to chats",
   },
   reports: {
     title: "Reports",
@@ -2354,6 +2368,13 @@ const ar: Dict = {
     notificationSendError: "تعذر إرسال الإشعار. حاول مرة أخرى.",
     notificationSent: "تم إرسال الإشعار إلى تطبيق العضو.",
     whatsappDeliveryFailed: "تم الحفظ هنا، لكن الإرسال عبر واتساب فشل.",
+    searchConversationsPlaceholder: "ابحث في المحادثات…",
+    recentSearches: "الأخيرة",
+    clearAll: "مسح الكل",
+    noSearchResults: "لا توجد محادثات مطابقة لبحثك.",
+    selectConversationTitle: "اختر محادثة",
+    selectConversationHint: "اختر عضوًا من القائمة لعرض رسائل واتساب وإرسالها.",
+    backToChats: "العودة إلى المحادثات",
   },
   reports: {
     title: "التقارير",
@@ -3239,6 +3260,13 @@ const he: Dict = {
     notificationSendError: "שליחת ההתראה נכשלה. נסה שוב.",
     notificationSent: "ההתראה נשלחה לאפליקציית החבר.",
     whatsappDeliveryFailed: "נשמר כאן, אך שליחת ה-WhatsApp נכשלה.",
+    searchConversationsPlaceholder: "חיפוש בשיחות…",
+    recentSearches: "אחרונות",
+    clearAll: "נקה הכל",
+    noSearchResults: "אין שיחות התואמות לחיפוש שלך.",
+    selectConversationTitle: "בחר שיחה",
+    selectConversationHint: "בחר חבר מהרשימה כדי להציג ולשלוח הודעות וואטסאפ.",
+    backToChats: "חזרה לשיחות",
   },
   reports: {
     title: "דוחות",

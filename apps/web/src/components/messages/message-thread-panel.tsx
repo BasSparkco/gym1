@@ -100,7 +100,7 @@ export function MessageThreadPanel({
   }
 
   return (
-    <div className="flex h-[420px] flex-col border-t border-line">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
         {loading ? (
           <p className="text-sm text-muted">{t.messages.loading}</p>

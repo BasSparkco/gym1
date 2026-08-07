@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -49,7 +49,7 @@ export function MessagesBell({
           : "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-foreground/70 transition-colors hover:bg-black/[0.04] hover:text-foreground"
       }
     >
-      <MessageCircle className="h-[18px] w-[18px]" strokeWidth={2} />
+      <WhatsAppIcon className="h-[18px] w-[18px]" />
       {unreadCount > 0 && (
         <span className="absolute -top-0.5 -end-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white">
           {unreadCount > 9 ? "9+" : unreadCount}
