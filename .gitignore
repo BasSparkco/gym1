@@ -22,3 +22,5 @@ messages.md
 !.env.example
 
 /backups/
+
+.claude/settings.json
