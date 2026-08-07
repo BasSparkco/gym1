@@ -7,6 +7,7 @@ import { ClosedDatesModule } from '../closed-dates/closed-dates.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MessagesModule } from '../messages/messages.module';
 import { MemberActivityModule } from '../member-activity/member-activity.module';
+import { TrainingProgramsModule } from '../training-programs/training-programs.module';
 import { MemberAuthController } from './member-auth.controller';
 import { MeController } from './me.controller';
 import { MemberAuthService } from './member-auth.service';
@@ -20,6 +21,7 @@ import { MemberAuthService } from './member-auth.service';
     NotificationsModule,
     MessagesModule,
     MemberActivityModule,
+    TrainingProgramsModule,
     // Same reasoning as AuthModule: brute-force protection scoped to just
     // the member sign-in route, so only it pays the throttling cost.
     ThrottlerModule.forRoot({

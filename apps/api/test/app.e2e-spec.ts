@@ -493,6 +493,96 @@ describe('API (e2e)', () => {
     ).toBe('member-002');
   });
 
+  it('member Explore tab: GET /me/courses and /me/plans are scoped, filtered, and auth-gated', async () => {
+    const staffSignIn = await request(getHttpServer())
+      .post('/api/auth/sign-in')
+      .send({ identifier: 'owner@sparkgym.local', password: 'owner123' })
+      .expect(200);
+    const staffCookies = staffSignIn.get('Set-Cookie');
+
+    const phone = '+970599000099';
+    await request(getHttpServer())
+      .patch('/api/members/member-001')
+      .set('Cookie', staffCookies)
+      .send({ phone })
+      .expect(200);
+    await request(getHttpServer())
+      .post('/api/members/member-001/pin')
+      .set('Cookie', staffCookies)
+      .send({ pin: '1357' })
+      .expect(204);
+
+    const memberSignIn = await request(getHttpServer())
+      .post('/api/member-auth/sign-in')
+      .send({ identifier: phone, pin: '1357' })
+      .expect(200);
+    const memberToken = (memberSignIn.body as { token: string }).token;
+
+    // No token -> 401 on both routes.
+    await request(getHttpServer()).get('/api/me/courses').expect(401);
+    await request(getHttpServer()).get('/api/me/plans').expect(401);
+
+    // member-001's home branch is 'Platinum Fitness' (see operations-seed.ts).
+    const homeBranchCourse = await request(getHttpServer())
+      .post('/api/training-programs')
+      .set('Cookie', staffCookies)
+      .send({ name: 'Yoga', active: true, price: 40 })
+      .expect(201);
+    const otherBranchCourse = await request(getHttpServer())
+      .post('/api/training-programs')
+      .set('Cookie', staffCookies)
+      .send({
+        name: 'Boxing',
+        active: true,
+        price: 30,
+        branchId: 'branch-nablus-north',
+      })
+      .expect(201);
+    const inactiveCourse = await request(getHttpServer())
+      .post('/api/training-programs')
+      .set('Cookie', staffCookies)
+      .send({ name: 'Old Course', active: false, price: 20 })
+      .expect(201);
+
+    expect(otherBranchCourse.status).toBe(201);
+    expect(inactiveCourse.status).toBe(201);
+
+    const coursesResponse = await request(getHttpServer())
+      .get('/api/me/courses')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .expect(200);
+    const courses = (coursesResponse.body as { courses: Record<string, unknown>[] })
+      .courses;
+
+    const homeBranchProgramId = (
+      homeBranchCourse.body as { program: { id: string } }
+    ).program.id;
+    expect(courses.map((c) => c.id)).toEqual([homeBranchProgramId]);
+    expect(Object.keys(courses[0]).sort()).toEqual(
+      [
+        'description',
+        'endDate',
+        'id',
+        'maxMembers',
+        'name',
+        'price',
+        'startDate',
+      ].sort(),
+    );
+
+    const plansResponse = await request(getHttpServer())
+      .get('/api/me/plans')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .expect(200);
+    const planIds = (
+      plansResponse.body as { plans: { id: string }[] }
+    ).plans.map((p) => p.id);
+    expect(planIds).toEqual(
+      expect.arrayContaining(['plan-monthly-flex', 'plan-ramallah-standard']),
+    );
+    expect(planIds).not.toContain('plan-other-monthly');
+  });
+
   it('uploads a member photo to MinIO and serves it through the proxied route, requiring auth', async () => {
     const signInResponse = await request(getHttpServer())
       .post('/api/auth/sign-in')

@@ -16,6 +16,7 @@ import { ClosedDatesService } from '../closed-dates/closed-dates.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MessagesService } from '../messages/messages.service';
 import { MemberActivityService } from '../member-activity/member-activity.service';
+import { TrainingProgramsService } from '../training-programs/training-programs.service';
 import { MemberAuthService, MemberSession } from './member-auth.service';
 import { extractBearerToken } from './extract-bearer-token';
 
@@ -38,6 +39,7 @@ export class MeController {
     private readonly notificationsService: NotificationsService,
     private readonly messagesService: MessagesService,
     private readonly memberActivityService: MemberActivityService,
+    private readonly trainingProgramsService: TrainingProgramsService,
   ) {}
 
   @Get()
@@ -59,6 +61,38 @@ export class MeController {
       memberships: await this.membershipsService.listMembershipsForMember(
         session.tenantId,
         session.id,
+      ),
+    };
+  }
+
+  @Get('courses')
+  async getCourses(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    const programs = await this.trainingProgramsService.listProgramsForTenant(
+      session.tenantId,
+      session.homeBranchId,
+    );
+    return {
+      courses: programs
+        .filter((program) => program.active)
+        .map((program) => ({
+          id: program.id,
+          name: program.name,
+          description: program.description,
+          price: program.price,
+          maxMembers: program.maxMembers,
+          startDate: program.startDate,
+          endDate: program.endDate,
+        })),
+    };
+  }
+
+  @Get('plans')
+  async getPlans(@Req() request: Request) {
+    const session = await this.getRequiredMemberSession(request);
+    return {
+      plans: await this.membershipsService.listMembershipPlansForTenant(
+        session.tenantId,
       ),
     };
   }
