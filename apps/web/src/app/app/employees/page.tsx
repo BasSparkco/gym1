@@ -17,7 +17,9 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EmployeeList } from "@/components/employees/employee-list";
-import { UserPlus, Users, Filter } from "lucide-react";
+import { EmployeesFilterToolbar } from "@/components/employees/employees-filter-toolbar";
+import { UserPlus, Users } from "lucide-react";
+import { Suspense } from "react";
 
 type Props = { searchParams: Promise<{ q?: string; branch?: string; job?: string }> };
 
@@ -33,6 +35,7 @@ export default async function EmployeesPage({ searchParams }: Props) {
   const [allEmployees, branches, settings] = await Promise.all([listEmployees(), listBranches(), getSettings()]);
   const branchMap = Object.fromEntries(branches.map((b) => [b.id, b.name]));
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
+  const viewingAllBranches = session.role === "owner" && settings.ownerDataScope === "all";
   const activeCount = allEmployees.filter((e) => e.status === "active").length;
   const positions = Array.from(
     new Set(allEmployees.map((e) => e.job).filter((job): job is string => Boolean(job))),
@@ -81,51 +84,9 @@ export default async function EmployeesPage({ searchParams }: Props) {
         }
       />
 
-      <form className="flex flex-wrap items-end gap-3 rounded-[18px] border border-line bg-surface px-6 py-5">
-        <label className="grid flex-1 gap-1 text-sm" style={{ minWidth: 200 }}>
-          <span className="text-xs font-medium text-foreground/60">{t.employees.searchPlaceholder}</span>
-          <input
-            type="text"
-            name="q"
-            defaultValue={q ?? ""}
-            placeholder={t.employees.searchPlaceholder}
-            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm outline-none focus:border-brand"
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="text-xs font-medium text-foreground/60">{t.employees.branch}</span>
-          <select
-            name="branch"
-            defaultValue={branchFilter ?? ""}
-            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm"
-          >
-            <option value="">{t.employees.filterAllBranches}</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="text-xs font-medium text-foreground/60">{t.employees.job}</span>
-          <select
-            name="job"
-            defaultValue={jobFilter ?? ""}
-            className="rounded-[10px] border border-line bg-white px-4 py-2 text-sm"
-          >
-            <option value="">{t.employees.filterAllPositions}</option>
-            {positions.map((job) => (
-              <option key={job} value={job}>
-                {job}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button type="submit" variant="primary" size="md" icon={<Filter className="h-4 w-4" strokeWidth={2} />}>
-          {t.reports.applyFilter}
-        </Button>
-      </form>
+      <Suspense fallback={null}>
+        <EmployeesFilterToolbar branches={branches} positions={positions} t={t} showBranchFilter={viewingAllBranches} />
+      </Suspense>
 
       {employees.length === 0 ? (
         <EmptyState icon={<Users className="h-5 w-5" strokeWidth={2} />} title={t.employees.noEmployees} />
