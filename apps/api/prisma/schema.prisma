@@ -366,6 +366,7 @@ model Member {
   lockerRentals      LockerRental[]
   deviceTokens       MemberDeviceToken[]
   messages           Message[]
+  courseInterests    ProgramInterest[]
 
   @@unique([tenantId, memberNumber])
   @@unique([tenantId, rfidTag])
@@ -500,11 +501,12 @@ model TrainingProgram {
   startDate      DateTime? @db.Date
   endDate        DateTime? @db.Date
 
-  classSessions    ClassSession[]
-  entitledForPlans MembershipPlanProgram[]
-  enrolledMembers  ProgramEnrollment[]
-  enrollmentEvents ProgramEnrollmentEvent[]
-  scheduleSlots    ProgramScheduleSlot[]
+  classSessions     ClassSession[]
+  entitledForPlans  MembershipPlanProgram[]
+  enrolledMembers   ProgramEnrollment[]
+  enrollmentEvents  ProgramEnrollmentEvent[]
+  scheduleSlots     ProgramScheduleSlot[]
+  interestedMembers ProgramInterest[]
 
   @@index([tenantId])
   @@index([branchId])
@@ -559,6 +561,21 @@ model ProgramEnrollmentEvent {
   enrolledAt DateTime        @default(now())
   finalPrice Decimal         @db.Decimal(10, 2)
 
+  @@index([memberId])
+}
+
+// A member tapping "interested" on a course in the app — a soft lead for
+// staff to follow up on, distinct from ProgramEnrollment which commits the
+// member to a price and creates class bookings/debt. One row per
+// member+course; re-expressing interest just bumps expressedAt.
+model ProgramInterest {
+  programId   String
+  program     TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  memberId    String
+  member      Member          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  expressedAt DateTime        @default(now())
+
+  @@id([programId, memberId])
   @@index([memberId])
 }
 

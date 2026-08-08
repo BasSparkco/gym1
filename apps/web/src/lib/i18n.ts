@@ -901,6 +901,9 @@ export type Dict = {
     addStudent: string;
     noStudentsRegistered: string;
     unregisterStudent: string;
+    interestTitle: string;
+    interestHint: string;
+    noInterestedMembers: string;
     registerForCourse: string;
     selectCourse: string;
     noCoursesAvailable: string;
@@ -1812,6 +1815,9 @@ const en: Dict = {
     addStudent: "Register a student",
     noStudentsRegistered: "No students registered yet.",
     unregisterStudent: "Unregister",
+    interestTitle: "Interested members",
+    interestHint: "Members who tapped \"Interested\" in the app. This is just a lead — nothing is charged or booked until you register them below.",
+    noInterestedMembers: "No members have expressed interest yet.",
     registerForCourse: "Register for a course",
     selectCourse: "Select a course",
     noCoursesAvailable: "No courses available.",
@@ -2723,6 +2729,9 @@ const ar: Dict = {
     addStudent: "تسجيل طالب",
     noStudentsRegistered: "لا يوجد طلاب مسجلون بعد.",
     unregisterStudent: "إلغاء التسجيل",
+    interestTitle: "الأعضاء المهتمون",
+    interestHint: "الأعضاء الذين ضغطوا \"مهتم\" في التطبيق. هذا مجرد اهتمام أولي — لا يتم فرض أي رسوم أو حجز حتى تسجلهم أدناه.",
+    noInterestedMembers: "لم يبدِ أي عضو اهتمامه بعد.",
     registerForCourse: "التسجيل في دورة",
     selectCourse: "اختر دورة",
     noCoursesAvailable: "لا توجد دورات متاحة.",
@@ -3634,6 +3643,9 @@ const he: Dict = {
     addStudent: "רישום תלמיד",
     noStudentsRegistered: "עדיין לא נרשמו תלמידים.",
     unregisterStudent: "ביטול הרשמה",
+    interestTitle: "חברים מתעניינים",
+    interestHint: "חברים שלחצו על \"מתעניין\" באפליקציה. זהו ליד בלבד — שום דבר לא מחויב או מוזמן עד שתרשום אותם למטה.",
+    noInterestedMembers: "אף חבר עדיין לא הביע התעניינות.",
     registerForCourse: "הרשמה לקורס",
     selectCourse: "בחר קורס",
     noCoursesAvailable: "אין קורסים זמינים.",

@@ -206,6 +206,20 @@ export class TrainingProgramsController {
     };
   }
 
+  @Get(':programId/interests')
+  async listInterestedMembers(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return {
+      interests: await this.trainingProgramsService.listInterestedMembers(
+        session.user.tenant.id,
+        programId,
+      ),
+    };
+  }
+
   @Post(':programId/register')
   async registerMember(
     @Req() request: Request,

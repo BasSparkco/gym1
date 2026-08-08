@@ -579,6 +579,46 @@ export class TrainingProgramsService {
     await this.debtService.recompute(memberId);
   }
 
+  // ── Interest (soft lead, no price/debt implication) ─────────────────────
+
+  async expressInterest(tenantId: string, programId: string, memberId: string) {
+    await this.getProgramRecord(tenantId, programId);
+
+    const member = await this.prisma.member.findFirst({
+      where: { id: memberId, tenantId },
+    });
+    if (!member) {
+      throw new BadRequestException('Member is invalid for this tenant.');
+    }
+
+    await this.prisma.programInterest.upsert({
+      where: { programId_memberId: { programId, memberId } },
+      create: { programId, memberId },
+      update: { expressedAt: new Date() },
+    });
+  }
+
+  async listInterestedMembers(tenantId: string, programId: string) {
+    await this.getProgramRecord(tenantId, programId);
+
+    const interests = await this.prisma.programInterest.findMany({
+      where: { programId },
+      include: { member: true },
+      orderBy: { expressedAt: 'desc' },
+    });
+
+    return interests.map((interest) => ({
+      memberId: interest.memberId,
+      programId: interest.programId,
+      expressedAt: interest.expressedAt,
+      member: {
+        id: interest.member.id,
+        fullName: interest.member.fullName,
+        memberNumber: interest.member.memberNumber,
+      },
+    }));
+  }
+
   // ── Attendance report ────────────────────────────────────────────────────
 
   async getAttendanceReport(tenantId: string, programId: string) {

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Param,
   Post,
   Req,
   Res,
@@ -85,6 +86,20 @@ export class MeController {
           endDate: program.endDate,
         })),
     };
+  }
+
+  @Post('courses/:programId/interest')
+  @HttpCode(204)
+  async expressCourseInterest(
+    @Req() request: Request,
+    @Param('programId') programId: string,
+  ): Promise<void> {
+    const session = await this.getRequiredMemberSession(request);
+    await this.trainingProgramsService.expressInterest(
+      session.tenantId,
+      programId,
+      session.id,
+    );
   }
 
   @Get('plans')

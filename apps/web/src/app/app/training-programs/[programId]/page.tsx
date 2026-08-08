@@ -4,6 +4,7 @@ import {
   getTrainingProgram,
   updateTrainingProgram,
   listEnrollments,
+  listInterestedMembers,
   registerMemberForCourse,
   unregisterMemberFromCourse,
 } from "@/lib/training-programs";
@@ -35,14 +36,16 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
 
   const canManage = session.role === "owner" || session.role === "manager";
 
-  const [program, sessions, branches, coaches, members, enrollments] = await Promise.all([
-    getTrainingProgram(programId),
-    listClassSessions({ programId }),
-    listBranches(),
-    listCoaches(),
-    listMembers(),
-    listEnrollments(programId),
-  ]);
+  const [program, sessions, branches, coaches, members, enrollments, interests] =
+    await Promise.all([
+      getTrainingProgram(programId),
+      listClassSessions({ programId }),
+      listBranches(),
+      listCoaches(),
+      listMembers(),
+      listEnrollments(programId),
+      listInterestedMembers(programId),
+    ]);
 
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
   const coachMap = new Map(coaches.map((c) => [c.id, c.fullName]));
@@ -271,6 +274,33 @@ export default async function TrainingProgramDetailPage({ params }: Props) {
       </Card>
 
       <Card animate delay={3}>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
+          {t.classes.interestTitle}
+        </p>
+        <p className="mt-1 text-sm text-foreground/60">{t.classes.interestHint}</p>
+
+        <div className="mt-4 grid gap-2">
+          {interests.length === 0 && (
+            <p className="text-sm text-foreground/60">{t.classes.noInterestedMembers}</p>
+          )}
+          {interests.map((interest) => (
+            <div
+              key={interest.memberId}
+              className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-white px-4 py-3"
+            >
+              <div>
+                <p className="text-sm font-medium">{interest.member.fullName}</p>
+                <p className="text-xs text-foreground/50">{interest.member.memberNumber}</p>
+              </div>
+              <span className="text-xs text-foreground/50">
+                {new Date(interest.expressedAt).toLocaleDateString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card animate delay={4}>
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">
             {t.classes.sessionsTitle}

@@ -52,6 +52,17 @@ export type ProgramEnrollmentWithProgram = {
   program: TrainingProgram;
 };
 
+export type ProgramInterest = {
+  memberId: string;
+  programId: string;
+  expressedAt: string;
+  member: {
+    id: string;
+    fullName: string;
+    memberNumber: string;
+  };
+};
+
 export type AttendanceStatus = "booked" | "waitlisted" | "attended" | "noShow" | "cancelled";
 
 export type AttendanceReport = {
@@ -206,6 +217,14 @@ export async function listEnrollments(programId: string): Promise<ProgramEnrollm
   const response = await authedFetch(`/training-programs/${programId}/enrollments`);
   const payload = (await response.json()) as { enrollments: ProgramEnrollment[] };
   return payload.enrollments;
+}
+
+export async function listInterestedMembers(
+  programId: string,
+): Promise<ProgramInterest[]> {
+  const response = await authedFetch(`/training-programs/${programId}/interests`);
+  const payload = (await response.json()) as { interests: ProgramInterest[] };
+  return payload.interests;
 }
 
 export async function listEnrollmentsForMember(

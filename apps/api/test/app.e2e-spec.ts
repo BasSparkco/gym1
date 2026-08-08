@@ -583,6 +583,92 @@ describe('API (e2e)', () => {
     expect(planIds).not.toContain('plan-other-monthly');
   });
 
+  it('member course interest: POST /me/courses/:id/interest is a soft lead visible to staff, re-tapping does not duplicate', async () => {
+    const staffSignIn = await request(getHttpServer())
+      .post('/api/auth/sign-in')
+      .send({ identifier: 'owner@sparkgym.local', password: 'owner123' })
+      .expect(200);
+    const staffCookies = staffSignIn.get('Set-Cookie');
+
+    const phone = '+970599000098';
+    await request(getHttpServer())
+      .patch('/api/members/member-001')
+      .set('Cookie', staffCookies)
+      .send({ phone })
+      .expect(200);
+    await request(getHttpServer())
+      .post('/api/members/member-001/pin')
+      .set('Cookie', staffCookies)
+      .send({ pin: '2468' })
+      .expect(204);
+    const memberSignIn = await request(getHttpServer())
+      .post('/api/member-auth/sign-in')
+      .send({ identifier: phone, pin: '2468' })
+      .expect(200);
+    const memberToken = (memberSignIn.body as { token: string }).token;
+
+    const course = await request(getHttpServer())
+      .post('/api/training-programs')
+      .set('Cookie', staffCookies)
+      .send({ name: 'Pilates', active: true, price: 25 })
+      .expect(201);
+    const programId = (course.body as { program: { id: string } }).program.id;
+
+    // No token -> 401.
+    await request(getHttpServer())
+      .post(`/api/me/courses/${programId}/interest`)
+      .expect(401);
+
+    // Tap "interested" twice — should not create two rows or error.
+    await request(getHttpServer())
+      .post(`/api/me/courses/${programId}/interest`)
+      .set('Authorization', `Bearer ${memberToken}`)
+      .expect(204);
+    await request(getHttpServer())
+      .post(`/api/me/courses/${programId}/interest`)
+      .set('Authorization', `Bearer ${memberToken}`)
+      .expect(204);
+
+    // Interest never creates a real enrollment, price, or debt.
+    const memberAfter = await request(getHttpServer())
+      .get('/api/me')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .expect(200);
+    expect(
+      (memberAfter.body as { member: { debt: number } }).member.debt,
+    ).toBe(0);
+
+    // Staff can see the interest on the course.
+    const interestsResponse = await request(getHttpServer())
+      .get(`/api/training-programs/${programId}/interests`)
+      .set('Cookie', staffCookies)
+      .expect(200);
+    const interests = (
+      interestsResponse.body as {
+        interests: { memberId: string; member: { fullName: string } }[];
+      }
+    ).interests;
+    expect(interests).toHaveLength(1);
+    expect(interests[0].memberId).toBe('member-001');
+    expect(interests[0].member.fullName).toBe('Lina Ahmad');
+
+    // A course with no interest returns an empty list, not an error.
+    const otherCourse = await request(getHttpServer())
+      .post('/api/training-programs')
+      .set('Cookie', staffCookies)
+      .send({ name: 'Spin', active: true, price: 15 })
+      .expect(201);
+    const otherProgramId = (otherCourse.body as { program: { id: string } })
+      .program.id;
+    const emptyInterests = await request(getHttpServer())
+      .get(`/api/training-programs/${otherProgramId}/interests`)
+      .set('Cookie', staffCookies)
+      .expect(200);
+    expect(
+      (emptyInterests.body as { interests: unknown[] }).interests,
+    ).toEqual([]);
+  });
+
   it('uploads a member photo to MinIO and serves it through the proxied route, requiring auth', async () => {
     const signInResponse = await request(getHttpServer())
       .post('/api/auth/sign-in')
