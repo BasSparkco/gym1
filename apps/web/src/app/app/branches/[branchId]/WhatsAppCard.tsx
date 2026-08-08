@@ -193,11 +193,27 @@ export default function WhatsAppCard({
           </div>
         )}
 
-        {/* Device was removed — worker is restarting, new QR coming soon */}
+        {/* Device was removed — worker is restarting, new QR coming soon.
+            Also shown for a branch that was never connected in the first
+            place, since SparkCo reports both cases as plain "disconnected"
+            with no QR — so this offers a way to (re)kick off a session
+            instead of polling a dead end forever. */}
         {status === "reconnecting" && (
-          <div className="flex items-center gap-3">
-            <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-yellow-400" />
-            <p className="text-sm text-foreground/70">{t.settings.whatsappReconnecting}</p>
+          <div className="flex flex-col items-start gap-3">
+            <div className="flex items-center gap-3">
+              <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-yellow-400" />
+              <p className="text-sm text-foreground/70">{t.settings.whatsappReconnecting}</p>
+            </div>
+            {canManage && (
+              <Button
+                onClick={() => void handleConnect()}
+                variant="primary"
+                size="sm"
+                icon={<MessageCircle className="h-3.5 w-3.5" strokeWidth={2} />}
+              >
+                {t.settings.whatsappConnectButton}
+              </Button>
+            )}
           </div>
         )}
 
