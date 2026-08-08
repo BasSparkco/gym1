@@ -23,7 +23,7 @@ import {
   UsersRound,
 } from "lucide-react";
 
-type NavGroup = "groupOverview" | "groupPeople" | "groupOperations" | "groupInsights";
+type NavGroup = "groupOverview" | "groupPeople" | "groupOperations" | "groupCommunication" | "groupInsights";
 
 type NavigationItem = {
   labelKey: keyof Dict["nav"];
@@ -33,7 +33,13 @@ type NavigationItem = {
   group: NavGroup;
 };
 
-const navGroups: NavGroup[] = ["groupOverview", "groupPeople", "groupOperations", "groupInsights"];
+const navGroups: NavGroup[] = [
+  "groupOverview",
+  "groupPeople",
+  "groupOperations",
+  "groupCommunication",
+  "groupInsights",
+];
 
 const navigationItems: NavigationItem[] = [
   {
@@ -104,7 +110,7 @@ const navigationItems: NavigationItem[] = [
     href: "/app/announcements",
     icon: Megaphone,
     roles: ["owner", "manager"],
-    group: "groupOperations",
+    group: "groupCommunication",
   },
   {
     labelKey: "closedDates",
@@ -118,14 +124,14 @@ const navigationItems: NavigationItem[] = [
     href: "/app/messages",
     icon: MessageCircle,
     roles: ["owner", "manager", "front-desk"],
-    group: "groupOperations",
+    group: "groupCommunication",
   },
   {
     labelKey: "notifications",
     href: "/app/notifications",
     icon: Bell,
     roles: ["owner", "manager", "front-desk"],
-    group: "groupInsights",
+    group: "groupCommunication",
   },
   {
     labelKey: "reports",

@@ -30,6 +30,7 @@ export type Dict = {
     groupOverview: string;
     groupPeople: string;
     groupOperations: string;
+    groupCommunication: string;
     groupInsights: string;
   };
   shell: {
@@ -940,6 +941,7 @@ const en: Dict = {
     groupOverview: "Overview",
     groupPeople: "People",
     groupOperations: "Operations",
+    groupCommunication: "Communication",
     groupInsights: "Insights",
   },
   shell: {
@@ -1850,6 +1852,7 @@ const ar: Dict = {
     groupOverview: "نظرة عامة",
     groupPeople: "الأشخاص",
     groupOperations: "العمليات",
+    groupCommunication: "التواصل",
     groupInsights: "التحليلات",
   },
   shell: {
@@ -2760,6 +2763,7 @@ const he: Dict = {
     groupOverview: "סקירה כללית",
     groupPeople: "אנשים",
     groupOperations: "תפעול",
+    groupCommunication: "תקשורת",
     groupInsights: "תובנות",
   },
   shell: {
