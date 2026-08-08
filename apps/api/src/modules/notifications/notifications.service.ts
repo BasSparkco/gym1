@@ -20,6 +20,11 @@ export type CreateNotificationContext = {
   relatedId?: string;
 };
 
+export type NotificationTargetInput =
+  | { type: 'members'; memberIds: string[] }
+  | { type: 'course'; programId: string }
+  | { type: 'all' };
+
 export type ScanSummary = {
   created: number;
   sent: number;
@@ -318,6 +323,100 @@ export class NotificationsService {
       tenantId,
       notification.id,
     );
+  }
+
+  /**
+   * Staff-triggered one-off push to more than one member at once — the
+   * "Send" tab on the Notifications page. Same 'app'-channel, staff-typed
+   * shape as createManualAppNotification, just fanned out to a resolved
+   * list of members instead of a single one, then dispatched together.
+   */
+  async sendManualAppNotifications(
+    tenantId: string,
+    branchId: string | undefined,
+    input: { subject?: string; body?: string; target: NotificationTargetInput },
+  ) {
+    const subject = input.subject?.trim();
+    const body = input.body?.trim();
+    if (!subject || !body) {
+      throw new BadRequestException('Subject and body are required.');
+    }
+
+    const memberIds = await this.resolveTargetMemberIds(
+      tenantId,
+      branchId,
+      input.target,
+    );
+
+    if (memberIds.length === 0) {
+      throw new BadRequestException('No members matched the selected recipients.');
+    }
+
+    const created = await Promise.all(
+      memberIds.map((memberId) =>
+        this.prisma.notification.create({
+          data: {
+            id: `notif-${randomUUID()}`,
+            tenantId,
+            memberId,
+            channel: 'app',
+            event: null,
+            subject,
+            body,
+            status: 'pending' as const,
+          },
+        }),
+      ),
+    );
+
+    await this.dispatchService.dispatchPendingForTenant(tenantId);
+
+    const notifications = await this.prisma.notification.findMany({
+      where: { id: { in: created.map((n) => n.id) } },
+    });
+
+    return { count: notifications.length, notifications };
+  }
+
+  private async resolveTargetMemberIds(
+    tenantId: string,
+    branchId: string | undefined,
+    target: NotificationTargetInput,
+  ): Promise<string[]> {
+    if (target.type === 'members') {
+      const requestedIds = Array.from(new Set(target.memberIds ?? []));
+      if (requestedIds.length === 0) return [];
+      const members = await this.prisma.member.findMany({
+        where: {
+          id: { in: requestedIds },
+          tenantId,
+          ...(branchId ? { homeBranchId: branchId } : {}),
+        },
+        select: { id: true },
+      });
+      return members.map((m) => m.id);
+    }
+
+    if (target.type === 'course') {
+      if (!target.programId) return [];
+      const enrollments = await this.prisma.programEnrollment.findMany({
+        where: {
+          programId: target.programId,
+          status: 'active',
+          program: { tenantId },
+          ...(branchId ? { member: { homeBranchId: branchId } } : {}),
+        },
+        select: { memberId: true },
+      });
+      return enrollments.map((e) => e.memberId);
+    }
+
+    // 'all' — every member in scope.
+    const members = await this.prisma.member.findMany({
+      where: { tenantId, ...(branchId ? { homeBranchId: branchId } : {}) },
+      select: { id: true },
+    });
+    return members.map((m) => m.id);
   }
 
   private async getNotificationSettingsForTenant(

@@ -169,7 +169,6 @@ export type Dict = {
     qrSentFailed: string;
     setAppPin: string;
     sendMessage: string;
-    sendNotification: string;
     appPinTitle: string;
     appPinDescription: string;
     newPinLabel: string;
@@ -564,6 +563,28 @@ export type Dict = {
     member: string;
     noNotifications: string;
     viewMemberProfile: string;
+    tabSent: string;
+    tabSend: string;
+    sendDescription: string;
+    recipientsLabel: string;
+    recipientMembers: string;
+    recipientCourse: string;
+    recipientAll: string;
+    membersPickerLabel: string;
+    membersPickerPlaceholder: string;
+    membersPickerEmpty: string;
+    coursePickerLabel: string;
+    coursePickerPlaceholder: string;
+    coursePickerEmpty: string;
+    allMembersNotice: string;
+    subjectLabel: string;
+    subjectPlaceholder: string;
+    bodyLabel: string;
+    bodyPlaceholder: string;
+    sendButton: string;
+    sendButtonCount: string;
+    sendSuccess: string;
+    sendErrorGeneric: string;
   };
   messages: {
     title: string;
@@ -576,13 +597,6 @@ export type Dict = {
     typeMessagePlaceholder: string;
     send: string;
     close: string;
-    notificationSubjectLabel: string;
-    notificationSubjectPlaceholder: string;
-    notificationBodyLabel: string;
-    notificationBodyPlaceholder: string;
-    notificationSendButton: string;
-    notificationSendError: string;
-    notificationSent: string;
     whatsappDeliveryFailed: string;
     searchConversationsPlaceholder: string;
     recentSearches: string;
@@ -1061,7 +1075,6 @@ const en: Dict = {
     qrSentFailed: "Failed to send QR code.",
     setAppPin: "Set app PIN",
     sendMessage: "Send message",
-    sendNotification: "Send notification",
     appPinTitle: "Mobile App PIN",
     appPinDescription: "Set or reset the PIN this member uses to sign into the gym mobile app with their phone number.",
     newPinLabel: "New PIN (4–8 digits)",
@@ -1456,6 +1469,28 @@ const en: Dict = {
     member: "Member",
     noNotifications: "No notifications recorded yet.",
     viewMemberProfile: "View member profile →",
+    tabSent: "Sent",
+    tabSend: "Send",
+    sendDescription: "Compose a one-off push notification to a member, a group, a course's members, or everyone.",
+    recipientsLabel: "Recipients",
+    recipientMembers: "Specific members",
+    recipientCourse: "Course members",
+    recipientAll: "All members",
+    membersPickerLabel: "Members",
+    membersPickerPlaceholder: "Search members to add…",
+    membersPickerEmpty: "No members selected yet.",
+    coursePickerLabel: "Course",
+    coursePickerPlaceholder: "Select a course",
+    coursePickerEmpty: "No courses yet.",
+    allMembersNotice: "This sends to every member in your branch — use it for gym-wide announcements only.",
+    subjectLabel: "Subject",
+    subjectPlaceholder: "e.g. Membership reminder",
+    bodyLabel: "Message",
+    bodyPlaceholder: "Write the notification text…",
+    sendButton: "Send notification",
+    sendButtonCount: "Send to {count} member{plural}",
+    sendSuccess: "Notification sent.",
+    sendErrorGeneric: "Couldn't send the notification. Try again.",
   },
   messages: {
     title: "Messages",
@@ -1468,13 +1503,6 @@ const en: Dict = {
     typeMessagePlaceholder: "Type a message…",
     send: "Send",
     close: "Close",
-    notificationSubjectLabel: "Subject",
-    notificationSubjectPlaceholder: "e.g. Membership reminder",
-    notificationBodyLabel: "Message",
-    notificationBodyPlaceholder: "Write the notification text…",
-    notificationSendButton: "Send notification",
-    notificationSendError: "Couldn't send the notification. Try again.",
-    notificationSent: "Notification sent to the member's app.",
     whatsappDeliveryFailed: "Saved here, but WhatsApp delivery failed.",
     searchConversationsPlaceholder: "Search conversations…",
     recentSearches: "Recent",
@@ -1953,7 +1981,6 @@ const ar: Dict = {
     qrSentFailed: "فشل إرسال رمز QR.",
     setAppPin: "تعيين رمز PIN للتطبيق",
     sendMessage: "إرسال رسالة",
-    sendNotification: "إرسال إشعار",
     appPinTitle: "رمز PIN لتطبيق الجوال",
     appPinDescription: "قم بتعيين أو إعادة تعيين رمز PIN الذي يستخدمه هذا العضو لتسجيل الدخول إلى تطبيق الصالة الرياضية برقم هاتفه.",
     newPinLabel: "رمز PIN جديد (4 إلى 8 أرقام)",
@@ -2348,6 +2375,28 @@ const ar: Dict = {
     member: "العضو",
     noNotifications: "لا توجد إشعارات مسجلة بعد.",
     viewMemberProfile: "عرض ملف العضو ←",
+    tabSent: "المُرسلة",
+    tabSend: "إرسال",
+    sendDescription: "أرسل إشعارًا فوريًا لعضو، أو مجموعة، أو أعضاء دورة، أو الجميع.",
+    recipientsLabel: "المستلمون",
+    recipientMembers: "أعضاء محددون",
+    recipientCourse: "أعضاء دورة",
+    recipientAll: "جميع الأعضاء",
+    membersPickerLabel: "الأعضاء",
+    membersPickerPlaceholder: "ابحث عن أعضاء لإضافتهم…",
+    membersPickerEmpty: "لم يتم اختيار أي عضو بعد.",
+    coursePickerLabel: "الدورة",
+    coursePickerPlaceholder: "اختر دورة",
+    coursePickerEmpty: "لا توجد دورات بعد.",
+    allMembersNotice: "سيتم الإرسال لجميع أعضاء فرعك — استخدم هذا الخيار للإعلانات العامة فقط.",
+    subjectLabel: "الموضوع",
+    subjectPlaceholder: "مثال: تذكير بالاشتراك",
+    bodyLabel: "الرسالة",
+    bodyPlaceholder: "اكتب نص الإشعار…",
+    sendButton: "إرسال الإشعار",
+    sendButtonCount: "إرسال إلى {count} عضو",
+    sendSuccess: "تم إرسال الإشعار.",
+    sendErrorGeneric: "تعذر إرسال الإشعار. حاول مرة أخرى.",
   },
   messages: {
     title: "الرسائل",
@@ -2360,13 +2409,6 @@ const ar: Dict = {
     typeMessagePlaceholder: "اكتب رسالة…",
     send: "إرسال",
     close: "إغلاق",
-    notificationSubjectLabel: "الموضوع",
-    notificationSubjectPlaceholder: "مثال: تذكير بالاشتراك",
-    notificationBodyLabel: "الرسالة",
-    notificationBodyPlaceholder: "اكتب نص الإشعار…",
-    notificationSendButton: "إرسال إشعار",
-    notificationSendError: "تعذر إرسال الإشعار. حاول مرة أخرى.",
-    notificationSent: "تم إرسال الإشعار إلى تطبيق العضو.",
     whatsappDeliveryFailed: "تم الحفظ هنا، لكن الإرسال عبر واتساب فشل.",
     searchConversationsPlaceholder: "ابحث في المحادثات…",
     recentSearches: "الأخيرة",
@@ -2845,7 +2887,6 @@ const he: Dict = {
     qrSentFailed: "שליחת קוד QR נכשלה.",
     setAppPin: "הגדרת קוד PIN לאפליקציה",
     sendMessage: "שליחת הודעה",
-    sendNotification: "שליחת התראה",
     appPinTitle: "קוד PIN לאפליקציית הנייד",
     appPinDescription: "הגדר או אפס את קוד ה-PIN שהחבר משתמש בו כדי להתחבר לאפליקציית חדר הכושר עם מספר הטלפון שלו.",
     newPinLabel: "קוד PIN חדש (4–8 ספרות)",
@@ -3240,6 +3281,28 @@ const he: Dict = {
     member: "חבר",
     noNotifications: "לא נרשמו התראות עדיין.",
     viewMemberProfile: "הצג פרופיל חבר ←",
+    tabSent: "נשלחו",
+    tabSend: "שליחה",
+    sendDescription: "שלח התראה חד-פעמית לחבר, לקבוצה, לחברי קורס, או לכולם.",
+    recipientsLabel: "נמענים",
+    recipientMembers: "חברים נבחרים",
+    recipientCourse: "חברי קורס",
+    recipientAll: "כל החברים",
+    membersPickerLabel: "חברים",
+    membersPickerPlaceholder: "חפש חברים להוספה…",
+    membersPickerEmpty: "עדיין לא נבחרו חברים.",
+    coursePickerLabel: "קורס",
+    coursePickerPlaceholder: "בחר קורס",
+    coursePickerEmpty: "אין עדיין קורסים.",
+    allMembersNotice: "פעולה זו תישלח לכל החברים בסניף שלך — יש להשתמש בה להודעות כלליות בלבד.",
+    subjectLabel: "נושא",
+    subjectPlaceholder: "לדוגמה: תזכורת מנוי",
+    bodyLabel: "הודעה",
+    bodyPlaceholder: "כתוב את תוכן ההתראה…",
+    sendButton: "שליחת התראה",
+    sendButtonCount: "שליחה ל-{count} חברים",
+    sendSuccess: "ההתראה נשלחה.",
+    sendErrorGeneric: "שליחת ההתראה נכשלה. נסה שוב.",
   },
   messages: {
     title: "התכתבויות",
@@ -3252,13 +3315,6 @@ const he: Dict = {
     typeMessagePlaceholder: "כתוב הודעה…",
     send: "שליחה",
     close: "סגירה",
-    notificationSubjectLabel: "נושא",
-    notificationSubjectPlaceholder: "לדוגמה: תזכורת מנוי",
-    notificationBodyLabel: "הודעה",
-    notificationBodyPlaceholder: "כתוב את טקסט ההתראה…",
-    notificationSendButton: "שליחת התראה",
-    notificationSendError: "שליחת ההתראה נכשלה. נסה שוב.",
-    notificationSent: "ההתראה נשלחה לאפליקציית החבר.",
     whatsappDeliveryFailed: "נשמר כאן, אך שליחת ה-WhatsApp נכשלה.",
     searchConversationsPlaceholder: "חיפוש בשיחות…",
     recentSearches: "אחרונות",

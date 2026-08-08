@@ -1,8 +1,10 @@
 import { listNotifications } from "@/lib/notifications";
 import { listMembers } from "@/lib/members";
+import { listTrainingPrograms, listEnrollments } from "@/lib/training-programs";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { apiBaseUrl } from "@/lib/auth";
 import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
@@ -11,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { BadgeTone } from "@/components/ui/badge";
 import { Bell } from "lucide-react";
+import { NotificationSendForm } from "@/components/notifications/notification-send-form";
 
 const channelLabel: Record<string, string> = {
   sms: "SMS",
@@ -32,28 +35,85 @@ const statusTone: Record<string, BadgeTone> = {
   failed: "danger",
 };
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   await requireSession();
   const t = await getT();
+  const { tab } = await searchParams;
+  const activeTab = tab === "send" ? "send" : "sent";
 
-  const [notifications, members, settings] = await Promise.all([
+  const [notifications, members, settings, programs] = await Promise.all([
     listNotifications(),
     listMembers(),
     getSettings(),
+    listTrainingPrograms(),
   ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
+
+  const activePrograms = programs.filter((p) => p.active);
+  const courses = await Promise.all(
+    activePrograms.map(async (p) => {
+      const enrollments = await listEnrollments(p.id);
+      return {
+        id: p.id,
+        name: p.name,
+        memberCount: enrollments.filter((e) => e.status === "active").length,
+      };
+    }),
+  );
+
+  const memberOptions = members
+    .slice()
+    .sort((a, b) => a.fullName.localeCompare(b.fullName))
+    .map((m) => ({ id: m.id, fullName: m.fullName, memberNumber: m.memberNumber }));
 
   return (
     <div className="grid gap-6">
       <PageHeader
         eyebrow={t.nav.notifications}
         title={t.notifications.title}
-        description={formatDict(t.notifications.listDescription, { count: notifications.length, plural: notifications.length !== 1 ? "s" : "" })}
+        description={
+          activeTab === "sent"
+            ? formatDict(t.notifications.listDescription, { count: notifications.length, plural: notifications.length !== 1 ? "s" : "" })
+            : t.notifications.sendDescription
+        }
       />
 
-      {notifications.length === 0 ? (
+      <div role="tablist" className="flex gap-2 border-b border-line">
+        <Link
+          href="?tab=sent"
+          role="tab"
+          aria-selected={activeTab === "sent"}
+          className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+            activeTab === "sent"
+              ? "border-brand text-brand"
+              : "border-transparent text-foreground/55 hover:text-foreground"
+          }`}
+        >
+          {t.notifications.tabSent}
+        </Link>
+        <Link
+          href="?tab=send"
+          role="tab"
+          aria-selected={activeTab === "send"}
+          className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+            activeTab === "send"
+              ? "border-brand text-brand"
+              : "border-transparent text-foreground/55 hover:text-foreground"
+          }`}
+        >
+          {t.notifications.tabSend}
+        </Link>
+      </div>
+
+      {activeTab === "send" ? (
+        <NotificationSendForm members={memberOptions} courses={courses} apiBaseUrl={apiBaseUrl} t={t} />
+      ) : notifications.length === 0 ? (
         <EmptyState icon={<Bell className="h-5 w-5" strokeWidth={2} />} title={t.notifications.noNotifications} />
       ) : (
         <section className="grid gap-3">

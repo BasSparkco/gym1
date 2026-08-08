@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { PhoneNumber } from "@/components/phone-number";
 import { formatDate, formatDateTime } from "@/lib/date-format";
@@ -34,9 +34,7 @@ import {
   KeyRound,
   GraduationCap,
   MessageCircle,
-  Bell,
 } from "lucide-react";
-import { NotificationComposeDialog } from "@/components/members/notification-compose-dialog";
 
 export type MembershipRow = {
   id: string;
@@ -131,7 +129,6 @@ function EditTrigger({
 export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }: Props) {
   const member = data.member;
   const todayStr = new Date().toISOString().slice(0, 10);
-  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
 
   return (
     <div className="font-display">
@@ -276,19 +273,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
           <MessageCircle className="h-4 w-4" strokeWidth={2.2} />
           {t.members.sendMessage}
         </Link>
-        <button type="button" onClick={() => setNotificationDialogOpen(true)} className={railBtn}>
-          <Bell className="h-4 w-4" strokeWidth={2.2} />
-          {t.members.sendNotification}
-        </button>
       </div>
-
-      <NotificationComposeDialog
-        open={notificationDialogOpen}
-        onClose={() => setNotificationDialogOpen(false)}
-        memberId={member.id}
-        memberName={member.fullName}
-        t={t}
-      />
 
       {/* Details grid */}
       <div className="mt-5 grid gap-5 md:grid-cols-2">

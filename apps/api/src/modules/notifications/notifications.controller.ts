@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
   Param,
@@ -11,7 +13,10 @@ import { requireRole } from '../../common/require-role';
 import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { NotificationDispatchService } from './notification-dispatch.service';
-import { NotificationsService } from './notifications.service';
+import {
+  NotificationsService,
+  NotificationTargetInput,
+} from './notifications.service';
 
 @Controller('notifications')
 export class NotificationsController {
@@ -48,6 +53,29 @@ export class NotificationsController {
         notificationId,
       ),
     };
+  }
+
+  // Staff compose-and-send: the "Send" tab on the Notifications page. Fans
+  // out one 'app' notification per resolved recipient (specific members, a
+  // course's enrolled members, or every member in scope).
+  @Post('send')
+  async sendNotification(
+    @Req() request: Request,
+    @Body()
+    body: { subject?: string; body?: string; target?: NotificationTargetInput },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+
+    if (!body.target) {
+      throw new BadRequestException('A recipient target is required.');
+    }
+
+    return this.notificationsService.sendManualAppNotifications(
+      session.user.tenant.id,
+      branchId,
+      { subject: body.subject, body: body.body, target: body.target },
+    );
   }
 
   @Post('scan')
