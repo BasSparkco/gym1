@@ -17,6 +17,7 @@ import {
   NotificationsService,
   NotificationTargetInput,
 } from './notifications.service';
+import { NotificationChannel } from '../../generated/prisma/client';
 
 @Controller('notifications')
 export class NotificationsController {
@@ -56,13 +57,19 @@ export class NotificationsController {
   }
 
   // Staff compose-and-send: the "Send" tab on the Notifications page. Fans
-  // out one 'app' notification per resolved recipient (specific members, a
-  // course's enrolled members, or every member in scope).
+  // out one notification per (recipient × chosen channel) pair, for a
+  // resolved recipient list (specific members, a course's enrolled members,
+  // or every member in scope).
   @Post('send')
   async sendNotification(
     @Req() request: Request,
     @Body()
-    body: { subject?: string; body?: string; target?: NotificationTargetInput },
+    body: {
+      subject?: string;
+      body?: string;
+      channels?: NotificationChannel[];
+      target?: NotificationTargetInput;
+    },
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     const branchId = await this.dataScopeService.resolveBranchId(session.user);
@@ -71,10 +78,15 @@ export class NotificationsController {
       throw new BadRequestException('A recipient target is required.');
     }
 
-    return this.notificationsService.sendManualAppNotifications(
+    return this.notificationsService.sendManualNotifications(
       session.user.tenant.id,
       branchId,
-      { subject: body.subject, body: body.body, target: body.target },
+      {
+        subject: body.subject,
+        body: body.body,
+        channels: body.channels ?? [],
+        target: body.target,
+      },
     );
   }
 

@@ -570,6 +570,10 @@ export type Dict = {
     recipientMembers: string;
     recipientCourse: string;
     recipientAll: string;
+    channelsLabel: string;
+    channelWhatsapp: string;
+    channelEmail: string;
+    channelApp: string;
     membersPickerLabel: string;
     membersPickerPlaceholder: string;
     membersPickerEmpty: string;
@@ -1476,6 +1480,10 @@ const en: Dict = {
     recipientMembers: "Specific members",
     recipientCourse: "Course members",
     recipientAll: "All members",
+    channelsLabel: "Channels",
+    channelWhatsapp: "WhatsApp",
+    channelEmail: "Email",
+    channelApp: "Mobile app",
     membersPickerLabel: "Members",
     membersPickerPlaceholder: "Search members to add…",
     membersPickerEmpty: "No members selected yet.",
@@ -2382,6 +2390,10 @@ const ar: Dict = {
     recipientMembers: "أعضاء محددون",
     recipientCourse: "أعضاء دورة",
     recipientAll: "جميع الأعضاء",
+    channelsLabel: "القنوات",
+    channelWhatsapp: "واتساب",
+    channelEmail: "البريد الإلكتروني",
+    channelApp: "تطبيق الجوال",
     membersPickerLabel: "الأعضاء",
     membersPickerPlaceholder: "ابحث عن أعضاء لإضافتهم…",
     membersPickerEmpty: "لم يتم اختيار أي عضو بعد.",
@@ -3288,6 +3300,10 @@ const he: Dict = {
     recipientMembers: "חברים נבחרים",
     recipientCourse: "חברי קורס",
     recipientAll: "כל החברים",
+    channelsLabel: "ערוצים",
+    channelWhatsapp: "וואטסאפ",
+    channelEmail: "אימייל",
+    channelApp: "אפליקציית הנייד",
     membersPickerLabel: "חברים",
     membersPickerPlaceholder: "חפש חברים להוספה…",
     membersPickerEmpty: "עדיין לא נבחרו חברים.",

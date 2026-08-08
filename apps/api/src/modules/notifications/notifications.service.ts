@@ -14,6 +14,11 @@ import { NotificationTemplateKey } from '../../data/notification-templates-seed'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
+// SMS is reserved for a future paid tier and hidden from every manual-send
+// surface (see Settings -> Notifications), so it's excluded here too even if
+// a caller passes it.
+const MANUAL_SEND_CHANNELS: readonly NotificationChannel[] = ['whatsapp', 'email', 'app'];
+
 export type CreateNotificationContext = {
   templateKey: NotificationTemplateKey;
   variables?: Record<string, string>;
@@ -326,20 +331,35 @@ export class NotificationsService {
   }
 
   /**
-   * Staff-triggered one-off push to more than one member at once — the
-   * "Send" tab on the Notifications page. Same 'app'-channel, staff-typed
-   * shape as createManualAppNotification, just fanned out to a resolved
-   * list of members instead of a single one, then dispatched together.
+   * Staff-triggered one-off send to more than one member at once, over one
+   * or more channels — the "Send" tab on the Notifications page. Same
+   * staff-typed shape as createManualAppNotification, just fanned out over a
+   * resolved list of members × the chosen channels (one Notification row per
+   * pair, mirroring how createNotificationsForEvent fans out per channel),
+   * then dispatched together. SMS is excluded even if passed: it's reserved
+   * for a future paid tier and hidden from every other manual-send UI too.
    */
-  async sendManualAppNotifications(
+  async sendManualNotifications(
     tenantId: string,
     branchId: string | undefined,
-    input: { subject?: string; body?: string; target: NotificationTargetInput },
+    input: {
+      subject?: string;
+      body?: string;
+      channels: NotificationChannel[];
+      target: NotificationTargetInput;
+    },
   ) {
     const subject = input.subject?.trim();
     const body = input.body?.trim();
     if (!subject || !body) {
       throw new BadRequestException('Subject and body are required.');
+    }
+
+    const channels = Array.from(new Set(input.channels ?? [])).filter((channel) =>
+      MANUAL_SEND_CHANNELS.includes(channel),
+    );
+    if (channels.length === 0) {
+      throw new BadRequestException('Select at least one channel.');
     }
 
     const memberIds = await this.resolveTargetMemberIds(
@@ -353,19 +373,21 @@ export class NotificationsService {
     }
 
     const created = await Promise.all(
-      memberIds.map((memberId) =>
-        this.prisma.notification.create({
-          data: {
-            id: `notif-${randomUUID()}`,
-            tenantId,
-            memberId,
-            channel: 'app',
-            event: null,
-            subject,
-            body,
-            status: 'pending' as const,
-          },
-        }),
+      memberIds.flatMap((memberId) =>
+        channels.map((channel) =>
+          this.prisma.notification.create({
+            data: {
+              id: `notif-${randomUUID()}`,
+              tenantId,
+              memberId,
+              channel,
+              event: null,
+              subject,
+              body,
+              status: 'pending' as const,
+            },
+          }),
+        ),
       ),
     );
 
@@ -375,7 +397,7 @@ export class NotificationsService {
       where: { id: { in: created.map((n) => n.id) } },
     });
 
-    return { count: notifications.length, notifications };
+    return { recipientCount: memberIds.length, notifications };
   }
 
   private async resolveTargetMemberIds(

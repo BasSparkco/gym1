@@ -1,16 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Users, GraduationCap, Megaphone, X } from "lucide-react";
+import { Send, Users, GraduationCap, Megaphone, Mail, Smartphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import type { Dict } from "@/lib/i18n";
 
 type MemberOption = { id: string; fullName: string; memberNumber: string };
 type CourseOption = { id: string; name: string; memberCount: number };
 
 type RecipientType = "members" | "course" | "all";
+type ChannelType = "whatsapp" | "email" | "app";
+type IconComponent = ComponentType<{ className?: string; strokeWidth?: number }>;
+
+function WhatsAppChannelIcon({ className }: { className?: string; strokeWidth?: number }) {
+  return <WhatsAppIcon className={className} />;
+}
 
 const inputClass =
   "w-full rounded-2xl border border-line bg-white px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
@@ -33,6 +40,7 @@ export function NotificationSendForm({
   const [memberQuery, setMemberQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [courseId, setCourseId] = useState("");
+  const [channels, setChannels] = useState<ChannelType[]>([]);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -54,9 +62,14 @@ export function NotificationSendForm({
   const canSend =
     subject.trim().length > 0 &&
     body.trim().length > 0 &&
+    channels.length > 0 &&
     (recipientType === "all" ||
       (recipientType === "members" && selectedMemberIds.length > 0) ||
       (recipientType === "course" && courseId !== ""));
+
+  function toggleChannel(channel: ChannelType) {
+    setChannels((prev) => (prev.includes(channel) ? prev.filter((c) => c !== channel) : [...prev, channel]));
+  }
 
   async function handleSend() {
     if (!canSend) return;
@@ -75,15 +88,16 @@ export function NotificationSendForm({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, body, target }),
+        body: JSON.stringify({ subject, body, channels, target }),
       });
       if (!res.ok) throw new Error();
-      const data = (await res.json()) as { count: number };
-      setSuccessCount(data.count);
+      const data = (await res.json()) as { recipientCount: number };
+      setSuccessCount(data.recipientCount);
       setSubject("");
       setBody("");
       setSelectedMemberIds([]);
       setCourseId("");
+      setChannels([]);
       router.refresh();
     } catch {
       setError(t.notifications.sendErrorGeneric);
@@ -92,10 +106,16 @@ export function NotificationSendForm({
     }
   }
 
-  const recipientOptions: { value: RecipientType; label: string; icon: typeof Users }[] = [
+  const recipientOptions: { value: RecipientType; label: string; icon: IconComponent }[] = [
     { value: "members", label: t.notifications.recipientMembers, icon: Users },
     { value: "course", label: t.notifications.recipientCourse, icon: GraduationCap },
     { value: "all", label: t.notifications.recipientAll, icon: Megaphone },
+  ];
+
+  const channelOptions: { value: ChannelType; label: string; icon: IconComponent }[] = [
+    { value: "whatsapp", label: t.notifications.channelWhatsapp, icon: WhatsAppChannelIcon },
+    { value: "email", label: t.notifications.channelEmail, icon: Mail },
+    { value: "app", label: t.notifications.channelApp, icon: Smartphone },
   ];
 
   return (
@@ -212,6 +232,33 @@ export function NotificationSendForm({
             {t.notifications.allMembersNotice}
           </p>
         )}
+      </Card>
+
+      <Card className="border-s-4 border-s-blue-500 !px-7 !py-6">
+        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-brand">
+          {t.notifications.channelsLabel}
+        </h2>
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+          {channelOptions.map(({ value, label, icon: Icon }) => {
+            const selected = channels.includes(value);
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => toggleChannel(value)}
+                aria-pressed={selected}
+                className={`flex items-center gap-2.5 rounded-2xl border px-4 py-3 text-start text-sm font-semibold transition-colors ${
+                  selected
+                    ? "border-brand bg-brand/5 text-brand"
+                    : "border-line bg-white text-foreground/70 hover:border-brand/40"
+                }`}
+              >
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </Card>
 
       <Card className="border-s-4 border-s-brand-deeper !px-7 !py-6">
