@@ -71,7 +71,14 @@ export const defaultPillTone = "bg-surface-muted text-muted ring-1 ring-inset ri
 export const sectionHead = "text-[11px] font-semibold uppercase tracking-[0.22em] text-brand";
 export const fieldKey = "text-[11px] font-medium uppercase tracking-[0.1em] text-muted";
 export const fieldValue = "text-[15px] font-semibold [overflow-wrap:anywhere]";
+// Solid, high-contrast quick-action buttons: made bold/oversized on purpose so
+// they read as obviously clickable to less web-savvy front-desk staff.
 export const railBtn =
-  "inline-flex items-center gap-2 rounded-[10px] border border-line bg-surface px-[18px] py-[9px] text-[13px] font-semibold text-foreground transition-colors hover:border-brand hover:text-brand";
+  "inline-flex items-center gap-2 rounded-[12px] bg-brand px-5 py-3 text-[14px] font-bold text-on-brand shadow-[0_2px_6px_rgba(12,43,36,0.18)] transition-all hover:bg-brand-deeper hover:shadow-[0_4px_10px_rgba(12,43,36,0.24)] active:scale-[0.98]";
+// Same rail, reserved for the single revenue-driving action (sell membership /
+// record payment) so it pops above its neighbors — mirrors the header's
+// check-in CTA (bg-accent).
+export const railBtnPrimary =
+  "inline-flex items-center gap-2 rounded-[12px] bg-accent px-5 py-3 text-[14px] font-bold text-brand-strong shadow-[0_2px_6px_rgba(12,43,36,0.18)] transition-all hover:bg-accent-strong hover:shadow-[0_4px_10px_rgba(12,43,36,0.24)] active:scale-[0.98]";
 export const panelBtnSm =
-  "inline-flex shrink-0 items-center gap-1.5 rounded-[9px] border border-line bg-white px-3.5 py-1.5 text-[12px] font-semibold text-foreground transition-colors hover:border-brand hover:text-brand";
+  "inline-flex shrink-0 items-center gap-1.5 rounded-[9px] border border-line bg-white px-4 py-2 text-[14px] font-semibold text-foreground transition-colors hover:border-brand hover:text-brand";

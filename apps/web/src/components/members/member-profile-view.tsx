@@ -17,6 +17,7 @@ import {
   fieldKey,
   fieldValue,
   railBtn,
+  railBtnPrimary,
   panelBtnSm,
 } from "@/components/members/member-profile-shared";
 import {
@@ -235,48 +236,48 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
       </header>
 
       {/* Quick actions rail */}
-      <div role="toolbar" aria-label={t.members.quickActions} className="mt-5 flex flex-wrap gap-2.5">
+      <div role="toolbar" aria-label={t.members.quickActions} className="mt-5 flex flex-wrap gap-3">
         <Link href={`/app/members/${member.id}/qr`} className={railBtn}>
-          <QrCode className="h-3.5 w-3.5" strokeWidth={2} />
+          <QrCode className="h-4 w-4" strokeWidth={2.2} />
           {t.members.showQrCode}
         </Link>
         <Link href={`/app/members/${member.id}/pin`} className={railBtn}>
-          <KeyRound className="h-3.5 w-3.5" strokeWidth={2} />
+          <KeyRound className="h-4 w-4" strokeWidth={2.2} />
           {t.members.setAppPin}
         </Link>
         {data.hasActiveMembership ? (
-          <Link href={`/app/members/${member.id}/payments/new`} className={railBtn}>
-            <Wallet className="h-3.5 w-3.5" strokeWidth={2} />
+          <Link href={`/app/members/${member.id}/payments/new`} className={railBtnPrimary}>
+            <Wallet className="h-4 w-4" strokeWidth={2.2} />
             {t.members.recordPayment}
           </Link>
         ) : (
-          <Link href={`/app/members/${member.id}/memberships/new`} className={railBtn}>
-            <CreditCard className="h-3.5 w-3.5" strokeWidth={2} />
+          <Link href={`/app/members/${member.id}/memberships/new`} className={railBtnPrimary}>
+            <CreditCard className="h-4 w-4" strokeWidth={2.2} />
             {t.members.sellMembership}
           </Link>
         )}
         <Link href={`/app/members/${member.id}/renew`} className={railBtn}>
-          <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
+          <RefreshCw className="h-4 w-4" strokeWidth={2.2} />
           {t.members.renewMembership}
         </Link>
         {data.hasActiveMembership && (
           <Link href={`/app/members/${member.id}/freeze`} className={railBtn}>
-            <Snowflake className="h-3.5 w-3.5" strokeWidth={2} />
+            <Snowflake className="h-4 w-4" strokeWidth={2.2} />
             {t.members.freezeMembership}
           </Link>
         )}
         {data.hasFrozenMembership && (
           <Link href={`/app/members/${member.id}/unfreeze`} className={railBtn}>
-            <PlayCircle className="h-3.5 w-3.5" strokeWidth={2} />
+            <PlayCircle className="h-4 w-4" strokeWidth={2.2} />
             {t.members.reactivateMembership}
           </Link>
         )}
         <Link href={`/app/messages/${member.id}`} className={railBtn}>
-          <MessageCircle className="h-3.5 w-3.5" strokeWidth={2} />
+          <MessageCircle className="h-4 w-4" strokeWidth={2.2} />
           {t.members.sendMessage}
         </Link>
         <button type="button" onClick={() => setNotificationDialogOpen(true)} className={railBtn}>
-          <Bell className="h-3.5 w-3.5" strokeWidth={2} />
+          <Bell className="h-4 w-4" strokeWidth={2.2} />
           {t.members.sendNotification}
         </button>
       </div>
@@ -392,7 +393,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
             <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-line bg-surface-muted px-5 py-5">
               <p className="text-[13px] text-muted">{t.members.noEmergencyContactLong}</p>
               <EditTrigger editHref={editHref} onEditClick={onEditClick} className={panelBtnSm}>
-                <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
+                <PlusCircle className="h-4 w-4" strokeWidth={2} />
                 {t.members.addEmergencyContact}
               </EditTrigger>
             </div>
@@ -452,7 +453,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
             <h2 className={`font-mono ${sectionHead}`}>{t.members.memberships}</h2>
             <span className="h-px flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/memberships/new`} className={panelBtnSm}>
-              <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
+              <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.members.sellMembership}
             </Link>
           </div>
@@ -518,7 +519,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
             <h2 className={`font-mono ${sectionHead}`}>{t.classes.coursesTitle}</h2>
             <span className="h-px flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/courses/new`} className={panelBtnSm}>
-              <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
+              <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.classes.registerForCourse}
             </Link>
           </div>
@@ -567,7 +568,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
             <h2 className={`font-mono ${sectionHead}`}>{t.members.lockers}</h2>
             <span className="h-px flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/lockers/new`} className={panelBtnSm}>
-              <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
+              <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.members.sellLocker}
             </Link>
           </div>
@@ -619,7 +620,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
             </span>
             <span className="h-px flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/payments/new`} className={panelBtnSm}>
-              <PlusCircle className="h-3.5 w-3.5" strokeWidth={2} />
+              <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.members.recordPayment}
             </Link>
           </div>
