@@ -224,6 +224,8 @@ export type Dict = {
     branchAccess: string;
     allBranches: string;
     homeBranchOnly: string;
+    selectedBranchesOnly: string;
+    noBranchesSelected: string;
     programAccess: string;
     allPrograms: string;
     selectedProgramsOnly: string;
@@ -336,6 +338,9 @@ export type Dict = {
     rentalHistory: string;
     noRentalsYet: string;
     rentedBy: string;
+    currentlyRentedBy: string;
+    dangerZone: string;
+    errorHasRentalHistory: string;
   };
   announcements: {
     title: string;
@@ -1138,6 +1143,8 @@ const en: Dict = {
     branchAccess: "Branch access",
     allBranches: "All branches",
     homeBranchOnly: "Home branch only",
+    selectedBranchesOnly: "Selected branches only",
+    noBranchesSelected: "No branches selected — members on this plan cannot be enrolled at any branch.",
     programAccess: "Training program access",
     allPrograms: "All programs",
     selectedProgramsOnly: "Selected programs only",
@@ -1250,6 +1257,9 @@ const en: Dict = {
     rentalHistory: "Rental history",
     noRentalsYet: "No locker rentals yet.",
     rentedBy: "Rented by",
+    currentlyRentedBy: "Currently rented by",
+    dangerZone: "Danger zone",
+    errorHasRentalHistory: "Cannot delete a locker with rental history. Set it to maintenance instead.",
   },
   announcements: {
     title: "Announcements",
@@ -1517,10 +1527,10 @@ const en: Dict = {
     send: "Send",
     close: "Close",
     whatsappDeliveryFailed: "Saved here, but WhatsApp delivery failed.",
-    searchConversationsPlaceholder: "Search conversations…",
+    searchConversationsPlaceholder: "Search members…",
     recentSearches: "Recent",
     clearAll: "Clear all",
-    noSearchResults: "No conversations match your search.",
+    noSearchResults: "No members match your search.",
     selectConversationTitle: "Select a conversation",
     selectConversationHint: "Choose a member from the list to view and send WhatsApp messages.",
     backToChats: "Back to chats",
@@ -2052,6 +2062,8 @@ const ar: Dict = {
     branchAccess: "صلاحية الفروع",
     allBranches: "جميع الفروع",
     homeBranchOnly: "الفرع الرئيسي فقط",
+    selectedBranchesOnly: "فروع محددة فقط",
+    noBranchesSelected: "لم يتم اختيار أي فرع — لا يمكن تسجيل أعضاء هذه الخطة في أي فرع.",
     programAccess: "الوصول إلى البرامج التدريبية",
     allPrograms: "جميع البرامج",
     selectedProgramsOnly: "برامج محددة فقط",
@@ -2164,6 +2176,9 @@ const ar: Dict = {
     rentalHistory: "سجل الإيجار",
     noRentalsYet: "لا توجد إيجارات خزائن بعد.",
     rentedBy: "مستأجرة من قبل",
+    currentlyRentedBy: "مستأجرة حاليًا من قبل",
+    dangerZone: "منطقة الخطر",
+    errorHasRentalHistory: "لا يمكن حذف خزانة لها سجل إيجارات. اجعلها في وضع الصيانة بدلاً من ذلك.",
   },
   announcements: {
     title: "الإعلانات",
@@ -2431,10 +2446,10 @@ const ar: Dict = {
     send: "إرسال",
     close: "إغلاق",
     whatsappDeliveryFailed: "تم الحفظ هنا، لكن الإرسال عبر واتساب فشل.",
-    searchConversationsPlaceholder: "ابحث في المحادثات…",
+    searchConversationsPlaceholder: "ابحث عن عضو…",
     recentSearches: "الأخيرة",
     clearAll: "مسح الكل",
-    noSearchResults: "لا توجد محادثات مطابقة لبحثك.",
+    noSearchResults: "لا يوجد أعضاء مطابقون لبحثك.",
     selectConversationTitle: "اختر محادثة",
     selectConversationHint: "اختر عضوًا من القائمة لعرض رسائل واتساب وإرسالها.",
     backToChats: "العودة إلى المحادثات",
@@ -2966,6 +2981,8 @@ const he: Dict = {
     branchAccess: "גישה לסניף",
     allBranches: "כל הסניפים",
     homeBranchOnly: "סניף בית בלבד",
+    selectedBranchesOnly: "סניפים נבחרים בלבד",
+    noBranchesSelected: "לא נבחרו סניפים — חברי תוכנית זו לא יוכלו להירשם באף סניף.",
     programAccess: "גישה לתוכניות אימון",
     allPrograms: "כל התוכניות",
     selectedProgramsOnly: "תוכניות נבחרות בלבד",
@@ -3078,6 +3095,9 @@ const he: Dict = {
     rentalHistory: "היסטוריית השכרות",
     noRentalsYet: "עדיין אין השכרות לוקרים.",
     rentedBy: "מושכר על ידי",
+    currentlyRentedBy: "מושכר כרגע על ידי",
+    dangerZone: "אזור סכנה",
+    errorHasRentalHistory: "לא ניתן למחוק לוקר עם היסטוריית השכרות. הגדר אותו כ'בתחזוקה' במקום זאת.",
   },
   announcements: {
     title: "הודעות",
@@ -3345,10 +3365,10 @@ const he: Dict = {
     send: "שליחה",
     close: "סגירה",
     whatsappDeliveryFailed: "נשמר כאן, אך שליחת ה-WhatsApp נכשלה.",
-    searchConversationsPlaceholder: "חיפוש בשיחות…",
+    searchConversationsPlaceholder: "חיפוש חבר…",
     recentSearches: "אחרונות",
     clearAll: "נקה הכל",
-    noSearchResults: "אין שיחות התואמות לחיפוש שלך.",
+    noSearchResults: "אין חברים התואמים לחיפוש שלך.",
     selectConversationTitle: "בחר שיחה",
     selectConversationHint: "בחר חבר מהרשימה כדי להציג ולשלוח הודעות וואטסאפ.",
     backToChats: "חזרה לשיחות",

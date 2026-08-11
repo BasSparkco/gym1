@@ -14,11 +14,20 @@ import {
   LockerRentalStatus,
   LockerSize,
   LockerStatus,
+  Prisma,
 } from '../../generated/prisma/client';
 
 type CreateLockerInput = {
   branchId?: string;
   lockerNumber?: string;
+  size?: LockerSize | null;
+  monthlyPrice?: number;
+};
+
+type CreateLockersBulkInput = {
+  branchId?: string;
+  startNumber?: string;
+  quantity?: number;
   size?: LockerSize | null;
   monthlyPrice?: number;
 };
@@ -84,6 +93,8 @@ export class LockersService {
   }
 
   async getLockerForTenant(tenantId: string, lockerId: string) {
+    await this.autoExpireStaleForTenant(tenantId);
+
     const locker = await this.prisma.locker.findFirst({
       where: { id: lockerId, tenantId },
     });
@@ -92,7 +103,24 @@ export class LockersService {
       throw new NotFoundException('Locker not found.');
     }
 
-    return this.serializeLocker(locker);
+    const activeRental = await this.prisma.lockerRental.findFirst({
+      where: { lockerId, status: 'active' },
+      include: { member: true },
+    });
+
+    return {
+      ...this.serializeLocker(locker),
+      activeRental: activeRental
+        ? {
+            ...this.serializeRental(activeRental),
+            member: {
+              id: activeRental.member.id,
+              fullName: activeRental.member.fullName,
+              memberNumber: activeRental.member.memberNumber,
+            },
+          }
+        : null,
+    };
   }
 
   async createLocker(tenantId: string, input: CreateLockerInput) {
@@ -120,18 +148,108 @@ export class LockersService {
       );
     }
 
-    const locker = await this.prisma.locker.create({
-      data: {
-        id: `locker-${randomUUID()}`,
-        tenantId,
-        branchId: input.branchId,
-        lockerNumber,
-        size: input.size ?? null,
-        monthlyPrice: input.monthlyPrice ?? 0,
-      },
-    });
+    let locker: Locker;
+    try {
+      locker = await this.prisma.locker.create({
+        data: {
+          id: `locker-${randomUUID()}`,
+          tenantId,
+          branchId: input.branchId,
+          lockerNumber,
+          size: input.size ?? null,
+          monthlyPrice: input.monthlyPrice ?? 0,
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          `Locker ${lockerNumber} already exists at this branch.`,
+        );
+      }
+      throw err;
+    }
 
     return this.serializeLocker(locker);
+  }
+
+  async createLockersBulk(tenantId: string, input: CreateLockersBulkInput) {
+    const quantity = input.quantity ?? 0;
+
+    if (!input.branchId || !input.startNumber?.trim()) {
+      throw new BadRequestException(
+        'Branch and starting locker number are required.',
+      );
+    }
+
+    const startNumber = Number(input.startNumber.trim());
+    if (!Number.isInteger(startNumber)) {
+      throw new BadRequestException(
+        'Creating multiple lockers requires a numeric starting locker number.',
+      );
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 500) {
+      throw new BadRequestException('Quantity must be between 1 and 500.');
+    }
+
+    const branch = await this.prisma.branch.findFirst({
+      where: { id: input.branchId, tenantId },
+    });
+
+    if (!branch) {
+      throw new BadRequestException('Branch is invalid for this tenant.');
+    }
+
+    const lockerNumbers = Array.from({ length: quantity }, (_, i) =>
+      String(startNumber + i),
+    );
+
+    const clashing = await this.prisma.locker.findMany({
+      where: { branchId: input.branchId, lockerNumber: { in: lockerNumbers } },
+      select: { lockerNumber: true },
+    });
+
+    if (clashing.length > 0) {
+      const numbers = clashing
+        .map((l) => l.lockerNumber)
+        .sort((a, b) => Number(a) - Number(b))
+        .join(', ');
+      throw new BadRequestException(
+        `Locker number${clashing.length > 1 ? 's' : ''} ${numbers} already exist${clashing.length > 1 ? '' : 's'} at this branch.`,
+      );
+    }
+
+    try {
+      const created = await this.prisma.$transaction(
+        lockerNumbers.map((lockerNumber) =>
+          this.prisma.locker.create({
+            data: {
+              id: `locker-${randomUUID()}`,
+              tenantId,
+              branchId: input.branchId as string,
+              lockerNumber,
+              size: input.size ?? null,
+              monthlyPrice: input.monthlyPrice ?? 0,
+            },
+          }),
+        ),
+      );
+
+      return created.map((locker) => this.serializeLocker(locker));
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'One or more of these locker numbers were just taken by someone else. Please try again.',
+        );
+      }
+      throw err;
+    }
   }
 
   async updateLocker(
@@ -187,12 +305,6 @@ export class LockersService {
 
     if (!current) {
       throw new NotFoundException('Locker not found.');
-    }
-
-    if (current.status === 'occupied') {
-      throw new BadRequestException(
-        'Cannot delete a locker that is currently rented out.',
-      );
     }
 
     const hasRentalHistory = await this.prisma.lockerRental.findFirst({

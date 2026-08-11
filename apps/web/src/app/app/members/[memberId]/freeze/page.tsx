@@ -93,7 +93,7 @@ export default async function FreezeMembershipPage({ params }: Props) {
             </div>
             <div>
               <dt className="text-foreground/55">{t.memberships.period}</dt>
-              <dd className="mt-0.5 font-medium">
+              <dd dir="ltr" className="mt-0.5 font-medium">
                 {formatDate(activeMembership.startDate, dateFormat)} → {formatDate(activeMembership.endDate, dateFormat)}
               </dd>
             </div>
@@ -120,7 +120,7 @@ export default async function FreezeMembershipPage({ params }: Props) {
                 key={f.id}
                 className="flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-2.5 text-sm"
               >
-                <span className="font-medium">
+                <span dir="ltr" className="font-medium">
                   {formatDate(f.startDate, dateFormat)} → {formatDate(f.endDate, dateFormat)}
                 </span>
                 <span className="text-foreground/50 text-xs">

@@ -1,8 +1,9 @@
-import { getMembershipPlan } from "@/lib/membership-plans";
+import { getEntitledBranchIds, getMembershipPlan } from "@/lib/membership-plans";
 import {
   getEntitledProgramIds,
   listTrainingPrograms,
 } from "@/lib/training-programs";
+import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getActiveCurrencySymbol } from "@/lib/currency";
@@ -17,15 +18,20 @@ export default async function MembershipPlanPage({ params }: Props) {
   const { planId } = await params;
   const session = await requireSession();
   const t = await getT();
-  const [plan, currencySymbol, entitledIds] = await Promise.all([
+  const [plan, currencySymbol, entitledIds, entitledBranchIds] = await Promise.all([
     getMembershipPlan(planId),
     getActiveCurrencySymbol(session.branch.id),
     getEntitledProgramIds(planId),
+    getEntitledBranchIds(planId),
   ]);
   const entitledPrograms =
     entitledIds === "all"
       ? []
       : (await listTrainingPrograms()).filter((p) => entitledIds.includes(p.id));
+  const entitledBranches =
+    entitledBranchIds === "all"
+      ? []
+      : (await listBranches()).filter((b) => entitledBranchIds.includes(b.id));
 
   const durationLabel = plan.planType === "duration"
     ? (() => {
@@ -83,7 +89,17 @@ export default async function MembershipPlanPage({ params }: Props) {
             </div>
             <div>
               <dt className="text-foreground/55">{t.plans.branchAccess}</dt>
-              <dd className="mt-0.5 font-medium">{plan.allowAllBranches ? t.plans.allBranches : t.plans.homeBranchOnly}</dd>
+              <dd className="mt-0.5 font-medium">
+                {plan.allowAllBranches ? (
+                  t.plans.allBranches
+                ) : plan.restrictToHomeBranch ? (
+                  t.plans.homeBranchOnly
+                ) : entitledBranches.length === 0 ? (
+                  <span className="text-red-600">{t.plans.noBranchesSelected}</span>
+                ) : (
+                  entitledBranches.map((b) => b.name).join(", ")
+                )}
+              </dd>
             </div>
             <div>
               <dt className="text-foreground/55">{t.plans.programAccess}</dt>

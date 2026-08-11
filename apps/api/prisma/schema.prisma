@@ -216,6 +216,7 @@ model Branch {
   lockers          Locker[]
   announcements    Announcement[]
   closedDates      ClosedDate[]
+  entitledForPlans MembershipPlanBranch[]
 
   @@index([tenantId])
 }
@@ -374,23 +375,41 @@ model Member {
 }
 
 model MembershipPlan {
-  id               String   @id
-  tenantId         String
-  tenant           Tenant   @relation(fields: [tenantId], references: [id])
-  name             String
-  planType         PlanType @default(duration)
-  durationDays     Int?
-  sessionCount     Int?
-  price            Decimal  @db.Decimal(10, 2)
-  allowAllBranches Boolean  @default(true)
-  freezeAllowed    Boolean  @default(false)
-  freezeMaxDays    Int?
-  allowAllPrograms Boolean  @default(true)
+  id                   String   @id
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  name                 String
+  planType             PlanType @default(duration)
+  durationDays         Int?
+  sessionCount         Int?
+  price                Decimal  @db.Decimal(10, 2)
+  allowAllBranches     Boolean  @default(true)
+  // Only consulted when allowAllBranches is false: true = restricted to
+  // whichever branch the member themselves belongs to (the long-standing
+  // "home branch only" behavior); false = restricted to the specific
+  // branches listed in entitledBranches instead.
+  restrictToHomeBranch Boolean  @default(true)
+  freezeAllowed        Boolean  @default(false)
+  freezeMaxDays        Int?
+  allowAllPrograms     Boolean  @default(true)
 
   memberships      Membership[]
   entitledPrograms MembershipPlanProgram[]
+  entitledBranches MembershipPlanBranch[]
 
   @@index([tenantId])
+}
+
+// Exception list of Branches a plan may be used at, used only when
+// allowAllBranches is false and restrictToHomeBranch is also false
+// (mirrors MembershipPlanProgram).
+model MembershipPlanBranch {
+  planId   String
+  plan     MembershipPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  branchId String
+  branch   Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([planId, branchId])
 }
 
 // Exception list of Training Programs a plan may book, used only when

@@ -24,6 +24,14 @@ type CreateLockerRequestBody = {
   monthlyPrice?: number;
 };
 
+type CreateLockersBulkRequestBody = {
+  branchId?: string;
+  startNumber?: string;
+  quantity?: number;
+  size?: 'small' | 'medium' | 'large' | null;
+  monthlyPrice?: number;
+};
+
 type UpdateLockerRequestBody = {
   lockerNumber?: string;
   size?: 'small' | 'medium' | 'large' | null;
@@ -124,6 +132,28 @@ export class LockersController {
         {
           branchId: body.branchId ?? session.user.branch.id,
           lockerNumber: body.lockerNumber,
+          size: body.size,
+          monthlyPrice: body.monthlyPrice,
+        },
+      ),
+    };
+  }
+
+  @Post('bulk')
+  async createLockersBulk(
+    @Req() request: Request,
+    @Body() body: CreateLockersBulkRequestBody,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+
+    return {
+      lockers: await this.lockersService.createLockersBulk(
+        session.user.tenant.id,
+        {
+          branchId: body.branchId ?? session.user.branch.id,
+          startNumber: body.startNumber,
+          quantity: body.quantity,
           size: body.size,
           monthlyPrice: body.monthlyPrice,
         },

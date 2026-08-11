@@ -1,6 +1,7 @@
 "use server";
 
-import { createMembershipPlan } from "@/lib/membership-plans";
+import { createMembershipPlan, setEntitledBranchIds } from "@/lib/membership-plans";
+import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
@@ -11,22 +12,31 @@ import { PlusCircle } from "lucide-react";
 export default async function NewMembershipPlanPage() {
   await requireSession();
   const t = await getT();
+  const branches = await listBranches();
 
   async function handleCreate(formData: FormData) {
     "use server";
     const planType = formData.get("planType") as "duration" | "session";
+    const branchAccessMode = formData.get("branchAccessMode") as "all" | "home" | "selected";
     const plan = await createMembershipPlan({
       name: formData.get("name") as string,
       planType,
       durationDays: planType === "duration" ? Number(formData.get("durationDays")) : undefined,
       sessionCount: planType === "session" ? Number(formData.get("sessionCount")) : undefined,
       price: Number(formData.get("price")) || 0,
-      allowAllBranches: formData.get("allowAllBranches") === "true",
+      allowAllBranches: branchAccessMode === "all",
+      restrictToHomeBranch: branchAccessMode !== "selected",
       freezeAllowed: formData.get("freezeAllowed") === "true",
       freezeMaxDays: formData.get("freezeAllowed") === "true" && formData.get("freezeMaxDays")
         ? Number(formData.get("freezeMaxDays"))
         : undefined,
     });
+    if (branchAccessMode === "selected") {
+      await setEntitledBranchIds(
+        plan.id,
+        formData.getAll("branchIds").map(String),
+      );
+    }
     redirect(`/app/membership-plans/${plan.id}`);
   }
 
@@ -122,18 +132,34 @@ export default async function NewMembershipPlanPage() {
 
           <div className="grid gap-1.5 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <label htmlFor="allowAllBranches" className="text-sm font-medium">
+              <label htmlFor="branchAccessMode" className="text-sm font-medium">
                 {t.plans.branchAccess}
               </label>
               <select
-                id="allowAllBranches"
-                name="allowAllBranches"
-                defaultValue="true"
+                id="branchAccessMode"
+                name="branchAccessMode"
+                defaultValue="all"
                 className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
               >
-                <option value="true">{t.plans.allBranches}</option>
-                <option value="false">{t.plans.homeBranchOnly}</option>
+                <option value="all">{t.plans.allBranches}</option>
+                <option value="home">{t.plans.homeBranchOnly}</option>
+                <option value="selected">{t.plans.selectedBranchesOnly}</option>
               </select>
+              {branches.length > 0 && (
+                <div className="mt-1 grid gap-2 rounded-2xl border border-line bg-white px-4 py-3 sm:grid-cols-2">
+                  {branches.map((branch) => (
+                    <label key={branch.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="branchIds"
+                        value={branch.id}
+                        className="h-4 w-4 rounded border-line accent-brand"
+                      />
+                      <span>{branch.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid gap-1.5">

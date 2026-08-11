@@ -1,11 +1,17 @@
 "use server";
 
-import { getMembershipPlan, updateMembershipPlan } from "@/lib/membership-plans";
+import {
+  getEntitledBranchIds,
+  getMembershipPlan,
+  setEntitledBranchIds,
+  updateMembershipPlan,
+} from "@/lib/membership-plans";
 import {
   getEntitledProgramIds,
   listTrainingPrograms,
   setEntitledProgramIds,
 } from "@/lib/training-programs";
+import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
@@ -19,25 +25,35 @@ export default async function EditMembershipPlanPage({ params }: Props) {
   const { planId } = await params;
   await requireSession();
   const t = await getT();
-  const [plan, programs, entitledIds] = await Promise.all([
+  const [plan, programs, entitledIds, branches, entitledBranchIds] = await Promise.all([
     getMembershipPlan(planId),
     listTrainingPrograms(),
     getEntitledProgramIds(planId),
+    listBranches(),
+    getEntitledBranchIds(planId),
   ]);
   const activePrograms = programs.filter((p) => p.active);
   const entitledSet = new Set(entitledIds === "all" ? [] : entitledIds);
+  const branchAccessMode: "all" | "home" | "selected" = plan.allowAllBranches
+    ? "all"
+    : plan.restrictToHomeBranch
+      ? "home"
+      : "selected";
+  const entitledBranchSet = new Set(entitledBranchIds === "all" ? [] : entitledBranchIds);
 
   async function handleUpdate(formData: FormData) {
     "use server";
     const planType = formData.get("planType") as "duration" | "session";
     const allowAllPrograms = formData.get("allowAllPrograms") === "true";
+    const branchAccessMode = formData.get("branchAccessMode") as "all" | "home" | "selected";
     await updateMembershipPlan(planId, {
       name: (formData.get("name") as string) || undefined,
       planType,
       durationDays: planType === "duration" ? Number(formData.get("durationDays")) : undefined,
       sessionCount: planType === "session" ? Number(formData.get("sessionCount")) : undefined,
       price: Number(formData.get("price")) || 0,
-      allowAllBranches: formData.get("allowAllBranches") === "true",
+      allowAllBranches: branchAccessMode === "all",
+      restrictToHomeBranch: branchAccessMode !== "selected",
       allowAllPrograms,
       freezeAllowed: formData.get("freezeAllowed") === "true",
       freezeMaxDays: formData.get("freezeAllowed") === "true" && formData.get("freezeMaxDays")
@@ -48,6 +64,12 @@ export default async function EditMembershipPlanPage({ params }: Props) {
       await setEntitledProgramIds(
         planId,
         formData.getAll("programIds").map(String),
+      );
+    }
+    if (branchAccessMode === "selected") {
+      await setEntitledBranchIds(
+        planId,
+        formData.getAll("branchIds").map(String),
       );
     }
     redirect(`/app/membership-plans/${planId}`);
@@ -144,16 +166,33 @@ export default async function EditMembershipPlanPage({ params }: Props) {
 
           <div className="grid gap-1.5 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <label htmlFor="allowAllBranches" className="text-sm font-medium">{t.plans.branchAccess}</label>
+              <label htmlFor="branchAccessMode" className="text-sm font-medium">{t.plans.branchAccess}</label>
               <select
-                id="allowAllBranches"
-                name="allowAllBranches"
-                defaultValue={plan.allowAllBranches ? "true" : "false"}
+                id="branchAccessMode"
+                name="branchAccessMode"
+                defaultValue={branchAccessMode}
                 className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
               >
-                <option value="true">{t.plans.allBranches}</option>
-                <option value="false">{t.plans.homeBranchOnly}</option>
+                <option value="all">{t.plans.allBranches}</option>
+                <option value="home">{t.plans.homeBranchOnly}</option>
+                <option value="selected">{t.plans.selectedBranchesOnly}</option>
               </select>
+              {branches.length > 0 && (
+                <div className="mt-1 grid gap-2 rounded-2xl border border-line bg-white px-4 py-3 sm:grid-cols-2">
+                  {branches.map((branch) => (
+                    <label key={branch.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="branchIds"
+                        value={branch.id}
+                        defaultChecked={entitledBranchSet.has(branch.id)}
+                        className="h-4 w-4 rounded border-line accent-brand"
+                      />
+                      <span>{branch.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid gap-1.5">

@@ -21,6 +21,7 @@ type CreateMembershipPlanRequestBody = {
   sessionCount?: number;
   price?: number;
   allowAllBranches?: boolean;
+  restrictToHomeBranch?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
   allowAllPrograms?: boolean;
@@ -33,6 +34,7 @@ type UpdateMembershipPlanRequestBody = {
   sessionCount?: number;
   price?: number;
   allowAllBranches?: boolean;
+  restrictToHomeBranch?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
   allowAllPrograms?: boolean;
@@ -103,7 +105,10 @@ export class MembershipsController {
   }
 
   @Get('plans/:planId')
-  async getMembershipPlan(@Req() request: Request, @Param('planId') planId: string) {
+  async getMembershipPlan(
+    @Req() request: Request,
+    @Param('planId') planId: string,
+  ) {
     const session = await this.getRequiredSession(request.headers.cookie);
 
     return {
@@ -128,6 +133,34 @@ export class MembershipsController {
         session.user.tenant.id,
         planId,
         body,
+      ),
+    };
+  }
+
+  @Get('plans/:planId/entitled-branches')
+  async getEntitledBranches(
+    @Req() request: Request,
+    @Param('planId') planId: string,
+  ) {
+    await this.getRequiredSession(request.headers.cookie);
+    return {
+      branchIds: await this.membershipsService.listEntitledBranchIds(planId),
+    };
+  }
+
+  @Patch('plans/:planId/entitled-branches')
+  async setEntitledBranches(
+    @Req() request: Request,
+    @Param('planId') planId: string,
+    @Body() body: { branchIds?: string[] },
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner', 'manager']);
+    return {
+      branchIds: await this.membershipsService.setEntitledBranches(
+        session.user.tenant.id,
+        planId,
+        body.branchIds ?? [],
       ),
     };
   }

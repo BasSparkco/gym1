@@ -11,7 +11,11 @@ import {
 import type { Request } from 'express';
 import { PlatformAdminAuthService } from './platform-admin-auth.service';
 import { PlatformAdminTenantsService } from './platform-admin-tenants.service';
-import type { AddBranchInput, CreateTenantInput } from './platform-admin-tenants.service';
+import type {
+  AddBranchInput,
+  CreateTenantInput,
+  UpdateBranchInput,
+} from './platform-admin-tenants.service';
 
 @Controller('platform-admin/tenants')
 export class PlatformAdminTenantsController {
@@ -88,6 +92,19 @@ export class PlatformAdminTenantsController {
   ) {
     await this.getRequiredSession(request.headers.cookie);
     return { branch: await this.tenantsService.addBranch(tenantId, body) };
+  }
+
+  @Patch(':tenantId/branches/:branchId')
+  async updateBranch(
+    @Req() request: Request,
+    @Param('tenantId') tenantId: string,
+    @Param('branchId') branchId: string,
+    @Body() body: UpdateBranchInput,
+  ) {
+    await this.getRequiredSession(request.headers.cookie);
+    return {
+      branch: await this.tenantsService.updateBranch(tenantId, branchId, body),
+    };
   }
 
   private async getRequiredSession(cookieHeader: string | undefined) {

@@ -29,6 +29,12 @@ export type LockerRental = {
   locker?: Locker;
 };
 
+export type LockerDetail = Locker & {
+  activeRental:
+    | (LockerRental & { member: { id: string; fullName: string; memberNumber: string } })
+    | null;
+};
+
 async function authedFetch(path: string, init?: RequestInit) {
   const cookieStore = await cookies();
   const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -58,9 +64,9 @@ export async function listLockers(branchId?: string): Promise<Locker[]> {
   return payload.lockers;
 }
 
-export async function getLocker(lockerId: string): Promise<Locker> {
+export async function getLocker(lockerId: string): Promise<LockerDetail> {
   const res = await authedFetch(`/lockers/${lockerId}`);
-  const payload = (await res.json()) as { locker: Locker };
+  const payload = (await res.json()) as { locker: LockerDetail };
   return payload.locker;
 }
 
@@ -76,6 +82,21 @@ export async function createLocker(data: {
   });
   const payload = (await res.json()) as { locker: Locker };
   return payload.locker;
+}
+
+export async function createLockersBulk(data: {
+  branchId: string;
+  startNumber: string;
+  quantity: number;
+  size?: LockerSize | null;
+  monthlyPrice: number;
+}): Promise<Locker[]> {
+  const res = await authedFetch("/lockers/bulk", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  const payload = (await res.json()) as { lockers: Locker[] };
+  return payload.lockers;
 }
 
 export async function updateLocker(

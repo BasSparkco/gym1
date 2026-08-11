@@ -1,5 +1,6 @@
-import { listMembershipPlans } from "@/lib/membership-plans";
+import { listMembershipPlans, getEntitledBranchIds } from "@/lib/membership-plans";
 import { listAllMemberships } from "@/lib/memberships";
+import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
 import { getActiveCurrencySymbol } from "@/lib/currency";
@@ -22,11 +23,26 @@ function planSummary(plan: Awaited<ReturnType<typeof listMembershipPlans>>[numbe
 export default async function MembershipPlansPage() {
   const session = await requireSession();
   const t = await getT();
-  const [plans, currencySymbol, memberships] = await Promise.all([
+  const [plans, currencySymbol, memberships, branches] = await Promise.all([
     listMembershipPlans(),
     getActiveCurrencySymbol(session.branch.id),
     listAllMemberships(),
+    listBranches(),
   ]);
+  const branchNameById = new Map(branches.map((b) => [b.id, b.name]));
+
+  const selectedBranchNamesByPlanId = new Map<string, string[]>();
+  await Promise.all(
+    plans
+      .filter((plan) => !plan.allowAllBranches && !plan.restrictToHomeBranch)
+      .map(async (plan) => {
+        const entitledIds = await getEntitledBranchIds(plan.id);
+        selectedBranchNamesByPlanId.set(
+          plan.id,
+          entitledIds === "all" ? [] : entitledIds.map((id) => branchNameById.get(id) ?? id),
+        );
+      }),
+  );
 
   const subscriberCounts = new Map<string, number>();
   for (const ms of memberships) {
@@ -89,9 +105,23 @@ export default async function MembershipPlansPage() {
                 </p>
                 <p className="mt-1 text-sm text-foreground/60">{planSummary(plan)}</p>
 
+                <p className="mt-2 text-sm text-foreground/60">
+                  <span className="text-foreground/45">{t.plans.branchAccess}: </span>
+                  {plan.allowAllBranches ? (
+                    <span className="font-medium text-foreground/80">{t.plans.allBranches}</span>
+                  ) : plan.restrictToHomeBranch ? (
+                    <span className="font-medium text-foreground/80">{t.plans.homeBranchOnly}</span>
+                  ) : (selectedBranchNamesByPlanId.get(plan.id) ?? []).length === 0 ? (
+                    <span className="font-medium text-red-600">{t.plans.noBranchesSelected}</span>
+                  ) : (
+                    <span className="font-medium text-foreground/80">
+                      {(selectedBranchNamesByPlanId.get(plan.id) ?? []).join(", ")}
+                    </span>
+                  )}
+                </p>
+
                 <div className="mt-4 flex flex-1 flex-wrap gap-2">
                   {plan.freezeAllowed && <Badge tone="brand">{t.plans.freezeAllowed}</Badge>}
-                  {!plan.allowAllBranches && <Badge tone="accent">{t.plans.homeBranchOnly}</Badge>}
                 </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-line pt-4">

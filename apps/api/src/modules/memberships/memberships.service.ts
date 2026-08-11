@@ -26,6 +26,7 @@ type CreateMembershipPlanInput = {
   sessionCount?: number;
   price?: number;
   allowAllBranches?: boolean;
+  restrictToHomeBranch?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
   allowAllPrograms?: boolean;
@@ -38,6 +39,7 @@ type UpdateMembershipPlanInput = {
   sessionCount?: number;
   price?: number;
   allowAllBranches?: boolean;
+  restrictToHomeBranch?: boolean;
   freezeAllowed?: boolean;
   freezeMaxDays?: number;
   allowAllPrograms?: boolean;
@@ -199,6 +201,7 @@ export class MembershipsService {
         sessionCount: planType === 'session' ? input.sessionCount : undefined,
         price: input.price ?? 0,
         allowAllBranches: input.allowAllBranches ?? true,
+        restrictToHomeBranch: input.restrictToHomeBranch ?? true,
         freezeAllowed: input.freezeAllowed ?? false,
         freezeMaxDays: input.freezeAllowed ? input.freezeMaxDays : undefined,
         allowAllPrograms: input.allowAllPrograms ?? true,
@@ -249,6 +252,8 @@ export class MembershipsService {
             : null,
         price: input.price ?? current.price,
         allowAllBranches: input.allowAllBranches ?? current.allowAllBranches,
+        restrictToHomeBranch:
+          input.restrictToHomeBranch ?? current.restrictToHomeBranch,
         freezeAllowed,
         freezeMaxDays: freezeAllowed
           ? (input.freezeMaxDays ?? current.freezeMaxDays)
@@ -258,6 +263,57 @@ export class MembershipsService {
     });
 
     return this.serializePlan(plan);
+  }
+
+  async listEntitledBranchIds(planId: string): Promise<string[] | 'all'> {
+    const plan = await this.prisma.membershipPlan.findUnique({
+      where: { id: planId },
+      select: { allowAllBranches: true, restrictToHomeBranch: true },
+    });
+
+    if (!plan || plan.allowAllBranches || plan.restrictToHomeBranch) {
+      return 'all';
+    }
+
+    const links = await this.prisma.membershipPlanBranch.findMany({
+      where: { planId },
+      select: { branchId: true },
+    });
+    return links.map((l) => l.branchId);
+  }
+
+  async setEntitledBranches(
+    tenantId: string,
+    planId: string,
+    branchIds: string[],
+  ) {
+    const plan = await this.prisma.membershipPlan.findFirst({
+      where: { id: planId, tenantId },
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Membership plan not found.');
+    }
+
+    const branches = await this.prisma.branch.findMany({
+      where: { id: { in: branchIds }, tenantId },
+      select: { id: true },
+    });
+
+    if (branches.length !== new Set(branchIds).size) {
+      throw new BadRequestException(
+        'One or more branches are invalid for this tenant.',
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.membershipPlanBranch.deleteMany({ where: { planId } }),
+      this.prisma.membershipPlanBranch.createMany({
+        data: branchIds.map((branchId) => ({ planId, branchId })),
+      }),
+    ]);
+
+    return this.listEntitledBranchIds(planId);
   }
 
   async getMembershipForTenant(tenantId: string, membershipId: string) {

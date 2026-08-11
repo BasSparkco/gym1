@@ -29,6 +29,11 @@ export type AddBranchInput = {
   owner: OwnerInput;
 };
 
+export type UpdateBranchInput = {
+  branch: BranchInput;
+  owner?: { name?: string; email?: string };
+};
+
 export type TenantSummary = {
   id: string;
   name: string;
@@ -44,9 +49,11 @@ export type BranchSummary = {
   id: string;
   name: string;
   address: string | null;
+  phone: string | null;
   countryCode: string | null;
   operatingCurrencyCode: string;
   status: 'active' | 'inactive';
+  ownerName: string | null;
   ownerEmail: string | null;
 };
 
@@ -231,20 +238,22 @@ export class PlatformAdminTenantsService {
       this.prisma.branch.findMany({ where: { tenantId }, orderBy: { name: 'asc' } }),
       this.prisma.user.findMany({
         where: { tenantId, role: 'owner' },
-        select: { branchId: true, email: true },
+        select: { branchId: true, name: true, email: true },
       }),
     ]);
 
-    const ownerEmailByBranchId = new Map(owners.map((owner) => [owner.branchId, owner.email]));
+    const ownerByBranchId = new Map(owners.map((owner) => [owner.branchId, owner]));
 
     return branches.map((branch) => ({
       id: branch.id,
       name: branch.name,
       address: branch.address,
+      phone: branch.phone,
       countryCode: branch.countryCode,
       operatingCurrencyCode: branch.operatingCurrencyCode,
       status: branch.status,
-      ownerEmail: ownerEmailByBranchId.get(branch.id) ?? null,
+      ownerName: ownerByBranchId.get(branch.id)?.name ?? null,
+      ownerEmail: ownerByBranchId.get(branch.id)?.email ?? null,
     }));
   }
 
@@ -306,10 +315,91 @@ export class PlatformAdminTenantsService {
       id: branchId,
       name: branch.branchName,
       address: branch.address ?? null,
+      phone: branch.phone ?? null,
       countryCode: branch.countryCode ?? null,
       operatingCurrencyCode: branch.operatingCurrencyCode,
       status: 'active',
+      ownerName: owner.ownerName,
       ownerEmail: owner.ownerEmail,
+    };
+  }
+
+  async updateBranch(
+    tenantId: string,
+    branchId: string,
+    input: UpdateBranchInput,
+  ): Promise<BranchSummary> {
+    const branchRecord = await this.prisma.branch.findFirst({
+      where: { id: branchId, tenantId },
+    });
+    if (!branchRecord) {
+      throw new NotFoundException('Branch not found.');
+    }
+
+    const branch = this.validateBranchInput(input.branch);
+
+    const owner = await this.prisma.user.findFirst({
+      where: { tenantId, branchId, role: 'owner' },
+    });
+
+    const ownerName = input.owner?.name?.trim();
+    const ownerEmail = input.owner?.email?.trim().toLowerCase();
+
+    if (owner && (ownerName || ownerEmail)) {
+      if (ownerEmail && !ownerEmail.includes('@')) {
+        throw new BadRequestException('A valid owner email is required.');
+      }
+
+      if (ownerEmail && ownerEmail !== owner.email) {
+        // Same collision check as createTenant/addBranch: sign-in looks up
+        // users by email across all tenants, so the new email must be free.
+        const existing = await this.prisma.user.findFirst({
+          where: {
+            email: { equals: ownerEmail, mode: 'insensitive' },
+            NOT: { id: owner.id },
+          },
+        });
+        if (existing) {
+          throw new BadRequestException(
+            'That owner email is already in use by another organization.',
+          );
+        }
+      }
+
+      await this.prisma.user.update({
+        where: { id: owner.id },
+        data: {
+          name: ownerName || owner.name,
+          email: ownerEmail || owner.email,
+        },
+      });
+    }
+
+    const updated = await this.prisma.branch.update({
+      where: { id: branchId },
+      data: {
+        name: branch.branchName,
+        address: branch.address ?? null,
+        phone: branch.phone ?? null,
+        countryCode: branch.countryCode ?? null,
+        operatingCurrencyCode: branch.operatingCurrencyCode,
+      },
+    });
+
+    const refreshedOwner = owner
+      ? await this.prisma.user.findUnique({ where: { id: owner.id } })
+      : null;
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      address: updated.address,
+      phone: updated.phone,
+      countryCode: updated.countryCode,
+      operatingCurrencyCode: updated.operatingCurrencyCode,
+      status: updated.status,
+      ownerName: refreshedOwner?.name ?? null,
+      ownerEmail: refreshedOwner?.email ?? null,
     };
   }
 

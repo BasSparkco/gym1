@@ -77,7 +77,7 @@ export default async function UnfreezeMembershipPage({ params }: Props) {
               </div>
               <div>
                 <dt className="text-foreground/55">{t.memberships.period}</dt>
-                <dd className="mt-0.5 font-medium">
+                <dd dir="ltr" className="mt-0.5 font-medium">
                   {formatDate(frozenMembership.startDate, dateFormat)} → {formatDate(frozenMembership.endDate, dateFormat)}
                 </dd>
               </div>

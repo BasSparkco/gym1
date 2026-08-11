@@ -13,6 +13,7 @@ export type MembershipPlan = {
   sessionCount?: number;
   price: number;
   allowAllBranches: boolean;
+  restrictToHomeBranch: boolean;
   allowAllPrograms: boolean;
   freezeAllowed: boolean;
   freezeMaxDays?: number;
@@ -59,6 +60,7 @@ export async function createMembershipPlan(data: {
   sessionCount?: number;
   price: number;
   allowAllBranches: boolean;
+  restrictToHomeBranch?: boolean;
   freezeAllowed: boolean;
   freezeMaxDays?: number;
 }): Promise<MembershipPlan> {
@@ -79,6 +81,7 @@ export async function updateMembershipPlan(
     sessionCount: number;
     price: number;
     allowAllBranches: boolean;
+    restrictToHomeBranch: boolean;
     allowAllPrograms: boolean;
     freezeAllowed: boolean;
     freezeMaxDays: number;
@@ -90,4 +93,22 @@ export async function updateMembershipPlan(
   });
   const payload = (await res.json()) as { plan: MembershipPlan };
   return payload.plan;
+}
+
+export async function getEntitledBranchIds(planId: string): Promise<string[] | "all"> {
+  const res = await authedFetch(`/memberships/plans/${planId}/entitled-branches`);
+  const payload = (await res.json()) as { branchIds: string[] | "all" };
+  return payload.branchIds;
+}
+
+export async function setEntitledBranchIds(
+  planId: string,
+  branchIds: string[],
+): Promise<string[] | "all"> {
+  const res = await authedFetch(`/memberships/plans/${planId}/entitled-branches`, {
+    method: "PATCH",
+    body: JSON.stringify({ branchIds }),
+  });
+  const payload = (await res.json()) as { branchIds: string[] | "all" };
+  return payload.branchIds;
 }

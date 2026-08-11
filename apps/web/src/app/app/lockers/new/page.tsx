@@ -1,6 +1,6 @@
 "use server";
 
-import { createLocker } from "@/lib/lockers";
+import { createLocker, createLockersBulk } from "@/lib/lockers";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
@@ -8,9 +8,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-export default async function NewLockerPage() {
+type Props = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function NewLockerPage({ searchParams }: Props) {
   const session = await requireSession();
   const t = await getT();
+  const { error } = await searchParams;
 
   if (session.role !== "owner" && session.role !== "manager") {
     redirect("/app/dashboard");
@@ -24,26 +29,32 @@ export default async function NewLockerPage() {
     const monthlyPrice = Number(formData.get("monthlyPrice")) || 0;
     const quantity = Math.max(1, parseInt(formData.get("quantity") as string, 10) || 1);
 
-    if (quantity > 1) {
-      const startNumber = Number(lockerNumber);
-      if (isNaN(startNumber)) {
-        throw new Error("Creating multiple lockers requires a numeric starting locker number.");
-      }
-      for (let i = 0; i < quantity; i++) {
+    try {
+      if (quantity > 1) {
+        await createLockersBulk({
+          branchId: session.branch.id,
+          startNumber: lockerNumber,
+          quantity,
+          size,
+          monthlyPrice,
+        });
+      } else {
         await createLocker({
           branchId: session.branch.id,
-          lockerNumber: String(startNumber + i),
+          lockerNumber,
           size,
           monthlyPrice,
         });
       }
-    } else {
-      await createLocker({
-        branchId: session.branch.id,
-        lockerNumber,
-        size,
-        monthlyPrice,
-      });
+    } catch (err) {
+      let message = err instanceof Error ? err.message : String(err);
+      try {
+        const parsed = JSON.parse(message) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // not JSON, use as-is
+      }
+      redirect(`/app/lockers/new?error=${encodeURIComponent(message)}`);
     }
 
     redirect("/app/lockers");
@@ -56,6 +67,12 @@ export default async function NewLockerPage() {
         title={t.lockers.newLocker}
         description={t.branches.title + ": " + session.branch.name}
       />
+
+      {error && (
+        <section className="animate-scale-in rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          {decodeURIComponent(error)}
+        </section>
+      )}
 
       <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-5">

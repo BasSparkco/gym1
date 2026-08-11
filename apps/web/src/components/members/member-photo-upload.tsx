@@ -98,12 +98,12 @@ export default function MemberPhotoUpload({ memberId, currentPhotoUrl, apiBaseUr
   return (
     <div className="grid gap-3">
       {/* Current photo */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         {photoUrl ? (
           <img
             src={photoUrl}
             alt="Member photo"
-            className="h-24 w-24 rounded-2xl object-cover border border-line"
+            className="h-24 w-24 shrink-0 rounded-2xl object-cover border border-line"
           />
         ) : (
           <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-dashed border-line bg-white text-foreground/30">

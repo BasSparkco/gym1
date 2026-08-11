@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,8 @@ import type { DateFormat } from "@/lib/settings";
 
 const RECENT_SEARCHES_KEY = "gym.messages.recentSearches";
 const MAX_RECENT_SEARCHES = 6;
+
+type MemberSearchResult = { id: string; fullName: string; memberNumber: string };
 
 export function MessagesWorkspace({
   conversations,
@@ -65,13 +67,44 @@ export function MessagesWorkspace({
     [items],
   );
 
+  const [memberResults, setMemberResults] = useState<MemberSearchResult[]>([]);
+
+  useEffect(() => {
+    const q = searchTerm.trim();
+    if (!q) return;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/members/search?q=${encodeURIComponent(q)}`);
+        const data = (await res.json()) as { members: MemberSearchResult[] };
+        setMemberResults(data.members);
+      } catch {
+        setMemberResults([]);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const filteredItems = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return sortedItems;
-    return sortedItems.filter(
+
+    const localMatches = sortedItems.filter(
       (c) => c.memberName.toLowerCase().includes(q) || c.memberNumber.toLowerCase().includes(q),
     );
-  }, [sortedItems, searchTerm]);
+    const existingIds = new Set(conversations.map((c) => c.memberId));
+    const newMatches: Conversation[] = memberResults
+      .filter((m) => !existingIds.has(m.id))
+      .map((m) => ({
+        memberId: m.id,
+        memberName: m.fullName,
+        memberNumber: m.memberNumber,
+        lastMessageBody: "",
+        lastMessageAt: "",
+        unreadCount: 0,
+      }));
+
+    return [...localMatches, ...newMatches];
+  }, [sortedItems, searchTerm, memberResults, conversations]);
 
   const activeConversation = sortedItems.find((c) => c.memberId === openMemberId) ?? null;
 
@@ -175,6 +208,7 @@ export function MessagesWorkspace({
                 <button
                   key={c.memberId}
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectConversation(c.memberId)}
                   className={cn(
                     "flex w-full items-center gap-3 border-b border-line/60 px-4 py-3 text-start transition-colors hover:bg-black/[0.02]",

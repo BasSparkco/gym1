@@ -46,13 +46,20 @@ export type AddBranchInput = {
   owner: OwnerInput;
 };
 
+export type UpdateBranchInput = {
+  branch: BranchInput;
+  owner?: { name?: string; email?: string };
+};
+
 export type BranchSummary = {
   id: string;
   name: string;
   address: string | null;
+  phone: string | null;
   countryCode: string | null;
   operatingCurrencyCode: string;
   status: "active" | "inactive";
+  ownerName: string | null;
   ownerEmail: string | null;
 };
 
@@ -173,6 +180,22 @@ export async function addBranch(
     method: "POST",
     body: JSON.stringify(input),
   });
+  const payload = (await response.json()) as { branch: BranchSummary };
+  return payload.branch;
+}
+
+export async function updateBranch(
+  tenantId: string,
+  branchId: string,
+  input: UpdateBranchInput,
+): Promise<BranchSummary> {
+  const response = await authedFetch(
+    `/platform-admin/tenants/${tenantId}/branches/${branchId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
   const payload = (await response.json()) as { branch: BranchSummary };
   return payload.branch;
 }
