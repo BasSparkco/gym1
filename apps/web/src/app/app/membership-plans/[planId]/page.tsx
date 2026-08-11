@@ -5,7 +5,7 @@ import {
 } from "@/lib/training-programs";
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import { getActiveCurrencySymbol } from "@/lib/currency";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -36,8 +36,13 @@ export default async function MembershipPlanPage({ params }: Props) {
   const durationLabel = plan.planType === "duration"
     ? (() => {
         const d = plan.durationDays ?? 0;
-        if (d % 30 === 0) return `${d / 30} month${d / 30 !== 1 ? "s" : ""} (${d} days)`;
-        return `${d} days`;
+        const daysLabel = formatDict(t.plans.daysUnit, { count: d, plural: d !== 1 ? "s" : "" });
+        if (d % 30 === 0) {
+          const months = d / 30;
+          const monthsLabel = formatDict(t.plans.monthsUnit, { count: months, plural: months !== 1 ? "s" : "" });
+          return `${monthsLabel} (${daysLabel})`;
+        }
+        return daysLabel;
       })()
     : null;
 
@@ -80,7 +85,12 @@ export default async function MembershipPlanPage({ params }: Props) {
             {plan.planType === "session" && (
               <div>
                 <dt className="text-foreground/55">{t.plans.sessions}</dt>
-                <dd className="mt-0.5 font-medium">{plan.sessionCount} sessions</dd>
+                <dd className="mt-0.5 font-medium">
+                  {formatDict(t.plans.sessionsUnit, {
+                    count: plan.sessionCount ?? 0,
+                    plural: (plan.sessionCount ?? 0) !== 1 ? "s" : "",
+                  })}
+                </dd>
               </div>
             )}
             <div>
@@ -127,7 +137,9 @@ export default async function MembershipPlanPage({ params }: Props) {
               <div>
                 <dt className="text-foreground/55">{t.plans.maxFreezeDays}</dt>
                 <dd className="mt-0.5 font-medium">
-                  {plan.freezeMaxDays ? `${plan.freezeMaxDays} days` : t.plans.unlimited}
+                  {plan.freezeMaxDays
+                    ? formatDict(t.plans.daysUnit, { count: plan.freezeMaxDays, plural: plan.freezeMaxDays !== 1 ? "s" : "" })
+                    : t.plans.unlimited}
                 </dd>
               </div>
             )}

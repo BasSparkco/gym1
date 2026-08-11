@@ -244,6 +244,9 @@ export type Dict = {
     unlimited: string;
     yes: string;
     no: string;
+    monthsUnit: string;
+    daysUnit: string;
+    sessionsUnit: string;
   };
   memberships: {
     sell: string;
@@ -1163,6 +1166,9 @@ const en: Dict = {
     unlimited: "Unlimited",
     yes: "Yes",
     no: "No",
+    monthsUnit: "{count} month{plural}",
+    daysUnit: "{count} day{plural}",
+    sessionsUnit: "{count} session{plural}",
   },
   memberships: {
     sell: "Sell membership",
@@ -2082,6 +2088,9 @@ const ar: Dict = {
     unlimited: "غير محدود",
     yes: "نعم",
     no: "لا",
+    monthsUnit: "{count} شهر",
+    daysUnit: "{count} يوم",
+    sessionsUnit: "{count} حصة",
   },
   memberships: {
     sell: "بيع اشتراك",
@@ -3001,6 +3010,9 @@ const he: Dict = {
     unlimited: "ללא הגבלה",
     yes: "כן",
     no: "לא",
+    monthsUnit: "{count} חודשים",
+    daysUnit: "{count} ימים",
+    sessionsUnit: "{count} מפגשים",
   },
   memberships: {
     sell: "מכור מנוי",

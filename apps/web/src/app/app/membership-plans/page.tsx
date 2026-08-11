@@ -11,13 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CreditCard, PlusCircle, PencilLine } from "lucide-react";
 
-function planSummary(plan: Awaited<ReturnType<typeof listMembershipPlans>>[number]) {
+function planSummary(plan: Awaited<ReturnType<typeof listMembershipPlans>>[number], t: Awaited<ReturnType<typeof getT>>) {
   if (plan.planType === "duration") {
     const days = plan.durationDays ?? 0;
-    if (days % 30 === 0) return `${days / 30} month${days / 30 !== 1 ? "s" : ""}`;
-    return `${days} days`;
+    if (days % 30 === 0) {
+      const months = days / 30;
+      return formatDict(t.plans.monthsUnit, { count: months, plural: months !== 1 ? "s" : "" });
+    }
+    return formatDict(t.plans.daysUnit, { count: days, plural: days !== 1 ? "s" : "" });
   }
-  return `${plan.sessionCount ?? 0} sessions`;
+  const count = plan.sessionCount ?? 0;
+  return formatDict(t.plans.sessionsUnit, { count, plural: count !== 1 ? "s" : "" });
 }
 
 export default async function MembershipPlansPage() {
@@ -103,7 +107,7 @@ export default async function MembershipPlansPage() {
                   {currencySymbol}
                   {plan.price}
                 </p>
-                <p className="mt-1 text-sm text-foreground/60">{planSummary(plan)}</p>
+                <p className="mt-1 text-sm text-foreground/60">{planSummary(plan, t)}</p>
 
                 <p className="mt-2 text-sm text-foreground/60">
                   <span className="text-foreground/45">{t.plans.branchAccess}: </span>
