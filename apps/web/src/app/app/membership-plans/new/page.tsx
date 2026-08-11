@@ -7,6 +7,7 @@ import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { BranchAccessField } from "@/components/membership-plans/branch-access-field";
 import { PlusCircle } from "lucide-react";
 
 export default async function NewMembershipPlanPage() {
@@ -130,39 +131,20 @@ export default async function NewMembershipPlanPage() {
             </div>
           </div>
 
-          <div className="grid gap-1.5 sm:grid-cols-2">
-            <div className="grid gap-1.5">
-              <label htmlFor="branchAccessMode" className="text-sm font-medium">
-                {t.plans.branchAccess}
-              </label>
-              <select
-                id="branchAccessMode"
-                name="branchAccessMode"
-                defaultValue="all"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
-                <option value="all">{t.plans.allBranches}</option>
-                <option value="home">{t.plans.homeBranchOnly}</option>
-                <option value="selected">{t.plans.selectedBranchesOnly}</option>
-              </select>
-              {branches.length > 0 && (
-                <div className="mt-1 grid gap-2 rounded-2xl border border-line bg-white px-4 py-3 sm:grid-cols-2">
-                  {branches.map((branch) => (
-                    <label key={branch.id} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        name="branchIds"
-                        value={branch.id}
-                        className="h-4 w-4 rounded border-line accent-brand"
-                      />
-                      <span>{branch.name}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+          <div className="grid items-start gap-5 sm:grid-cols-2">
+            <BranchAccessField
+              branches={branches}
+              defaultMode="all"
+              entitledBranchIds={new Set()}
+              labels={{
+                branchAccess: t.plans.branchAccess,
+                allBranches: t.plans.allBranches,
+                homeBranchOnly: t.plans.homeBranchOnly,
+                selectedBranchesOnly: t.plans.selectedBranchesOnly,
+              }}
+            />
 
-            <div className="grid gap-1.5">
+            <div className="grid gap-1.5 self-start">
               <label htmlFor="freezeAllowed" className="text-sm font-medium">
                 {t.plans.freezePolicy}
               </label>
