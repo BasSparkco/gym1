@@ -3,6 +3,7 @@
 import { getMember } from "@/lib/members";
 import { listMembershipsForMember, createMembership } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
+import { listLockers, createLockerRental } from "@/lib/lockers";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -25,14 +26,18 @@ export default async function SellMembershipPage({ params, searchParams }: Props
   await requireSession();
   const t = await getT();
 
-  const [member, memberships, plans, settings] = await Promise.all([
+  const [member, memberships, plans, allLockers, settings] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
     listMembershipPlans(),
+    listLockers(),
     getSettings(),
   ]);
   const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
+  const availableLockers = allLockers.filter(
+    (l) => l.branchId === member.homeBranchId && l.status === "available",
+  );
 
   // Matches the backend's overlap check in createMembership — active, frozen,
   // and pre-sold draft memberships all still occupy their date range.
@@ -48,6 +53,9 @@ export default async function SellMembershipPage({ params, searchParams }: Props
     const rawPrice = formData.get("finalPrice") as string;
     const finalPrice = rawPrice ? Number(rawPrice) : undefined;
     const endDate = (formData.get("endDate") as string) || undefined;
+    const lockerId = formData.get("lockerId") as string;
+    const rawLockerPrice = formData.get("lockerFinalPrice") as string;
+    const lockerFinalPrice = rawLockerPrice ? Number(rawLockerPrice) : undefined;
 
     try {
       await createMembership({
@@ -67,6 +75,16 @@ export default async function SellMembershipPage({ params, searchParams }: Props
         // not JSON, use as-is
       }
       redirect(`/app/members/${memberId}/memberships/new?error=${encodeURIComponent(message)}`);
+    }
+
+    if (lockerId) {
+      await createLockerRental({
+        lockerId,
+        memberId,
+        startDate,
+        endDate,
+        finalPrice: lockerFinalPrice !== undefined && !isNaN(lockerFinalPrice) ? lockerFinalPrice : undefined,
+      });
     }
 
     redirect(`/app/members/${memberId}`);
@@ -101,6 +119,7 @@ export default async function SellMembershipPage({ params, searchParams }: Props
         <form action={handleCreate} className="grid gap-5">
           <MembershipFormFields
             plans={plans}
+            lockers={availableLockers}
             today={today}
             dateFormat={dateFormat}
             currencySymbol={currencySymbol}
@@ -111,6 +130,11 @@ export default async function SellMembershipPage({ params, searchParams }: Props
               finalPrice: t.memberships.finalPrice,
               noPlansAvailable: t.memberships.noPlansAvailable,
               createPlanFirst: t.memberships.createPlanFirst,
+              rentLocker: t.memberships.rentLocker,
+              selectLocker: t.lockers.selectLocker,
+              noLockersAvailable: t.lockers.noLockersAvailable,
+              createLockerFirst: t.lockers.createLockerFirst,
+              lockerFinalPrice: t.memberships.lockerFinalPrice,
             }}
           />
 

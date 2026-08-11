@@ -14,14 +14,27 @@ type Plan = {
   sessionCount?: number;
 };
 
+type Locker = {
+  id: string;
+  lockerNumber: string;
+  size: "small" | "medium" | "large" | null;
+  monthlyPrice: number;
+};
+
+function monthsForPlan(plan?: Plan) {
+  return plan?.durationDays ? Math.max(1, Math.round(plan.durationDays / 30)) : 1;
+}
+
 export default function MembershipFormFields({
   plans,
+  lockers,
   today,
   dateFormat,
   currencySymbol,
   labels,
 }: {
   plans: Plan[];
+  lockers: Locker[];
   today: string;
   dateFormat: DateFormat;
   currencySymbol: string;
@@ -32,13 +45,22 @@ export default function MembershipFormFields({
     finalPrice: string;
     noPlansAvailable: string;
     createPlanFirst: string;
+    rentLocker: string;
+    selectLocker: string;
+    noLockersAvailable: string;
+    createLockerFirst: string;
+    lockerFinalPrice: string;
   };
 }) {
   const [planId, setPlanId] = useState("");
   const [startDate, setStartDate] = useState(today);
   const [price, setPrice] = useState<number | "">("");
+  const [rentLocker, setRentLocker] = useState(false);
+  const [lockerId, setLockerId] = useState("");
+  const [lockerPrice, setLockerPrice] = useState<number | "">("");
 
   const selectedPlan = plans.find((plan) => plan.id === planId);
+  const selectedLocker = lockers.find((locker) => locker.id === lockerId);
   const computedEndDate =
     selectedPlan?.planType === "duration" && selectedPlan.durationDays
       ? addDaysToDateString(startDate, selectedPlan.durationDays)
@@ -49,6 +71,14 @@ export default function MembershipFormFields({
     setPlanId(id);
     const plan = plans.find((p) => p.id === id);
     if (plan) setPrice(plan.price);
+    if (selectedLocker) setLockerPrice(selectedLocker.monthlyPrice * monthsForPlan(plan));
+  }
+
+  function handleLockerChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setLockerId(id);
+    const locker = lockers.find((l) => l.id === id);
+    if (locker) setLockerPrice(locker.monthlyPrice * monthsForPlan(selectedPlan));
   }
 
   return (
@@ -134,6 +164,72 @@ export default function MembershipFormFields({
           onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
           className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
+      </div>
+
+      <div className="grid gap-1.5">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-sm">
+          <input
+            type="checkbox"
+            checked={rentLocker}
+            onChange={(e) => setRentLocker(e.target.checked)}
+            className="h-4 w-4 rounded border-line accent-brand"
+          />
+          <span className="font-medium">{labels.rentLocker}</span>
+        </label>
+
+        {rentLocker && (
+          <div className="grid gap-4 rounded-2xl border border-line bg-white/50 p-4">
+            {lockers.length === 0 ? (
+              <p className="text-sm text-foreground/50">
+                {labels.noLockersAvailable}{" "}
+                <a href="/app/lockers/new" className="text-brand hover:underline">
+                  {labels.createLockerFirst}
+                </a>
+              </p>
+            ) : (
+              <>
+                <div className="grid gap-1.5">
+                  <label htmlFor="lockerId" className="text-sm font-medium">
+                    {labels.selectLocker} <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="lockerId"
+                    name="lockerId"
+                    required
+                    value={lockerId}
+                    onChange={handleLockerChange}
+                    className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  >
+                    <option value="">Select a locker…</option>
+                    {lockers.map((locker) => (
+                      <option key={locker.id} value={locker.id}>
+                        #{locker.lockerNumber} — {currencySymbol}
+                        {locker.monthlyPrice}
+                        {locker.size ? ` · ${locker.size}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <label htmlFor="lockerFinalPrice" className="text-sm font-medium">
+                    {labels.lockerFinalPrice}
+                  </label>
+                  <input
+                    id="lockerFinalPrice"
+                    name="lockerFinalPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={lockerPrice}
+                    onChange={(e) => setLockerPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                    className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

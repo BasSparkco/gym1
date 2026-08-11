@@ -279,6 +279,8 @@ export type Dict = {
     sellNewInstead: string;
     backToProfile: string;
     days: string;
+    rentLocker: string;
+    lockerFinalPrice: string;
   };
   payments: {
     title: string;
@@ -1201,6 +1203,8 @@ const en: Dict = {
     sellNewInstead: "Sell a new membership instead.",
     backToProfile: "Back to profile",
     days: "days",
+    rentLocker: "Rent a locker",
+    lockerFinalPrice: "Rental price",
   },
   payments: {
     title: "Payments",
@@ -2123,6 +2127,8 @@ const ar: Dict = {
     sellNewInstead: "بيع اشتراك جديد بدلاً من ذلك.",
     backToProfile: "العودة إلى الملف الشخصي",
     days: "أيام",
+    rentLocker: "استئجار خزانة",
+    lockerFinalPrice: "سعر الإيجار",
   },
   payments: {
     title: "المدفوعات",
@@ -3045,6 +3051,8 @@ const he: Dict = {
     sellNewInstead: "מכור מנוי חדש במקום.",
     backToProfile: "חזור לפרופיל",
     days: "ימים",
+    rentLocker: "השכר תא",
+    lockerFinalPrice: "מחיר השכרה",
   },
   payments: {
     title: "תשלומים",
