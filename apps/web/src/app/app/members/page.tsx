@@ -301,29 +301,14 @@ export default async function MembersPage({
         <EmptyState icon={<Users className="h-5 w-5" strokeWidth={2} />} title={t.members.noMembers} />
       ) : (
         <Card animate delay={1} className="min-w-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead>
-                <tr className="border-b border-line text-start text-xs font-semibold uppercase tracking-[0.18em] text-foreground/50">
-                  <th className="pb-3 pe-4 text-start">{t.reports.memberCol}</th>
-                  <th className="pb-3 pe-4 text-start">{t.reports.planCol}</th>
-                  {viewingAllBranches && <th className="pb-3 pe-4 text-start">{t.members.homeBranch}</th>}
-                  <th className="pb-3 pe-4 text-start">{t.reports.expiresCol}</th>
-                  <th className="pb-3 pe-4 text-start">{t.reports.statusCol}</th>
-                  <th className="pb-3 pe-4 text-start">{t.members.debt}</th>
-                  <th className="pb-3 text-end">{t.actions.details}</th>
-                </tr>
-              </thead>
-              <MembersTableBody
-                rows={rows}
-                branches={branches}
-                employees={employees}
-                dateFormat={dateFormat}
-                t={t}
-                showBranchColumn={viewingAllBranches}
-              />
-            </table>
-          </div>
+          <MembersTableBody
+            rows={rows}
+            branches={branches}
+            employees={employees}
+            dateFormat={dateFormat}
+            t={t}
+            showBranchColumn={viewingAllBranches}
+          />
 
           {/* Pagination */}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
