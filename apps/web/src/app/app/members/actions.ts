@@ -23,7 +23,6 @@ export async function updateMemberAction(formData: FormData) {
     emergencyContactName: (formData.get("emergencyContactName") as string) || undefined,
     emergencyContactPhone: (formData.get("emergencyContactPhone") as string) || undefined,
     medicalNotes: (formData.get("medicalNotes") as string) || undefined,
-    rfidTag: (formData.get("rfidTag") as string) || undefined,
   });
 
   revalidatePath("/app/members");
