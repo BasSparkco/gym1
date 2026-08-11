@@ -186,21 +186,6 @@ export default async function NewMemberPage() {
             </div>
           </div>
 
-          {/* Access Control */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50 mb-4">Access Control</p>
-            <div className="grid gap-1.5 sm:max-w-xs">
-              <label htmlFor="rfidTag" className="text-sm font-medium">RFID Tag ID</label>
-              <input
-                id="rfidTag"
-                name="rfidTag"
-                placeholder="e.g. A3F20C1D"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm font-mono uppercase outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-              <p className="text-xs text-foreground/50">Scan or type the tag ID printed on the member's RFID card.</p>
-            </div>
-          </div>
-
           <div className="flex gap-3 pt-2">
             <Button type="submit" variant="primary" icon={<UserPlus className="h-4 w-4" strokeWidth={2} />}>
               {t.members.newMember}

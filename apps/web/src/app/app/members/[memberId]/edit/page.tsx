@@ -65,7 +65,7 @@ export default async function EditMemberPage({ params }: Props) {
       />
 
       {/* Photo upload — client component, independent of the form */}
-      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+      <section className="animate-fade-in-up min-w-0 rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand mb-4">{t.members.photo}</p>
         <MemberPhotoUpload
           memberId={memberId}
@@ -74,14 +74,14 @@ export default async function EditMemberPage({ params }: Props) {
         />
       </section>
 
-      <section className="animate-fade-in-up rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
-        <form action={handleUpdate} className="grid gap-6">
+      <section className="animate-fade-in-up min-w-0 rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
+        <form action={handleUpdate} className="grid min-w-0 gap-6">
 
           {/* Basic Info */}
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand mb-4">{t.members.basicInfo}</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-4 sm:col-span-2 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <label htmlFor="fullName" className="text-sm font-medium">
                     {t.members.fullName} <span className="text-red-500">*</span>
@@ -159,7 +159,7 @@ export default async function EditMemberPage({ params }: Props) {
                 />
               </div>
 
-              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-4 sm:col-span-2 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <label htmlFor="homeBranchId" className="text-sm font-medium">{t.members.homeBranch}</label>
                   <select id="homeBranchId" name="homeBranchId" defaultValue={member.homeBranchId} className={inputClass}>
@@ -188,9 +188,9 @@ export default async function EditMemberPage({ params }: Props) {
           </div>
 
           {/* Emergency Contact */}
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent mb-4">{t.members.emergencyContact}</p>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
                 <label htmlFor="emergencyContactName" className="text-sm font-medium">{t.members.contactName}</label>
                 <input id="emergencyContactName" name="emergencyContactName" defaultValue={member.emergencyContactName} placeholder="e.g. Ahmad Khalil" className={inputClass} />
@@ -203,7 +203,7 @@ export default async function EditMemberPage({ params }: Props) {
           </div>
 
           {/* Medical Notes */}
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50 mb-4">{t.members.medicalNotes}</p>
             <div className="grid gap-1.5">
               <label htmlFor="medicalNotes" className="text-sm font-medium">{t.members.notes}</label>
@@ -215,22 +215,6 @@ export default async function EditMemberPage({ params }: Props) {
                 placeholder="Any relevant medical information or health conditions…"
                 className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 resize-none"
               />
-            </div>
-          </div>
-
-          {/* Access Control */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/50 mb-4">Access Control</p>
-            <div className="grid gap-1.5 sm:max-w-xs">
-              <label htmlFor="rfidTag" className="text-sm font-medium">RFID Tag ID</label>
-              <input
-                id="rfidTag"
-                name="rfidTag"
-                defaultValue={member.rfidTag}
-                placeholder="e.g. A3F20C1D"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm font-mono uppercase outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-              <p className="text-xs text-foreground/50">Scan or type the tag ID printed on the member's RFID card.</p>
             </div>
           </div>
 

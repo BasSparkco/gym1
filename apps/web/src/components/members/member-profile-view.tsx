@@ -22,7 +22,6 @@ import {
 } from "@/components/members/member-profile-shared";
 import {
   PencilLine,
-  QrCode,
   Wallet,
   CreditCard,
   RefreshCw,
@@ -70,10 +69,12 @@ export type CourseEnrollmentRow = {
   finalPrice: number;
 };
 
-// The single canonical shape a member profile view is built from. Both the
-// dedicated /app/members/[memberId] page and the members-list inline
-// expansion (MembersTableBody) map their fetched data into this shape and
-// render it through MemberProfileView below, so the two never drift again.
+// The single canonical shape a member profile is built from. The dedicated
+// /app/members/[memberId] page maps its fetched data into this shape and
+// renders it through MemberProfileView below; MembersTableBody (the
+// /app/members list table) reuses the same shape for its row data so the two
+// never drift, even though the list only navigates to the dedicated page
+// rather than rendering MemberProfileView inline.
 export type MemberProfileData = {
   member: Member;
   avatar: string;
@@ -180,13 +181,15 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
             </div>
           </div>
 
-          {member.rfidTag && (
-            <div className="flex shrink-0 flex-col items-end gap-2 text-right">
-              <div className="relative h-[38px] w-[52px] rounded-lg bg-[linear-gradient(140deg,#E8D98A,#C9AF5B_55%,#EADFA4)] before:absolute before:inset-x-0 before:top-3 before:h-px before:bg-[rgba(60,45,10,0.35)] after:absolute after:inset-x-0 after:bottom-3 after:h-px after:bg-[rgba(60,45,10,0.35)]" />
-              <span className={`font-mono text-[12px] tracking-[0.22em] text-accent`}>{member.rfidTag}</span>
-              <span className={`font-mono text-[10px] uppercase tracking-[0.18em] text-white/50`}>{t.members.rfidTagLabel}</span>
-            </div>
-          )}
+          <Link href={`/app/members/${member.id}/qr`} className="flex shrink-0 flex-col items-center gap-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/members/${member.id}/qrcode`}
+              alt={`QR code for ${member.fullName}`}
+              className="h-[76px] w-[76px] rounded-lg border border-white/15 bg-white p-1.5"
+            />
+            <span className={`font-mono text-[10px] uppercase tracking-[0.18em] text-white/50`}>{t.members.qrCode}</span>
+          </Link>
         </div>
 
         <div className="relative flex flex-wrap items-center justify-between gap-4 border-t border-white/12 px-9 py-3.5">
@@ -234,10 +237,6 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
 
       {/* Quick actions rail */}
       <div role="toolbar" aria-label={t.members.quickActions} className="mt-5 flex flex-wrap gap-3">
-        <Link href={`/app/members/${member.id}/qr`} className={railBtn}>
-          <QrCode className="h-4 w-4" strokeWidth={2.2} />
-          {t.members.showQrCode}
-        </Link>
         <Link href={`/app/members/${member.id}/pin`} className={railBtn}>
           <KeyRound className="h-4 w-4" strokeWidth={2.2} />
           {t.members.setAppPin}
@@ -276,9 +275,9 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
       </div>
 
       {/* Details grid */}
-      <div className="mt-5 grid gap-5 md:grid-cols-2">
+      <div className="mt-5 grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2">
         {/* Identity + Contact */}
-        <section className="rounded-[18px] border border-line border-s-4 border-s-brand bg-surface px-7 py-6">
+        <section className="rounded-[18px] border border-line border-s-4 border-s-brand bg-surface px-5 py-6 sm:px-7">
           <div className="mb-4 flex items-center gap-2.5">
             <h2 className={`font-mono ${sectionHead}`}>{t.members.identityTitle}</h2>
             <span className="h-px flex-1 bg-line" />
@@ -350,7 +349,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
         </section>
 
         {/* Emergency contact + Physical profile */}
-        <section className="rounded-[18px] border border-line border-s-4 border-s-danger bg-surface px-7 py-6">
+        <section className="rounded-[18px] border border-line border-s-4 border-s-danger bg-surface px-5 py-6 sm:px-7">
           <div className="mb-4 flex items-center gap-2.5">
             <h2 className={`font-mono ${sectionHead}`}>{t.members.emergencyContact}</h2>
             <span className="h-px flex-1 bg-line" />
@@ -433,10 +432,10 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
         </section>
 
         {/* Memberships */}
-        <section className="rounded-[18px] border border-line border-s-4 border-s-accent-strong bg-surface px-7 py-6 md:col-span-2">
-          <div className="flex items-center gap-2.5">
+        <section className="rounded-[18px] border border-line border-s-4 border-s-accent-strong bg-surface px-5 py-6 sm:px-7 md:col-span-2">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <h2 className={`font-mono ${sectionHead}`}>{t.members.memberships}</h2>
-            <span className="h-px flex-1 bg-line" />
+            <span className="h-px min-w-8 flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/memberships/new`} className={panelBtnSm}>
               <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.members.sellMembership}
@@ -461,7 +460,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                       <span dir={isRtlText(ms.planName) ? "rtl" : undefined} className="text-[15px] font-semibold">
                         {ms.planName}
                       </span>
-                      <span className={`font-mono text-[12px] tracking-[0.04em] text-muted`}>
+                      <span dir="ltr" className={`font-mono text-[12px] tracking-[0.04em] text-muted`}>
                         {formatDate(ms.startDate, dateFormat)} → {formatDate(ms.endDate, dateFormat)}
                       </span>
                     </div>
@@ -499,10 +498,10 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
         </section>
 
         {/* Courses */}
-        <section className="rounded-[18px] border border-line border-s-4 border-s-purple-500 bg-surface px-7 py-6 md:col-span-2">
-          <div className="flex items-center gap-2.5">
+        <section className="rounded-[18px] border border-line border-s-4 border-s-purple-500 bg-surface px-5 py-6 sm:px-7 md:col-span-2">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <h2 className={`font-mono ${sectionHead}`}>{t.classes.coursesTitle}</h2>
-            <span className="h-px flex-1 bg-line" />
+            <span className="h-px min-w-8 flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/courses/new`} className={panelBtnSm}>
               <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.classes.registerForCourse}
@@ -548,10 +547,10 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
         </section>
 
         {/* Lockers */}
-        <section className="rounded-[18px] border border-line border-s-4 border-s-blue-500 bg-surface px-7 py-6 md:col-span-2">
-          <div className="flex items-center gap-2.5">
+        <section className="rounded-[18px] border border-line border-s-4 border-s-blue-500 bg-surface px-5 py-6 sm:px-7 md:col-span-2">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <h2 className={`font-mono ${sectionHead}`}>{t.members.lockers}</h2>
-            <span className="h-px flex-1 bg-line" />
+            <span className="h-px min-w-8 flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/lockers/new`} className={panelBtnSm}>
               <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.members.sellLocker}
@@ -573,7 +572,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                       <span className="flex items-center gap-1.5 text-[15px] font-semibold">
                         <KeySquare className="h-3.5 w-3.5 text-muted" strokeWidth={2} />#{rental.lockerNumber}
                       </span>
-                      <span className={`font-mono text-[12px] tracking-[0.04em] text-muted`}>
+                      <span dir="ltr" className={`font-mono text-[12px] tracking-[0.04em] text-muted`}>
                         {formatDate(rental.startDate, dateFormat)} → {formatDate(rental.endDate, dateFormat)}
                       </span>
                     </div>
@@ -594,8 +593,8 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
         </section>
 
         {/* Payments */}
-        <section className="rounded-[18px] border border-line border-s-4 border-s-brand-deeper bg-surface px-7 py-6 md:col-span-2">
-          <div className="flex items-center gap-2.5">
+        <section className="rounded-[18px] border border-line border-s-4 border-s-brand-deeper bg-surface px-5 py-6 sm:px-7 md:col-span-2">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <h2 className={`font-mono ${sectionHead}`}>{t.members.payments}</h2>
             <span
               className={`font-mono inline-flex items-center gap-1.5 rounded-full px-[11px] py-[5px] text-[10px] uppercase tracking-[0.14em] ${member.debt > 0 ? pillTone.cancelled : pillTone.active}`}
@@ -603,7 +602,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
               {t.members.debt}: {data.currencySymbol}
               {member.debt.toLocaleString()}
             </span>
-            <span className="h-px flex-1 bg-line" />
+            <span className="h-px min-w-8 flex-1 bg-line" />
             <Link href={`/app/members/${member.id}/payments/new`} className={panelBtnSm}>
               <PlusCircle className="h-4 w-4" strokeWidth={2} />
               {t.members.recordPayment}
