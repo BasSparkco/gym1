@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MemberProfileView, type MemberProfileData } from "@/components/members/member-profile-view";
@@ -49,6 +49,24 @@ const secondaryCellCls = "hidden py-3 pe-4 text-start sm:table-cell";
 // that width instead of stretching it.
 export function MembersTableBody({ rows, branches, employees, dateFormat, t, showBranchColumn = true }: Props) {
   const [expanded, setExpanded] = useState<{ id: string; mode: "profile" | "edit" } | null>(null);
+  const expandedRowRef = useRef<HTMLTableRowElement | null>(null);
+  const expandedPanelRef = useRef<HTMLDivElement | null>(null);
+
+  // Bring a newly expanded row into view: without this, expanding a row near
+  // the bottom of a long list opens its panel below the fold and the click
+  // silently appears to do nothing. Scrolling the ROW (not just the panel)
+  // into view keeps the member's name/photo visible alongside their details.
+  // `scroll-mt-*` on the row (below) keeps it clear of the sticky/fixed app
+  // header instead of scrolling to the literal top edge of the viewport.
+  useEffect(() => {
+    if (!expanded) return;
+
+    expandedRowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // preventScroll: the row's own smooth scroll above already handles
+    // positioning — without this, focusing an off-screen panel makes the
+    // browser jump-scroll it into view too, fighting the smooth scroll.
+    expandedPanelRef.current?.focus({ preventScroll: true });
+  }, [expanded]);
 
   function toggleProfile(id: string) {
     setExpanded((prev) => (prev && prev.id === id && prev.mode === "profile" ? null : { id, mode: "profile" }));
@@ -80,7 +98,8 @@ export function MembersTableBody({ rows, branches, employees, dateFormat, t, sho
             return (
               <Fragment key={row.member.id}>
                 <tr
-                  className={`cursor-pointer transition-colors hover:bg-black/[0.02] ${isSelected ? "bg-black/[0.03]" : ""}`}
+                  ref={isSelected ? expandedRowRef : undefined}
+                  className={`scroll-mt-20 cursor-pointer transition-colors hover:bg-black/[0.02] ${isSelected ? "bg-black/[0.03]" : ""}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => toggleProfile(row.member.id)}
@@ -147,7 +166,7 @@ export function MembersTableBody({ rows, branches, employees, dateFormat, t, sho
                 {isSelected && (
                   <tr>
                     <td colSpan={colSpan} className="bg-surface-muted/40 px-2 py-6 sm:px-7" onClick={(event) => event.stopPropagation()}>
-                      <div className="min-w-0">
+                      <div ref={expandedPanelRef} tabIndex={-1} className="min-w-0 rounded-[10px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
                         {expanded?.mode === "profile" ? (
                           <MemberProfileView data={row} t={t} dateFormat={dateFormat} onEditClick={() => toggleEdit(row.member.id)} />
                         ) : (
