@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Camera, Upload, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -146,24 +147,29 @@ export default function MemberPhotoUpload({ memberId, currentPhotoUrl, apiBaseUr
 
       {error && <p className="text-xs text-red-500">{error}</p>}
 
-      {/* Camera modal */}
-      {cameraOpen && (
-        <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="animate-scale-in grid gap-4 rounded-3xl bg-white p-6 shadow-xl w-full max-w-sm">
-            <p className="text-sm font-semibold">Take a photo</p>
-            <video ref={videoRef} className="rounded-2xl w-full" playsInline muted />
-            <canvas ref={canvasRef} className="hidden" />
-            <div className="flex gap-3">
-              <Button type="button" variant="primary" onClick={capturePhoto} className="flex-1">
-                Capture
-              </Button>
-              <Button type="button" variant="secondary" onClick={closeCamera} className="flex-1">
-                Cancel
-              </Button>
+      {/* Camera modal — portaled to <body> so it's fixed to the real
+          viewport, not to this card's animate-fade-in-up ancestor (that
+          animation leaves a persistent `transform`, which turns `fixed`
+          into positioning relative to that card instead of the screen). */}
+      {cameraOpen &&
+        createPortal(
+          <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="animate-scale-in grid gap-4 rounded-3xl bg-white p-6 shadow-xl w-full max-w-sm">
+              <p className="text-sm font-semibold">Take a photo</p>
+              <video ref={videoRef} className="rounded-2xl w-full" playsInline muted />
+              <canvas ref={canvasRef} className="hidden" />
+              <div className="flex gap-3">
+                <Button type="button" variant="primary" onClick={capturePhoto} className="flex-1">
+                  Capture
+                </Button>
+                <Button type="button" variant="secondary" onClick={closeCamera} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

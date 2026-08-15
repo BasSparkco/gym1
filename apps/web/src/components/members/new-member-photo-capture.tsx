@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Camera, Upload, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -139,23 +140,31 @@ export default function NewMemberPhotoCapture({
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
 
-      {cameraOpen && (
-        <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="animate-scale-in grid gap-4 rounded-3xl bg-white p-6 shadow-xl w-full max-w-sm">
-            <p className="text-sm font-semibold">{takePhotoLabel}</p>
-            <video ref={videoRef} className="rounded-2xl w-full" playsInline muted />
-            <canvas ref={canvasRef} className="hidden" />
-            <div className="flex gap-3">
-              <Button type="button" variant="primary" onClick={capturePhoto} className="flex-1">
-                Capture
-              </Button>
-              <Button type="button" variant="secondary" onClick={closeCamera} className="flex-1">
-                Cancel
-              </Button>
+      {/* Portaled to <body> so it's fixed to the real viewport, not to the
+          form's animate-fade-in-up ancestor (that animation leaves a
+          persistent `transform`, which turns `fixed` into positioning
+          relative to that ancestor's box instead of the screen — on this
+          page the ancestor is the whole tall form, so the modal was
+          centering itself far down the page instead of near the button). */}
+      {cameraOpen &&
+        createPortal(
+          <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="animate-scale-in grid gap-4 rounded-3xl bg-white p-6 shadow-xl w-full max-w-sm">
+              <p className="text-sm font-semibold">{takePhotoLabel}</p>
+              <video ref={videoRef} className="rounded-2xl w-full" playsInline muted />
+              <canvas ref={canvasRef} className="hidden" />
+              <div className="flex gap-3">
+                <Button type="button" variant="primary" onClick={capturePhoto} className="flex-1">
+                  Capture
+                </Button>
+                <Button type="button" variant="secondary" onClick={closeCamera} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
