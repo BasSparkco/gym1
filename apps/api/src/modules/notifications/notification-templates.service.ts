@@ -45,12 +45,13 @@ export class NotificationTemplatesService {
 
       return LANGUAGES.map((lang) => {
         const override = overrides.get(`${templateKey}:${lang}`);
+        const defaultText = fallback.translations[lang];
 
         return {
           templateKey,
           lang,
-          subject: override?.subject ?? (lang === 'en' ? fallback.subject : ''),
-          body: override?.body ?? (lang === 'en' ? fallback.body : ''),
+          subject: override?.subject ?? defaultText.subject,
+          body: override?.body ?? defaultText.body,
           variables: fallback.variables,
           isCustomized: Boolean(override),
         };
@@ -115,8 +116,9 @@ export class NotificationTemplatesService {
 
   /**
    * Resolves and renders the subject/body actually sent: an exact
-   * (templateKey, lang) override, else the tenant's `en` override, else the
-   * in-code English default — a translation gap never blocks sending.
+   * (templateKey, lang) override, else the in-code default for that
+   * language — every language has real in-code text, so there's no need to
+   * fall back across languages.
    */
   async getRenderedTemplate(
     tenantId: string,
@@ -124,25 +126,11 @@ export class NotificationTemplatesService {
     lang: Language,
     variables: Record<string, string>,
   ): Promise<RenderedNotification> {
-    const exact = await this.prisma.notificationTemplate.findUnique({
+    const row = await this.prisma.notificationTemplate.findUnique({
       where: { tenantId_templateKey_lang: { tenantId, templateKey, lang } },
     });
 
-    const fallbackRow =
-      exact ??
-      (lang !== 'en'
-        ? await this.prisma.notificationTemplate.findUnique({
-            where: {
-              tenantId_templateKey_lang: {
-                tenantId,
-                templateKey,
-                lang: 'en',
-              },
-            },
-          })
-        : null);
-
-    const base = fallbackRow ?? DEFAULT_NOTIFICATION_TEMPLATES[templateKey];
+    const base = row ?? DEFAULT_NOTIFICATION_TEMPLATES[templateKey].translations[lang];
 
     return {
       subject: renderNotificationTemplate(base.subject, variables),
