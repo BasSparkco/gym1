@@ -310,6 +310,16 @@ export class MembersService {
     return this.serializeMember(updated);
   }
 
+  // Resolves a stored photo filename back to the member it belongs to, scoped
+  // to one tenant so a filename can never be used to reach into another
+  // tenant's photos. Used by MemberPhotosController to authorize both staff
+  // and member requests before streaming the file from MinIO.
+  async findMemberByPictureFilename(tenantId: string, filename: string) {
+    return this.prisma.member.findFirst({
+      where: { tenantId, pictureUrl: { endsWith: `/${filename}` } },
+    });
+  }
+
   /**
    * Staff-triggered: assigns or resets the PIN a member uses to sign into
    * the mobile app. There's no member self-service flow yet — a staff
