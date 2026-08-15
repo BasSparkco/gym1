@@ -101,11 +101,17 @@ export default async function MembersPage({
 
   if (q) {
     const lq = q.toLowerCase();
+    // Phone match is digits-only on both sides, with a leading zero on the
+    // query stripped — same rule the topbar search uses (members.controller.ts
+    // searchMembers) — so a local-format number like "0585438101" still
+    // matches a member stored in E.164 form ("+972585438101").
+    const queryDigits = lq.replace(/\D/g, "").replace(/^0+/, "");
     members = members.filter(
       (m) =>
         m.fullName.toLowerCase().includes(lq) ||
         m.memberNumber.toLowerCase().includes(lq) ||
-        (m.phone ?? "").includes(lq),
+        (queryDigits.length >= 4 &&
+          (m.phone ?? "").replace(/\D/g, "").includes(queryDigits)),
     );
   }
 
