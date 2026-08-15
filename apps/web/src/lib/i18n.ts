@@ -68,6 +68,7 @@ export type Dict = {
     view: string;
     details: string;
     saveChanges: string;
+    saving: string;
     prev: string;
     next: string;
   };
@@ -157,6 +158,7 @@ export type Dict = {
     allMembers: string;
     noMembers: string;
     createFirst: string;
+    saveError: string;
     basicInfo: string;
     contactName: string;
     contactPhone: string;
@@ -993,6 +995,7 @@ const en: Dict = {
     view: "View",
     details: "Details",
     saveChanges: "Save changes",
+    saving: "Saving…",
     prev: "Prev",
     next: "Next",
   },
@@ -1082,6 +1085,7 @@ const en: Dict = {
     allMembers: "All members",
     noMembers: "No members yet. Create the first one.",
     createFirst: "Create the first one.",
+    saveError: "Couldn't save changes. Please try again.",
     basicInfo: "Basic info",
     contactName: "Contact name",
     contactPhone: "Contact phone",
@@ -1918,6 +1922,7 @@ const ar: Dict = {
     view: "عرض",
     details: "التفاصيل",
     saveChanges: "حفظ التغييرات",
+    saving: "جارٍ الحفظ…",
     prev: "السابق",
     next: "التالي",
   },
@@ -2007,6 +2012,7 @@ const ar: Dict = {
     allMembers: "جميع الأعضاء",
     noMembers: "لا يوجد أعضاء بعد. أنشئ أول عضو.",
     createFirst: "أنشئ أول عضو.",
+    saveError: "تعذّر حفظ التغييرات. حاول مرة أخرى.",
     basicInfo: "المعلومات الأساسية",
     contactName: "اسم جهة الاتصال",
     contactPhone: "هاتف جهة الاتصال",
@@ -2843,6 +2849,7 @@ const he: Dict = {
     view: "הצג",
     details: "פרטים",
     saveChanges: "שמור שינויים",
+    saving: "שומר…",
     prev: "הקודם",
     next: "הבא",
   },
@@ -2932,6 +2939,7 @@ const he: Dict = {
     allMembers: "כל החברים",
     noMembers: "אין חברים עדיין. צור את הראשון.",
     createFirst: "צור את הראשון.",
+    saveError: "לא ניתן היה לשמור את השינויים. נסה שוב.",
     basicInfo: "מידע בסיסי",
     contactName: "שם איש קשר",
     contactPhone: "טלפון איש קשר",
