@@ -57,9 +57,12 @@ async function authedFetch(path: string, init?: RequestInit) {
   return response;
 }
 
-export async function listLockers(branchId?: string): Promise<Locker[]> {
-  const url = branchId ? `/lockers?branchId=${encodeURIComponent(branchId)}` : "/lockers";
-  const res = await authedFetch(url);
+export async function listLockers(options?: { branchId?: string; memberId?: string }): Promise<Locker[]> {
+  const params = new URLSearchParams();
+  if (options?.branchId) params.set("branchId", options.branchId);
+  if (options?.memberId) params.set("memberId", options.memberId);
+  const query = params.toString();
+  const res = await authedFetch(query ? `/lockers?${query}` : "/lockers");
   const payload = (await res.json()) as { lockers: Locker[] };
   return payload.lockers;
 }

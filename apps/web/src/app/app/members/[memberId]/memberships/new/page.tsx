@@ -30,7 +30,7 @@ export default async function SellMembershipPage({ params, searchParams }: Props
     getMember(memberId),
     listMembershipsForMember(memberId),
     listMembershipPlans(),
-    listLockers(),
+    listLockers({ memberId }),
     getSettings(),
   ]);
   const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);

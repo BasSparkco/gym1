@@ -91,7 +91,7 @@ export default async function EditTenantPage({
       <PageHeader
         eyebrow="Onboarding"
         title={tenant.name}
-        description={`${tenant.branchCount} branch${tenant.branchCount === 1 ? "" : "es"}${tenant.ownerEmail ? ` · Owner: ${tenant.ownerEmail}` : ""}`}
+        description={`${tenant.code ? `Code: ${tenant.code} · ` : ""}${tenant.branchCount} branch${tenant.branchCount === 1 ? "" : "es"}${tenant.ownerEmail ? ` · Owner: ${tenant.ownerEmail}` : ""}`}
       />
 
       {error && (

@@ -13,6 +13,7 @@ export type PlatformAdminSessionUser = {
 export type TenantSummary = {
   id: string;
   name: string;
+  code: string | null;
   createdAt: string;
   branchCount: number;
   ownerEmail: string | null;
@@ -37,6 +38,7 @@ export type OwnerInput = {
 
 export type CreateTenantInput = {
   tenantName: string;
+  code: string;
   branch: BranchInput;
   owner: OwnerInput;
 };

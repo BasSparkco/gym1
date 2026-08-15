@@ -104,6 +104,7 @@ export class LockersController {
   async listLockers(
     @Req() request: Request,
     @Query('branchId') queryBranchId?: string,
+    @Query('memberId') memberId?: string,
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     const scopedBranchId = await this.dataScopeService.resolveBranchId(
@@ -111,10 +112,11 @@ export class LockersController {
     );
 
     return {
-      lockers: await this.lockersService.listLockers(
-        session.user.tenant.id,
-        scopedBranchId ?? queryBranchId,
-      ),
+      lockers: await this.lockersService.listLockers(session.user.tenant.id, {
+        scopedBranchId,
+        branchId: queryBranchId,
+        memberId,
+      }),
     };
   }
 

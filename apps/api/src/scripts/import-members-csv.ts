@@ -5,9 +5,9 @@
  *
  * "Customer Id" and "Number Of Subscriptions" are source-system-only and
  * intentionally dropped: memberNumber is auto-sequenced the normal way
- * (MEM-0001, ...) rather than reusing the old ids, and there's no
- * plan/price/date data in this file to reconstruct real Membership rows
- * from a bare subscription count.
+ * rather than reusing the old ids, and there's no plan/price/date data in
+ * this file to reconstruct real Membership rows from a bare subscription
+ * count.
  *
  * Not idempotent — re-running against the same CSV creates duplicates.
  *
@@ -22,6 +22,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Sex } from '../generated/prisma/client';
 import { normalizePhone } from '../common/phone';
 import { findCountryByCode } from '../data/countries';
+import { memberNumberPrefix, nextMemberSequence, formatOrgNumber } from '../common/org-numbering';
 
 const TENANT_ID = 'tenant-spark-gym';
 const BRANCH_ID = 'Platinum Fitness';
@@ -119,15 +120,12 @@ async function main() {
       ? findCountryByCode(branch.countryCode)?.dialCode
       : undefined;
 
-    const existing = await prisma.member.findMany({
-      where: { tenantId: TENANT_ID },
-      select: { memberNumber: true },
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: TENANT_ID },
+      select: { code: true },
     });
-    const usedSequences = existing
-      .map((m) => m.memberNumber.match(/^MEM-(\d{4})$/))
-      .filter((m): m is RegExpMatchArray => m !== null)
-      .map((m) => Number(m[1]));
-    let nextSequence = (Math.max(0, ...usedSequences) || 0) + 1;
+    const prefix = memberNumberPrefix(tenant?.code ?? null);
+    let nextSequence = await nextMemberSequence(prisma, TENANT_ID, prefix);
 
     let created = 0;
     let skipped = 0;
@@ -139,7 +137,7 @@ async function main() {
         continue;
       }
 
-      const memberNumber = `MEM-${String(nextSequence).padStart(4, '0')}`;
+      const memberNumber = formatOrgNumber(prefix, nextSequence);
       nextSequence++;
 
       await prisma.member.create({

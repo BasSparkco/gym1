@@ -82,7 +82,31 @@ export class LockersService {
     ]);
   }
 
-  async listLockers(tenantId: string, branchId?: string) {
+  async listLockers(
+    tenantId: string,
+    options: { scopedBranchId?: string; branchId?: string; memberId?: string } = {},
+  ) {
+    await this.autoExpireStaleForTenant(tenantId);
+
+    let branchId = options.scopedBranchId ?? options.branchId;
+
+    if (options.memberId) {
+      const member = await this.prisma.member.findFirst({
+        where: {
+          id: options.memberId,
+          tenantId,
+          ...(options.scopedBranchId ? { homeBranchId: options.scopedBranchId } : {}),
+        },
+        select: { homeBranchId: true },
+      });
+
+      if (!member) {
+        throw new NotFoundException('Member not found.');
+      }
+
+      branchId = member.homeBranchId;
+    }
+
     const lockers = await this.prisma.locker.findMany({
       where: { tenantId, ...(branchId ? { branchId } : {}) },
     });

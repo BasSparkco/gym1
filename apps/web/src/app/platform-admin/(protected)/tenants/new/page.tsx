@@ -18,6 +18,7 @@ export default async function NewTenantPage({ searchParams }: Props) {
 
     const input = {
       tenantName: String(formData.get("tenantName") ?? ""),
+      code: String(formData.get("code") ?? ""),
       branch: {
         name: String(formData.get("branchName") ?? ""),
         address: String(formData.get("branchAddress") ?? "") || undefined,
@@ -67,18 +68,41 @@ export default async function NewTenantPage({ searchParams }: Props) {
         <form action={handleCreate} className="grid gap-8">
           <div className="grid gap-4">
             <p className="text-base font-semibold">Organization</p>
-            <div className="grid gap-1.5">
-              <label htmlFor="tenantName" className="text-sm font-medium">
-                Organization name
-              </label>
-              <input
-                id="tenantName"
-                name="tenantName"
-                type="text"
-                required
-                placeholder="Platinum Fitness"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <label htmlFor="tenantName" className="text-sm font-medium">
+                  Organization name
+                </label>
+                <input
+                  id="tenantName"
+                  name="tenantName"
+                  type="text"
+                  required
+                  placeholder="Platinum Fitness"
+                  className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="code" className="text-sm font-medium">
+                  Organization code
+                </label>
+                <input
+                  id="code"
+                  name="code"
+                  type="text"
+                  required
+                  maxLength={2}
+                  placeholder="PF"
+                  pattern="[A-Za-z]{2}"
+                  title="Exactly 2 letters"
+                  className="rounded-2xl border border-line bg-white px-4 py-3 text-sm uppercase outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+                <p className="text-xs text-foreground/50">
+                  2 letters, agreed with the club. Prefixes every member/employee
+                  number (e.g. PF-0001) and must be unique across all
+                  organizations.
+                </p>
+              </div>
             </div>
           </div>
 

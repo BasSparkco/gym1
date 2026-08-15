@@ -38,6 +38,11 @@ export default async function PlatformAdminDashboardPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold">{tenant.name}</p>
+                    {tenant.code ? (
+                      <span className="rounded-full border border-line bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/60">
+                        {tenant.code}
+                      </span>
+                    ) : null}
                     {tenant.status === "paused" ? (
                       <span className="rounded-full border border-danger/25 bg-danger/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
                         Paused

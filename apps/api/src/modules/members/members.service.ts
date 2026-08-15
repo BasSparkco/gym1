@@ -11,6 +11,7 @@ import { generateQrSig, makeQrPublicUrl, memberIdToUuid } from '../../common/qr'
 import { localPartDigits, normalizePhone } from '../../common/phone';
 import { hashPin, pinMatches } from '../../common/pin-hash';
 import { toNumber } from '../../common/decimal';
+import { nextMemberNumber } from '../../common/org-numbering';
 import { findCountryByCode } from '../../data/countries';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { DebtService } from '../debt/debt.service';
@@ -125,7 +126,11 @@ export class MembersService {
     }
 
     const dialCode = this.getDialCodeForBranch(branch);
-    const memberNumber = await this.getNextMemberNumber(tenantId);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { code: true },
+    });
+    const memberNumber = await nextMemberNumber(this.prisma, tenantId, tenant?.code ?? null);
 
     const member = await this.prisma.member.create({
       data: {
@@ -591,21 +596,4 @@ export class MembersService {
     return QRCode.toBuffer(uuid, { type: 'png', width: 400, margin: 2 });
   }
 
-  private async getNextMemberNumber(tenantId: string): Promise<string> {
-    // In-memory regex-filtered scan (not a SQL MAX), matching EmployeesService's
-    // employeeNumber sequencing — avoids relying on lexicographic string MAX
-    // collation behavior for what's semantically a numeric sequence.
-    const members = await this.prisma.member.findMany({
-      where: { tenantId },
-      select: { memberNumber: true },
-    });
-
-    const usedSequences = members
-      .map((member) => member.memberNumber.match(/^MEM-(\d{4})$/))
-      .filter((match): match is RegExpMatchArray => match !== null)
-      .map((match) => Number(match[1]));
-    const nextSequence = (Math.max(0, ...usedSequences) || 0) + 1;
-
-    return `MEM-${String(nextSequence).padStart(4, '0')}`;
-  }
 }

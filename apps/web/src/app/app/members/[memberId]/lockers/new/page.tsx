@@ -23,7 +23,7 @@ export default async function SellLockerPage({ params }: Props) {
   const [member, rentals, allLockers, settings] = await Promise.all([
     getMember(memberId),
     listLockerRentalsForMember(memberId),
-    listLockers(),
+    listLockers({ memberId }),
     getSettings(),
   ]);
   const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);

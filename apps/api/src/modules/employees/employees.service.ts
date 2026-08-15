@@ -6,6 +6,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { toDateOnlyString } from '../../common/date';
 import { toNumber } from '../../common/decimal';
+import { nextEmployeeNumber } from '../../common/org-numbering';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Employee } from '../../generated/prisma/client';
 
@@ -143,21 +144,11 @@ export class EmployeesService {
   }
 
   async createEmployee(tenantId: string, input: CreateEmployeeInput) {
-    // Mirrors the original in-memory scan exactly (rather than a SQL MAX on
-    // employeeNumber), since a SQL string max would misbehave if any
-    // non-conforming employeeNumber ever sorted lexicographically higher
-    // than the true numeric max.
-    const tenantEmployees = await this.prisma.employee.findMany({
-      where: { tenantId },
-      select: { employeeNumber: true },
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { code: true },
     });
-
-    const maxSeq = tenantEmployees.reduce((max, e) => {
-      const match = e.employeeNumber.match(/^EMP-(\d{4})$/);
-      return match ? Math.max(max, Number(match[1])) : max;
-    }, 0);
-
-    const employeeNumber = `EMP-${String(maxSeq + 1).padStart(4, '0')}`;
+    const employeeNumber = await nextEmployeeNumber(this.prisma, tenantId, tenant?.code ?? null);
 
     const employee = await this.prisma.employee.create({
       data: {

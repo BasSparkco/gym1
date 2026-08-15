@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashPassword } from '../../common/password';
 import { isValidCurrencyCode } from '../../common/currencies';
+import { nextEmployeeNumber } from '../../common/org-numbering';
 
 export type BranchInput = {
   name: string;
@@ -20,6 +21,7 @@ export type OwnerInput = {
 
 export type CreateTenantInput = {
   tenantName: string;
+  code: string;
   branch: BranchInput;
   owner: OwnerInput;
 };
@@ -37,6 +39,7 @@ export type UpdateBranchInput = {
 export type TenantSummary = {
   id: string;
   name: string;
+  code: string | null;
   createdAt: Date;
   branchCount: number;
   ownerEmail: string | null;
@@ -73,6 +76,7 @@ export class PlatformAdminTenantsService {
     return tenants.map((tenant) => ({
       id: tenant.id,
       name: tenant.name,
+      code: tenant.code,
       createdAt: tenant.createdAt,
       branchCount: tenant.branches.length,
       ownerEmail: tenant.users[0]?.email ?? null,
@@ -138,21 +142,28 @@ export class PlatformAdminTenantsService {
     };
   }
 
-  // Mirrors EmployeesService.createEmployee's numbering scheme so
-  // platform-admin-created owners get employeeNumbers indistinguishable from
-  // ones created through the normal /app/employees flow.
-  private async nextEmployeeNumber(tenantId: string): Promise<string> {
-    const tenantEmployees = await this.prisma.employee.findMany({
-      where: { tenantId },
-      select: { employeeNumber: true },
+  private async validateOrgCode(rawCode: string): Promise<string> {
+    const code = rawCode?.trim().toUpperCase();
+    if (!code || !/^[A-Z]{2}$/.test(code)) {
+      throw new BadRequestException(
+        'Organization code must be exactly 2 letters (e.g. "PF").',
+      );
+    }
+
+    // Prefixed onto every member/employee number this tenant creates (see
+    // apps/api/src/common/org-numbering.ts), so — same shape as the
+    // owner-email collision check above — it must be unique across ALL
+    // tenants, not just checked within one.
+    const existing = await this.prisma.tenant.findFirst({
+      where: { code: { equals: code, mode: 'insensitive' } },
     });
+    if (existing) {
+      throw new BadRequestException(
+        `The code "${code}" is already used by another organization. Please agree on a different 2-letter code with the club.`,
+      );
+    }
 
-    const maxSeq = tenantEmployees.reduce((max, e) => {
-      const match = e.employeeNumber.match(/^EMP-(\d{4})$/);
-      return match ? Math.max(max, Number(match[1])) : max;
-    }, 0);
-
-    return `EMP-${String(maxSeq + 1).padStart(4, '0')}`;
+    return code;
   }
 
   async createTenant(input: CreateTenantInput): Promise<TenantSummary> {
@@ -161,17 +172,18 @@ export class PlatformAdminTenantsService {
       throw new BadRequestException('Organization name is required.');
     }
 
+    const code = await this.validateOrgCode(input.code);
     const branch = this.validateBranchInput(input.branch);
     const owner = await this.validateOwnerInput(input.owner);
 
     const tenantId = `tenant-${randomUUID()}`;
     const branchId = `branch-${randomUUID()}`;
     const employeeId = `employee-${randomUUID()}`;
-    const employeeNumber = await this.nextEmployeeNumber(tenantId);
+    const employeeNumber = await nextEmployeeNumber(this.prisma, tenantId, code);
 
     await this.prisma.$transaction([
       this.prisma.tenant.create({
-        data: { id: tenantId, name: tenantName },
+        data: { id: tenantId, name: tenantName, code },
       }),
       this.prisma.branch.create({
         data: {
@@ -219,6 +231,7 @@ export class PlatformAdminTenantsService {
     return {
       id: tenantId,
       name: tenantName,
+      code,
       createdAt: new Date(),
       branchCount: 1,
       ownerEmail: owner.ownerEmail,
@@ -268,7 +281,7 @@ export class PlatformAdminTenantsService {
 
     const branchId = `branch-${randomUUID()}`;
     const employeeId = `employee-${randomUUID()}`;
-    const employeeNumber = await this.nextEmployeeNumber(tenantId);
+    const employeeNumber = await nextEmployeeNumber(this.prisma, tenantId, tenant.code);
 
     await this.prisma.$transaction([
       this.prisma.branch.create({
@@ -428,6 +441,7 @@ export class PlatformAdminTenantsService {
     return {
       id: updated.id,
       name: updated.name,
+      code: updated.code,
       createdAt: updated.createdAt,
       branchCount: tenant.branches.length,
       ownerEmail: tenant.users[0]?.email ?? null,
@@ -462,6 +476,7 @@ export class PlatformAdminTenantsService {
     return {
       id: updated.id,
       name: updated.name,
+      code: updated.code,
       createdAt: updated.createdAt,
       branchCount: tenant.branches.length,
       ownerEmail: tenant.users[0]?.email ?? null,
@@ -491,6 +506,7 @@ export class PlatformAdminTenantsService {
     return {
       id: updated.id,
       name: updated.name,
+      code: updated.code,
       createdAt: updated.createdAt,
       branchCount: tenant.branches.length,
       ownerEmail: tenant.users[0]?.email ?? null,

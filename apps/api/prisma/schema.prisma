@@ -157,6 +157,10 @@ enum TenantStatus {
 model Tenant {
   id           String       @id
   name         String
+  // 2-letter code prefixed onto member/employee numbers (e.g. "PF" ->
+  // PF-0001). Nullable at the DB level because existing tenants predate this
+  // field; app-level validation requires it for every newly created tenant.
+  code         String?      @unique
   status       TenantStatus @default(active)
   pausedReason String?
   pausedAt     DateTime?
