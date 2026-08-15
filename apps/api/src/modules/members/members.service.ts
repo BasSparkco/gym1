@@ -42,6 +42,7 @@ type UpdateMemberInput = {
   phone?: string;
   email?: string;
   dateOfBirth?: string;
+  joinDate?: string;
   sex?: Sex;
   idNumber?: string;
   address?: string;
@@ -226,6 +227,18 @@ export class MembersService {
             : input.dateOfBirth.trim()
               ? new Date(input.dateOfBirth.trim())
               : null,
+        // Members imported from another system often arrive with no join
+        // date. Staff can fill it in exactly once — once a join date is on
+        // record, this silently ignores further attempts to change it
+        // rather than letting a stray request quietly rewrite a member's
+        // tenure, matching the edit form only rendering the field as
+        // editable while it's still null.
+        joinDate:
+          input.joinDate === undefined || current.joinDate !== null
+            ? undefined
+            : input.joinDate.trim()
+              ? new Date(input.joinDate.trim())
+              : undefined,
         sex: input.sex === undefined ? undefined : input.sex || null,
         idNumber:
           input.idNumber === undefined

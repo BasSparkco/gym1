@@ -14,6 +14,7 @@ export async function updateMemberAction(formData: FormData) {
     phone: (formData.get("phone") as string) || undefined,
     email: (formData.get("email") as string) || undefined,
     dateOfBirth: (formData.get("dateOfBirth") as string) || undefined,
+    joinDate: (formData.get("joinDate") as string) || undefined,
     sex: (formData.get("sex") as "male" | "female") || undefined,
     idNumber: (formData.get("idNumber") as string) || undefined,
     address: (formData.get("address") as string) || undefined,

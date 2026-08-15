@@ -91,10 +91,19 @@ export function MemberEditForm({ member, photoUrl, branches, employees, dateForm
               </div>
 
               <div className="grid gap-1.5">
-                <label className="text-sm font-medium">{t.members.joinDate}</label>
-                <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm text-foreground/60">
-                  {formatDate(member.joinDate, dateFormat)}
-                </p>
+                <label htmlFor={member.joinDate ? undefined : id("joinDate")} className="text-sm font-medium">
+                  {t.members.joinDate}
+                </label>
+                {member.joinDate ? (
+                  <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm text-foreground/60">
+                    {formatDate(member.joinDate, dateFormat)}
+                  </p>
+                ) : (
+                  <>
+                    <DateInput id={id("joinDate")} name="joinDate" dateFormat={dateFormat} />
+                    <p className="text-xs text-foreground/50">{t.members.joinDateHelp}</p>
+                  </>
+                )}
               </div>
 
               <div className="grid gap-1.5">

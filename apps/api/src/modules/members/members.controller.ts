@@ -49,6 +49,7 @@ type UpdateMemberRequestBody = {
   phone?: string;
   email?: string;
   dateOfBirth?: string;
+  joinDate?: string;
   sex?: 'male' | 'female';
   idNumber?: string;
   address?: string;

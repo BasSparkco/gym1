@@ -141,6 +141,7 @@ export type Dict = {
     idNumber: string;
     address: string;
     joinDate: string;
+    joinDateHelp: string;
     height: string;
     weight: string;
     registeredEmployee: string;
@@ -1065,6 +1066,7 @@ const en: Dict = {
     idNumber: "ID Number",
     address: "Address",
     joinDate: "Join date",
+    joinDateHelp: "Missing from import — set it once and it locks in.",
     height: "Height (cm)",
     weight: "Weight (kg)",
     registeredEmployee: "Registered by",
@@ -1989,6 +1991,7 @@ const ar: Dict = {
     idNumber: "رقم الهوية",
     address: "العنوان",
     joinDate: "تاريخ الانتساب",
+    joinDateHelp: "غير متوفر من عملية الاستيراد — عيّنه مرة واحدة ولن يمكن تعديله لاحقًا.",
     height: "الطول (سم)",
     weight: "الوزن (كغم)",
     registeredEmployee: "سجّله الموظف",
@@ -2913,6 +2916,7 @@ const he: Dict = {
     idNumber: "מספר תעודת זהות",
     address: "כתובת",
     joinDate: "תאריך הצטרפות",
+    joinDateHelp: "חסר מהייבוא — הגדר פעם אחת ולא ניתן יהיה לשנות זאת לאחר מכן.",
     height: "גובה (ס\"מ)",
     weight: "משקל (ק\"ג)",
     registeredEmployee: "נרשם על ידי",
