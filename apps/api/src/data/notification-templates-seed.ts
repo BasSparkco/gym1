@@ -54,7 +54,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES: Record<
     body:
       'Your {{planName}} membership is now active and runs through {{endDate}}.\n\n' +
       'Download your QR code (show it at the entrance to enter):\n{{qrUrl}}',
-    variables: ['planName', 'endDate', 'qrUrl'],
+    variables: ['planName', 'endDate', 'qrUrl', 'branchName'],
   },
   membershipRenewed: {
     subject: 'Membership renewed',

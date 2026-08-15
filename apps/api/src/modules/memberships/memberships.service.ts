@@ -121,6 +121,9 @@ export class MembershipsService {
     membership: Membership,
   ): Promise<void> {
     const qrUrl = makeQrPublicUrl(member.id);
+    const branch = await this.prisma.branch.findUnique({
+      where: { id: member.homeBranchId },
+    });
     await this.notificationsService.createNotificationsForEvent(
       tenantId,
       'membershipActivated',
@@ -131,6 +134,7 @@ export class MembershipsService {
           planName: plan.name,
           endDate: toDateOnlyString(membership.endDate),
           qrUrl,
+          branchName: branch?.name ?? '',
         },
         relatedId: membership.id,
       },
