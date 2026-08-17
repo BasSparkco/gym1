@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SparkcoNotificationProvider } from '../notifications/providers/sparkco-notification.provider';
+import { resolveWhatsAppSessionBranchId } from '../tenancy/whatsapp-session';
 import { Message } from '../../generated/prisma/client';
 
 const phoneDigits = (phone: string) =>
@@ -154,12 +155,13 @@ export class MessagesService {
       return { sent: false, reason: 'Member has no phone number on file.' };
     }
 
+    const sessionId = await resolveWhatsAppSessionBranchId(this.prisma, member.homeBranchId);
     const result = await this.sparkcoProvider.send({
       channel: 'whatsapp',
       to: member.phone,
       subject: '',
       body,
-      sessionId: member.homeBranchId,
+      sessionId,
     });
 
     return result.status === 'sent'

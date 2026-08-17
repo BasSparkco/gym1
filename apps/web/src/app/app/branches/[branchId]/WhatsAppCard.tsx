@@ -12,11 +12,15 @@ type Status = "idle" | "connecting" | "waiting_qr" | "reconnecting" | "connected
 
 export default function WhatsAppCard({
   branchId,
+  isMain,
+  useMainBranchWhatsapp,
   canManage,
   t,
   className,
 }: {
   branchId: string;
+  isMain: boolean;
+  useMainBranchWhatsapp: boolean;
   canManage: boolean;
   t: Dict;
   className?: string;
@@ -25,8 +29,12 @@ export default function WhatsAppCard({
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | null>(null);
+  const [sharedWithMain, setSharedWithMain] = useState(useMainBranchWhatsapp);
+  const [togglePending, setTogglePending] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevStatusRef = useRef<string | null>(null);
+  const sharingMain = !isMain && sharedWithMain;
 
   const base = `/api/tenancy/whatsapp/branches/${encodeURIComponent(branchId)}`;
 
@@ -157,11 +165,66 @@ export default function WhatsAppCard({
     setPhone(null);
   }
 
+  async function handleToggleSharedWithMain(next: boolean) {
+    setTogglePending(true);
+    setToggleError(null);
+    try {
+      const res = await fetch(`${base}/use-main`, { method: next ? "PUT" : "DELETE" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        setToggleError(body.message ?? t.settings.whatsappGenericError);
+        return;
+      }
+      setSharedWithMain(next);
+      stopPolling();
+      prevStatusRef.current = null;
+      setStatus("idle");
+      setQrDataUrl(null);
+      setPhone(null);
+      setErrorMsg(null);
+      void poll();
+    } catch (e) {
+      setToggleError((e as Error).message);
+    } finally {
+      setTogglePending(false);
+    }
+  }
+
   return (
     <Card hoverable animate delay={2} className={className}>
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand">{t.settings.whatsapp}</p>
 
       <div className="mt-4">
+        {sharingMain ? (
+          // This branch sends/receives through the main branch's session —
+          // no QR/connect/disconnect of its own, just a live read of the
+          // main branch's real status (verify/qr already resolve to it
+          // server-side, see resolveWhatsAppSessionBranchId).
+          <div className="flex flex-col gap-3">
+            {status === "connected" ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge tone="success">
+                  <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                  {t.settings.whatsappConnected}
+                </Badge>
+                {phone && (
+                  <div className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-sm">
+                    <span className="text-foreground/50">{t.settings.whatsappConnectedNumber}:</span>
+                    <span dir="ltr" className="font-mono font-medium tracking-wide">
+                      +{phone}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-yellow-400" />
+                <p className="text-sm text-foreground/70">{t.settings.whatsappUseMainBranchWaiting}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
         {status === "error" && (
           <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {errorMsg ?? t.settings.whatsappGenericError}
@@ -263,6 +326,27 @@ export default function WhatsAppCard({
                 {t.settings.whatsappDisconnect}
               </Button>
             )}
+          </div>
+        )}
+          </>
+        )}
+
+        {!isMain && canManage && (
+          <div className="mt-4 border-t border-line pt-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={sharedWithMain}
+                disabled={togglePending}
+                onChange={(e) => void handleToggleSharedWithMain(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-line accent-brand"
+              />
+              <span>
+                <span className="block text-sm font-medium">{t.settings.whatsappUseMainBranch}</span>
+                <span className="block text-xs text-foreground/55">{t.settings.whatsappUseMainBranchHint}</span>
+              </span>
+            </label>
+            {toggleError && <p className="mt-2 text-xs text-red-600">{toggleError}</p>}
           </div>
         )}
       </div>

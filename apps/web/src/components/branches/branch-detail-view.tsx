@@ -59,7 +59,14 @@ export function BranchDetailView({ branch, canManage, t }: Props) {
           </dl>
         </Card>
 
-        <WhatsAppCard branchId={branch.id} canManage={canManage} t={t} className="border-s-4 border-s-blue-500" />
+        <WhatsAppCard
+          branchId={branch.id}
+          isMain={branch.isMain}
+          useMainBranchWhatsapp={branch.useMainBranchWhatsapp}
+          canManage={canManage}
+          t={t}
+          className="border-s-4 border-s-blue-500"
+        />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">

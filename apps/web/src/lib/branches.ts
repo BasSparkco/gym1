@@ -16,6 +16,8 @@ export type Branch = {
   operatingCurrencyCode: string;
   status: "active" | "inactive";
   logoUrl?: string | null;
+  isMain: boolean;
+  useMainBranchWhatsapp: boolean;
 };
 
 async function getCookieHeader() {

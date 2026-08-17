@@ -796,6 +796,9 @@ export type Dict = {
     whatsappReconnecting: string;
     whatsappRefreshHint: string;
     whatsappGenericError: string;
+    whatsappUseMainBranch: string;
+    whatsappUseMainBranchHint: string;
+    whatsappUseMainBranchWaiting: string;
     organizationSectionTitle: string;
     organizationSectionHelp: string;
     organizationNameLabel: string;
@@ -1723,6 +1726,9 @@ const en: Dict = {
     whatsappReconnecting: "Device disconnected — waiting for new QR code…",
     whatsappRefreshHint: "Refreshes every 3 seconds.",
     whatsappGenericError: "An error occurred.",
+    whatsappUseMainBranch: "Use the main branch's WhatsApp number",
+    whatsappUseMainBranchHint: "Skip scanning a QR code here — send and receive messages for this branch through the main branch's connected WhatsApp number instead.",
+    whatsappUseMainBranchWaiting: "Waiting for the main branch to connect WhatsApp…",
     organizationSectionTitle: "Organization",
     organizationSectionHelp: "The name shown across the app and on reports.",
     organizationNameLabel: "Organization name",
@@ -2650,6 +2656,9 @@ const ar: Dict = {
     whatsappReconnecting: "تم فصل الجهاز — بانتظار رمز QR جديد…",
     whatsappRefreshHint: "يتم التحديث كل 3 ثوانٍ.",
     whatsappGenericError: "حدث خطأ ما.",
+    whatsappUseMainBranch: "استخدام رقم واتساب الفرع الرئيسي",
+    whatsappUseMainBranchHint: "تخطَّ مسح رمز QR هنا — أرسل واستقبل رسائل هذا الفرع عبر رقم واتساب المتصل بالفرع الرئيسي بدلاً من ذلك.",
+    whatsappUseMainBranchWaiting: "بانتظار ربط واتساب في الفرع الرئيسي…",
     organizationSectionTitle: "المؤسسة",
     organizationSectionHelp: "الاسم الذي يظهر في التطبيق والتقارير.",
     organizationNameLabel: "اسم المؤسسة",
@@ -3577,6 +3586,9 @@ const he: Dict = {
     whatsappReconnecting: "המכשיר נותק — ממתין לקוד QR חדש…",
     whatsappRefreshHint: "מתרענן כל 3 שניות.",
     whatsappGenericError: "אירעה שגיאה.",
+    whatsappUseMainBranch: "השתמש במספר ה-WhatsApp של הסניף הראשי",
+    whatsappUseMainBranchHint: "דלג על סריקת קוד QR כאן — שלח וקבל הודעות עבור סניף זה דרך מספר ה-WhatsApp המחובר של הסניף הראשי במקום זאת.",
+    whatsappUseMainBranchWaiting: "ממתין לחיבור WhatsApp בסניף הראשי…",
     organizationSectionTitle: "ארגון",
     organizationSectionHelp: "השם המוצג באפליקציה ובדוחות.",
     organizationNameLabel: "שם הארגון",

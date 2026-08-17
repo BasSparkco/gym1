@@ -195,6 +195,7 @@ export class PlatformAdminTenantsService {
           countryCode: branch.countryCode,
           operatingCurrencyCode: branch.operatingCurrencyCode,
           status: 'active',
+          isMain: true,
         },
       }),
       // Every user account is someone's staff identity (see

@@ -12,6 +12,7 @@ import {
   FcmNotificationProvider,
 } from './providers/fcm-notification.provider';
 import { PrismaService } from '../../prisma/prisma.service';
+import { resolveWhatsAppSessionBranchId } from '../tenancy/whatsapp-session';
 import {
   Member,
   Notification,
@@ -111,6 +112,11 @@ export class NotificationDispatchService {
       });
     }
 
+    const sessionId =
+      notification.channel === 'whatsapp' && member?.homeBranchId
+        ? await resolveWhatsAppSessionBranchId(this.prisma, member.homeBranchId)
+        : undefined;
+
     const provider = this.selectProvider(notification.channel);
     const result = await provider.send({
       channel: notification.channel,
@@ -118,7 +124,7 @@ export class NotificationDispatchService {
       from: notification.channel === 'email' ? senders.emailFrom : undefined,
       subject: notification.subject,
       body: notification.body,
-      sessionId: notification.channel === 'whatsapp' ? member?.homeBranchId : undefined,
+      sessionId,
     });
 
     return result.status === 'sent'

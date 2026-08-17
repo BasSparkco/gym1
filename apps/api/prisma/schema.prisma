@@ -208,6 +208,8 @@ model Branch {
   operatingCurrencyCode String       @default("ILS")
   status                BranchStatus @default(active)
   logoUrl               String?
+  isMain                Boolean      @default(false)
+  useMainBranchWhatsapp Boolean      @default(false)
 
   employees        Employee[]
   gates            Gate[]

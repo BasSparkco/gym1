@@ -37,6 +37,18 @@ export class TenancyController {
     return this.tenancy.disconnectBranchWhatsApp(branchId);
   }
 
+  @Put('whatsapp/branches/:branchId/use-main')
+  async useMainBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
+    requireRole(await this.session(req), ['owner']);
+    return this.tenancy.setUseMainBranchWhatsapp(branchId, true);
+  }
+
+  @Delete('whatsapp/branches/:branchId/use-main')
+  async stopUsingMainBranchWhatsApp(@Req() req: Request, @Param('branchId') branchId: string) {
+    requireRole(await this.session(req), ['owner']);
+    return this.tenancy.setUseMainBranchWhatsapp(branchId, false);
+  }
+
   private async session(req: Request) {
     const s = await this.auth.getCurrentSessionFromCookieHeader(req.headers.cookie);
     if (!s) throw new UnauthorizedException('Authentication required.');
