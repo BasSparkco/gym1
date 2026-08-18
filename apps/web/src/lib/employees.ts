@@ -78,13 +78,17 @@ export async function createEmployee(data: {
   startDate?: string;
   endDate?: string;
   coachProfile?: { specializations?: string[]; certifications?: string[] };
-}): Promise<Employee> {
+  allowAllGates?: boolean;
+  gateIds?: string[];
+}): Promise<{ employee: Employee; qrDispatch?: { sent: boolean; reason?: string } }> {
   const response = await authedFetch("/employees", {
     method: "POST",
     body: JSON.stringify(data),
   });
-  const payload = (await response.json()) as { employee: Employee };
-  return payload.employee;
+  return (await response.json()) as {
+    employee: Employee;
+    qrDispatch?: { sent: boolean; reason?: string };
+  };
 }
 
 export type CoachProfile = {

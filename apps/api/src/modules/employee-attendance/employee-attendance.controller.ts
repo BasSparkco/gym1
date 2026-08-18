@@ -49,10 +49,7 @@ export class EmployeeAttendanceController {
 
   @Post('check-out/:visitId')
   @HttpCode(200)
-  async checkOut(
-    @Req() request: Request,
-    @Param('visitId') visitId: string,
-  ) {
+  async checkOut(@Req() request: Request, @Param('visitId') visitId: string) {
     const session = await this.getRequiredSession(request.headers.cookie);
     return {
       visit: await this.employeeAttendanceService.checkOut(
@@ -177,6 +174,19 @@ export class EmployeeAttendanceController {
     );
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.end(buffer);
+  }
+
+  // POST /:employeeId/send-qr — sends QR download link to employee via WhatsApp
+  @Post(':employeeId/send-qr')
+  async sendEmployeeQr(
+    @Req() request: Request,
+    @Param('employeeId') employeeId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    return this.employeeAttendanceService.sendQrViaWhatsApp(
+      session.user.tenant.id,
+      employeeId,
+    );
   }
 
   private async getRequiredSession(cookieHeader: string | undefined) {

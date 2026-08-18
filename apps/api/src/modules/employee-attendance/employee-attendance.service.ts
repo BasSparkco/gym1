@@ -1,12 +1,17 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import * as QRCode from 'qrcode';
 import { localDateString, toDateOnlyString } from '../../common/date';
-import { employeeIdToUuid, generateQrSig } from '../../common/qr';
+import {
+  employeeIdToUuid,
+  generateQrSig,
+  makeEmployeeQrPublicUrl,
+} from '../../common/qr';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccessMethod, Employee } from '../../generated/prisma/client';
@@ -35,6 +40,8 @@ function todayUtcRange(): { gte: Date; lt: Date } {
 
 @Injectable()
 export class EmployeeAttendanceService {
+  private readonly logger = new Logger(EmployeeAttendanceService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly basIpSyncService: BasIpSyncService,
@@ -148,6 +155,72 @@ export class EmployeeAttendanceService {
 
   verifyQrSig(employeeId: string, sig: string): boolean {
     return generateQrSig(employeeId) === sig;
+  }
+
+  /**
+   * Sends the QR code download link to the employee's WhatsApp number.
+   * Same shape/behavior as MembersService.sendQrViaWhatsApp.
+   * Returns { sent: true } or { sent: false, reason: string }.
+   */
+  async sendQrViaWhatsApp(
+    tenantId: string,
+    employeeId: string,
+  ): Promise<{ sent: boolean; reason?: string }> {
+    const employee = await this.getEmployeeRecord(tenantId, employeeId);
+
+    if (!employee.phone) {
+      return { sent: false, reason: 'Employee has no phone number on file.' };
+    }
+
+    const apiKey = process.env.SPARKCO_API_KEY;
+    const baseUrl =
+      process.env.SPARKCO_API_URL ?? 'https://api.sparkco.vip/api/v1';
+
+    if (!apiKey) {
+      return {
+        sent: false,
+        reason: 'SparkCo is not configured (set SPARKCO_API_KEY).',
+      };
+    }
+
+    const qrUrl = makeEmployeeQrPublicUrl(employee.id);
+    const message =
+      `Hi ${employee.fullName}, your staff access QR code is ready!\n\n` +
+      `Tap this link to download your QR code, then show it at the entrance to enter:\n${qrUrl}\n\n` +
+      `Save the image to your phone so you can access it even without internet.`;
+
+    try {
+      const res = await fetch(`${baseUrl}/messages/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+        },
+        body: JSON.stringify({
+          channel: 'whatsapp',
+          to: employee.phone,
+          message,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        const reason = `SparkCo error ${res.status}: ${text}`;
+        this.logger.warn(
+          `QR WhatsApp send failed for ${employeeId}: ${reason}`,
+        );
+        return { sent: false, reason };
+      }
+
+      this.logger.log(
+        `QR code sent via WhatsApp to ${employee.phone} (${employeeId})`,
+      );
+      return { sent: true };
+    } catch (err) {
+      const reason = (err as Error).message;
+      this.logger.warn(`QR WhatsApp send failed for ${employeeId}: ${reason}`);
+      return { sent: false, reason };
+    }
   }
 
   private async generateQrBuffer(employeeId: string): Promise<Buffer> {
@@ -289,8 +362,7 @@ export class EmployeeAttendanceService {
         }));
 
       const totalHours =
-        Math.round(days.reduce((sum, d) => sum + d.hoursWorked, 0) * 100) /
-        100;
+        Math.round(days.reduce((sum, d) => sum + d.hoursWorked, 0) * 100) / 100;
 
       return {
         employeeId: employee.id,

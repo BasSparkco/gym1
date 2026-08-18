@@ -9,6 +9,7 @@ import {
   updateEmployeeAction,
   toggleEmployeeStatusAction,
   setEmployeeGatesAction,
+  resendEmployeeQrAction,
 } from "@/app/app/employees/actions";
 import { EmployeeProfileView } from "@/components/employees/employee-profile-view";
 import type { Employee, CoachProfile } from "@/lib/employees";
@@ -17,7 +18,7 @@ import type { Gate } from "@/lib/gates";
 import type { EmployeeGateAccess, EmployeeVisit } from "@/lib/employee-attendance";
 import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
-import { UserRound, PencilLine } from "lucide-react";
+import { UserRound, PencilLine, MessageCircle } from "lucide-react";
 
 type Props = {
   employees: Employee[];
@@ -96,6 +97,20 @@ export function EmployeeList({
                 >
                   {t.actions.edit}
                 </Button>
+                {emp.phone && (
+                  <form action={resendEmployeeQrAction} className="flex-1">
+                    <input type="hidden" name="employeeId" value={emp.id} />
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                      icon={<MessageCircle className="h-3.5 w-3.5" strokeWidth={2} />}
+                    >
+                      {t.employees.resendQrWhatsApp}
+                    </Button>
+                  </form>
+                )}
               </div>
             </Card>
 

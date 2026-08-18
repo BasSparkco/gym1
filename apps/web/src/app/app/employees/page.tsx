@@ -21,7 +21,9 @@ import { EmployeesFilterToolbar } from "@/components/employees/employees-filter-
 import { UserPlus, Users } from "lucide-react";
 import { Suspense } from "react";
 
-type Props = { searchParams: Promise<{ q?: string; branch?: string; job?: string }> };
+type Props = {
+  searchParams: Promise<{ q?: string; branch?: string; job?: string; qrSent?: string; qrError?: string }>;
+};
 
 export default async function EmployeesPage({ searchParams }: Props) {
   const session = await requireSession();
@@ -31,7 +33,7 @@ export default async function EmployeesPage({ searchParams }: Props) {
     redirect("/app/dashboard");
   }
 
-  const { q, branch: branchFilter, job: jobFilter } = await searchParams;
+  const { q, branch: branchFilter, job: jobFilter, qrSent, qrError } = await searchParams;
   const [allEmployees, branches, settings] = await Promise.all([listEmployees(), listBranches(), getSettings()]);
   const branchMap = Object.fromEntries(branches.map((b) => [b.id, b.name]));
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
@@ -83,6 +85,17 @@ export default async function EmployeesPage({ searchParams }: Props) {
           </Button>
         }
       />
+
+      {qrSent && (
+        <div className="animate-scale-in rounded-2xl bg-green-50 border border-green-200 px-5 py-4 text-sm text-green-800 font-medium">
+          {t.employees.qrSentSuccess}
+        </div>
+      )}
+      {qrError && (
+        <div className="animate-scale-in rounded-2xl bg-red-50 border border-red-200 px-5 py-4 text-sm text-red-700">
+          {t.employees.qrSentFailed} {decodeURIComponent(qrError)}
+        </div>
+      )}
 
       <Suspense fallback={null}>
         <EmployeesFilterToolbar branches={branches} positions={positions} t={t} showBranchFilter={viewingAllBranches} />

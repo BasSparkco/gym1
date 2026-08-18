@@ -530,6 +530,10 @@ export type Dict = {
     endDate: string;
     isUser: string;
     isCoach: string;
+    sendQrWhatsApp: string;
+    resendQrWhatsApp: string;
+    qrSentSuccess: string;
+    qrSentFailed: string;
   };
   attendance: {
     checkInTitle: string;
@@ -1460,6 +1464,10 @@ const en: Dict = {
     endDate: "End date",
     isUser: "Has system user account",
     isCoach: "This employee is a coach (can be booked for classes)",
+    sendQrWhatsApp: "Send via WhatsApp",
+    resendQrWhatsApp: "Resend QR via WhatsApp",
+    qrSentSuccess: "QR code sent via WhatsApp!",
+    qrSentFailed: "Failed to send QR code.",
   },
   attendance: {
     checkInTitle: "Staff Check-In",
@@ -2390,6 +2398,10 @@ const ar: Dict = {
     endDate: "تاريخ انتهاء العمل",
     isUser: "لديه حساب مستخدم في النظام",
     isCoach: "هذا الموظف مدرب (يمكن حجزه للحصص)",
+    sendQrWhatsApp: "إرسال عبر واتساب",
+    resendQrWhatsApp: "إعادة إرسال رمز QR عبر واتساب",
+    qrSentSuccess: "تم إرسال رمز QR عبر واتساب!",
+    qrSentFailed: "فشل إرسال رمز QR.",
   },
   attendance: {
     checkInTitle: "تسجيل حضور الموظفين",
@@ -3320,6 +3332,10 @@ const he: Dict = {
     endDate: "תאריך סיום עבודה",
     isUser: "בעל חשבון משתמש במערכת",
     isCoach: "עובד זה הוא מאמן (ניתן לשבץ אותו לשיעורים)",
+    sendQrWhatsApp: "שלח ב-WhatsApp",
+    resendQrWhatsApp: "שלח מחדש קוד QR ב-WhatsApp",
+    qrSentSuccess: "קוד QR נשלח ב-WhatsApp!",
+    qrSentFailed: "שליחת קוד QR נכשלה.",
   },
   attendance: {
     checkInTitle: "נוכחות עובדים",

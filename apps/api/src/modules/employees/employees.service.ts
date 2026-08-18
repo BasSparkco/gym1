@@ -6,9 +6,12 @@ import {
 import { randomUUID } from 'node:crypto';
 import { toDateOnlyString } from '../../common/date';
 import { toNumber } from '../../common/decimal';
+import { normalizePhone } from '../../common/phone';
 import { nextEmployeeNumber } from '../../common/org-numbering';
+import { findCountryByCode } from '../../data/countries';
+import { EmployeeAttendanceService } from '../employee-attendance/employee-attendance.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Employee } from '../../generated/prisma/client';
+import { Branch, Employee } from '../../generated/prisma/client';
 
 export type CreateEmployeeInput = {
   fullName: string;
@@ -23,6 +26,8 @@ export type CreateEmployeeInput = {
   startDate?: string;
   endDate?: string;
   coachProfile?: { specializations?: string[]; certifications?: string[] };
+  allowAllGates?: boolean;
+  gateIds?: string[];
 };
 
 export type UpdateEmployeeInput = {
@@ -46,7 +51,10 @@ function toDate(value: string | undefined): Date | undefined {
 
 @Injectable()
 export class EmployeesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly employeeAttendanceService: EmployeeAttendanceService,
+  ) {}
 
   async listEmployeesForTenant(tenantId: string, branchId?: string) {
     const employees = await this.prisma.employee.findMany({
@@ -144,11 +152,22 @@ export class EmployeesService {
   }
 
   async createEmployee(tenantId: string, input: CreateEmployeeInput) {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { code: true },
-    });
-    const employeeNumber = await nextEmployeeNumber(this.prisma, tenantId, tenant?.code ?? null);
+    const [tenant, branch] = await Promise.all([
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { code: true },
+      }),
+      this.prisma.branch.findUnique({ where: { id: input.branchId } }),
+    ]);
+    const employeeNumber = await nextEmployeeNumber(
+      this.prisma,
+      tenantId,
+      tenant?.code ?? null,
+    );
+    const phone = normalizePhone(
+      input.phone,
+      branch ? this.getDialCodeForBranch(branch) : undefined,
+    );
 
     const employee = await this.prisma.employee.create({
       data: {
@@ -159,7 +178,7 @@ export class EmployeesService {
         fullName: input.fullName.trim(),
         status: 'active',
         idNumber: input.idNumber,
-        phone: input.phone,
+        phone,
         sex: input.sex,
         dateOfBirth: toDate(input.dateOfBirth),
         job: input.job,
@@ -180,7 +199,35 @@ export class EmployeesService {
       },
     });
 
-    return this.serialize(employee);
+    if (input.allowAllGates !== undefined) {
+      await this.employeeAttendanceService.setEmployeeGates(
+        tenantId,
+        employee.id,
+        {
+          allowAllGates: input.allowAllGates,
+          gateIds: input.gateIds ?? [],
+        },
+      );
+      // Keep the returned payload consistent with what was just persisted —
+      // `employee` still holds the create-time default (allowAllGates: true).
+      employee.allowAllGates = input.allowAllGates;
+    }
+
+    // Automatic QR delivery on creation — best-effort, doesn't fail employee
+    // creation if SparkCo is unreachable or the employee has no phone yet.
+    const qrDispatch = employee.phone
+      ? await this.employeeAttendanceService.sendQrViaWhatsApp(
+          tenantId,
+          employee.id,
+        )
+      : undefined;
+
+    return { employee: this.serialize(employee), qrDispatch };
+  }
+
+  private getDialCodeForBranch(branch: Branch): string | undefined {
+    if (!branch.countryCode) return undefined;
+    return findCountryByCode(branch.countryCode)?.dialCode;
   }
 
   async updateEmployee(
@@ -188,7 +235,18 @@ export class EmployeesService {
     employeeId: string,
     input: UpdateEmployeeInput,
   ) {
-    await this.getEmployeeForTenant(tenantId, employeeId);
+    const existing = await this.getEmployeeForTenant(tenantId, employeeId);
+
+    let phone: string | undefined;
+    if (input.phone !== undefined) {
+      const branch = await this.prisma.branch.findUnique({
+        where: { id: input.branchId ?? existing.branchId },
+      });
+      phone = normalizePhone(
+        input.phone,
+        branch ? this.getDialCodeForBranch(branch) : undefined,
+      );
+    }
 
     const employee = await this.prisma.employee.update({
       where: { id: employeeId },
@@ -199,7 +257,7 @@ export class EmployeesService {
         ...(input.branchId !== undefined && { branchId: input.branchId }),
         ...(input.status !== undefined && { status: input.status }),
         ...(input.idNumber !== undefined && { idNumber: input.idNumber }),
-        ...(input.phone !== undefined && { phone: input.phone }),
+        ...(input.phone !== undefined && { phone }),
         ...(input.sex !== undefined && { sex: input.sex }),
         ...(input.dateOfBirth !== undefined && {
           dateOfBirth: toDate(input.dateOfBirth),

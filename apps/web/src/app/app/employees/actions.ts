@@ -1,8 +1,9 @@
 "use server";
 
 import { updateEmployee, upsertCoachProfile, removeCoachProfile, getCoachProfile } from "@/lib/employees";
-import { setEmployeeGates } from "@/lib/employee-attendance";
+import { setEmployeeGates, sendEmployeeQr } from "@/lib/employee-attendance";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 function revalidateEmployee(employeeId: string) {
   revalidatePath("/app/employees");
@@ -53,6 +54,15 @@ export async function setEmployeeGatesAction(formData: FormData) {
     gateIds: allowAllGates ? [] : formData.getAll("gateIds").map(String),
   });
   revalidateEmployee(employeeId);
+}
+
+export async function resendEmployeeQrAction(formData: FormData) {
+  const employeeId = formData.get("employeeId") as string;
+  const result = await sendEmployeeQr(employeeId);
+  if (result.sent) {
+    redirect("/app/employees?qrSent=1");
+  }
+  redirect(`/app/employees?qrError=${encodeURIComponent(result.reason ?? "unknown")}`);
 }
 
 export async function toggleEmployeeStatusAction(formData: FormData) {

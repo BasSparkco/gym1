@@ -28,6 +28,8 @@ type CreateEmployeeRequestBody = {
   startDate?: string;
   endDate?: string;
   coachProfile?: { specializations?: string[]; certifications?: string[] };
+  allowAllGates?: boolean;
+  gateIds?: string[];
 };
 
 type UpdateEmployeeRequestBody = {
@@ -72,25 +74,22 @@ export class EmployeesController {
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     requireRole(session.user, ['owner', 'manager']);
-    return {
-      employee: await this.employeesService.createEmployee(
-        session.user.tenant.id,
-        {
-          fullName: body.fullName ?? '',
-          branchId: body.branchId ?? session.user.branch.id,
-          idNumber: body.idNumber,
-          phone: body.phone,
-          sex: body.sex,
-          dateOfBirth: body.dateOfBirth,
-          job: body.job,
-          salary: body.salary,
-          workType: body.workType,
-          startDate: body.startDate,
-          endDate: body.endDate,
-          coachProfile: body.coachProfile,
-        },
-      ),
-    };
+    return this.employeesService.createEmployee(session.user.tenant.id, {
+      fullName: body.fullName ?? '',
+      branchId: body.branchId ?? session.user.branch.id,
+      idNumber: body.idNumber,
+      phone: body.phone,
+      sex: body.sex,
+      dateOfBirth: body.dateOfBirth,
+      job: body.job,
+      salary: body.salary,
+      workType: body.workType,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      coachProfile: body.coachProfile,
+      allowAllGates: body.allowAllGates,
+      gateIds: body.gateIds,
+    });
   }
 
   @Get('coaches')
@@ -182,7 +181,8 @@ export class EmployeesController {
   }
 
   private async getRequiredSession(cookieHeader: string | undefined) {
-    const session = await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
+    const session =
+      await this.authService.getCurrentSessionFromCookieHeader(cookieHeader);
     if (!session) throw new UnauthorizedException('Authentication required.');
     return session;
   }

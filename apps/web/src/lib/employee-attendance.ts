@@ -118,6 +118,15 @@ export async function setEmployeeGates(
   return (await res.json()) as EmployeeGateAccess;
 }
 
+export async function sendEmployeeQr(
+  employeeId: string,
+): Promise<{ sent: boolean; reason?: string }> {
+  const res = await authedFetch(`/employee-attendance/${employeeId}/send-qr`, {
+    method: "POST",
+  });
+  return (await res.json()) as { sent: boolean; reason?: string };
+}
+
 export async function getEmployeeAttendanceReport(
   dateFrom: string,
   dateTo: string,
