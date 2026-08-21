@@ -549,6 +549,7 @@ export type Dict = {
     printQrCode: string;
     gateAccess: string;
     allGates: string;
+    allOrgGates: string;
     selectedGatesOnly: string;
     noGatesYet: string;
     recentAttendance: string;
@@ -738,10 +739,15 @@ export type Dict = {
     eventMembershipRenewedHelp: string;
     eventBirthday: string;
     eventBirthdayHelp: string;
+    eventEmployeeQrCode: string;
+    eventEmployeeQrCodeHelp: string;
+    eventMemberQrCode: string;
+    eventMemberQrCodeHelp: string;
     templates: string;
     templatesTitle: string;
     templatesDescription: string;
     templatesLanguageNote: string;
+    templatesFromNote: string;
     templateLanguageLabel: string;
     templateSubjectLabel: string;
     templateBodyLabel: string;
@@ -824,6 +830,7 @@ export type Dict = {
     gatesEmpty: string;
     gateAddButton: string;
     gateName: string;
+    gateBranch: string;
     gateGenderRestriction: string;
     gateGenderMale: string;
     gateGenderFemale: string;
@@ -1483,8 +1490,9 @@ const en: Dict = {
     printQrCode: "Print",
     gateAccess: "Gate Access",
     allGates: "All gates at this branch",
+    allOrgGates: "All gates in the organization",
     selectedGatesOnly: "Selected gates only",
-    noGatesYet: "No gates configured for this branch yet.",
+    noGatesYet: "No gates configured yet.",
     recentAttendance: "Recent attendance",
     noRecentAttendance: "No check-ins recorded yet.",
     checkInTime: "Check-in",
@@ -1672,10 +1680,15 @@ const en: Dict = {
     eventMembershipRenewedHelp: "Confirmation sent when an existing membership is renewed.",
     eventBirthday: "Member birthday",
     eventBirthdayHelp: "Send an automatic birthday greeting to members on their birthday.",
+    eventEmployeeQrCode: "Employee QR code",
+    eventEmployeeQrCodeHelp: "Sent via WhatsApp when an employee's QR code is (re)sent from the Employees page.",
+    eventMemberQrCode: "Member QR code",
+    eventMemberQrCodeHelp: "Sent via WhatsApp when a member's QR code is sent from the member's QR page.",
     templates: "Templates",
     templatesTitle: "Notification templates",
     templatesDescription: "Edit the subject and message text sent for each notification, in each language your gym uses.",
     templatesLanguageNote: "Notifications are actually sent in your gym's default language, set on the Options page — not chosen here. Edit each language's text below so it's ready when you switch.",
+    templatesFromNote: "Every message also opens with a \"From: {branch}\" line naming the sending branch, in the recipient's language — this is automatic and isn't part of the editable text below.",
     templateLanguageLabel: "Language",
     templateSubjectLabel: "Subject",
     templateBodyLabel: "Message",
@@ -1754,10 +1767,11 @@ const en: Dict = {
     logoUploadError: "Failed to upload logo. Please try again.",
     gates: "Smart Gates",
     gatesTitle: "Smart Gates",
-    gatesDescription: "Configure the electronic gates installed at this branch. Each gate connects to a BAS-IP device and can be restricted to a specific gender.",
+    gatesDescription: "Configure the electronic gates installed across your branches. Each gate connects to a BAS-IP device and can be restricted to a specific gender.",
     gatesEmpty: "No gates configured yet.",
     gateAddButton: "Add Gate",
     gateName: "Gate Name",
+    gateBranch: "Branch",
     gateGenderRestriction: "Gender Restriction",
     gateGenderMale: "Men's Gate (male only)",
     gateGenderFemale: "Women's Gate (female only)",
@@ -2417,8 +2431,9 @@ const ar: Dict = {
     printQrCode: "طباعة",
     gateAccess: "صلاحية البوابات",
     allGates: "كل بوابات هذا الفرع",
+    allOrgGates: "كل بوابات المؤسسة",
     selectedGatesOnly: "بوابات محددة فقط",
-    noGatesYet: "لا توجد بوابات مُعدّة لهذا الفرع بعد.",
+    noGatesYet: "لا توجد بوابات مُعدّة بعد.",
     recentAttendance: "الحضور الأخير",
     noRecentAttendance: "لا يوجد سجل حضور بعد.",
     checkInTime: "الدخول",
@@ -2606,10 +2621,15 @@ const ar: Dict = {
     eventMembershipRenewedHelp: "تأكيد يُرسل عند تجديد اشتراك حالي.",
     eventBirthday: "عيد ميلاد العضو",
     eventBirthdayHelp: "إرسال تهنئة تلقائية بعيد الميلاد للأعضاء في يوم ميلادهم.",
+    eventEmployeeQrCode: "رمز QR للموظف",
+    eventEmployeeQrCodeHelp: "يُرسل عبر واتساب عند إرسال أو إعادة إرسال رمز QR الخاص بموظف من صفحة الموظفين.",
+    eventMemberQrCode: "رمز QR للعضو",
+    eventMemberQrCodeHelp: "يُرسل عبر واتساب عند إرسال رمز QR الخاص بعضو من صفحة رمز QR الخاصة به.",
     templates: "القوالب",
     templatesTitle: "قوالب الإشعارات",
     templatesDescription: "عدّل نص الموضوع والرسالة المرسلة لكل إشعار، بكل لغة يستخدمها ناديك.",
     templatesLanguageNote: "تُرسل الإشعارات فعليًا باللغة الافتراضية لناديك، والتي تُحدَّد من صفحة الخيارات — وليس من هنا. عدّل نص كل لغة أدناه ليكون جاهزًا عند التبديل إليها.",
+    templatesFromNote: "تبدأ كل رسالة أيضاً بسطر \"من: {branch}\" يذكر الفرع المُرسِل، بلغة المستلم — هذا تلقائي وليس جزءاً من النص القابل للتعديل أدناه.",
     templateLanguageLabel: "اللغة",
     templateSubjectLabel: "الموضوع",
     templateBodyLabel: "الرسالة",
@@ -2688,10 +2708,11 @@ const ar: Dict = {
     logoUploadError: "فشل رفع الشعار. يرجى المحاولة مرة أخرى.",
     gates: "البوابات الذكية",
     gatesTitle: "البوابات الذكية",
-    gatesDescription: "إعداد البوابات الإلكترونية المثبتة في هذا الفرع. كل بوابة تتصل بجهاز BAS-IP ويمكن تخصيصها لجنس معين.",
+    gatesDescription: "إعداد البوابات الإلكترونية المثبتة في فروعك. كل بوابة تتصل بجهاز BAS-IP ويمكن تخصيصها لجنس معين.",
     gatesEmpty: "لا توجد بوابات مضافة بعد.",
     gateAddButton: "إضافة بوابة",
     gateName: "اسم البوابة",
+    gateBranch: "الفرع",
     gateGenderRestriction: "تقييد الجنس",
     gateGenderMale: "بوابة الرجال (ذكور فقط)",
     gateGenderFemale: "بوابة النساء (إناث فقط)",
@@ -3351,8 +3372,9 @@ const he: Dict = {
     printQrCode: "הדפסה",
     gateAccess: "גישה לשערים",
     allGates: "כל השערים בסניף זה",
+    allOrgGates: "כל השערים בארגון",
     selectedGatesOnly: "שערים נבחרים בלבד",
-    noGatesYet: "טרם הוגדרו שערים לסניף זה.",
+    noGatesYet: "טרם הוגדרו שערים.",
     recentAttendance: "נוכחות אחרונה",
     noRecentAttendance: "טרם נרשמה נוכחות.",
     checkInTime: "כניסה",
@@ -3540,10 +3562,15 @@ const he: Dict = {
     eventMembershipRenewedHelp: "אישור שנשלח כאשר מנוי קיים מחודש.",
     eventBirthday: "יום הולדת חבר",
     eventBirthdayHelp: "שלח ברכת יום הולדת אוטומטית לחברים ביום הולדתם.",
+    eventEmployeeQrCode: "קוד QR לעובד",
+    eventEmployeeQrCodeHelp: "נשלח בוואטסאפ כאשר קוד ה-QR של עובד נשלח או נשלח מחדש מדף העובדים.",
+    eventMemberQrCode: "קוד QR לחבר",
+    eventMemberQrCodeHelp: "נשלח בוואטסאפ כאשר קוד ה-QR של חבר נשלח מדף קוד ה-QR שלו.",
     templates: "תבניות",
     templatesTitle: "תבניות התראות",
     templatesDescription: "ערוך את הנושא וטקסט ההודעה שנשלחים לכל התראה, בכל שפה שהמכון שלך משתמש בה.",
     templatesLanguageNote: "התראות נשלחות בפועל בשפת ברירת המחדל של המכון שלך, שנקבעת בעמוד האפשרויות — לא כאן. ערוך את הטקסט של כל שפה למטה כדי שיהיה מוכן כשתעבור אליה.",
+    templatesFromNote: "כל הודעה גם נפתחת בשורת \"מאת: {branch}\" הנוקבת בסניף השולח, בשפת הנמען — זה אוטומטי ואינו חלק מהטקסט הניתן לעריכה למטה.",
     templateLanguageLabel: "שפה",
     templateSubjectLabel: "נושא",
     templateBodyLabel: "הודעה",
@@ -3622,10 +3649,11 @@ const he: Dict = {
     logoUploadError: "העלאת הלוגו נכשלה. נסה שוב.",
     gates: "שערים חכמים",
     gatesTitle: "שערים חכמים",
-    gatesDescription: "הגדר את השערים האלקטרוניים המותקנים בסניף זה. כל שער מתחבר למכשיר BAS-IP וניתן להגבילו לפי מגדר.",
+    gatesDescription: "הגדר את השערים האלקטרוניים המותקנים בסניפים שלך. כל שער מתחבר למכשיר BAS-IP וניתן להגבילו לפי מגדר.",
     gatesEmpty: "אין שערים מוגדרים עדיין.",
     gateAddButton: "הוסף שער",
     gateName: "שם השער",
+    gateBranch: "סניף",
     gateGenderRestriction: "הגבלת מגדר",
     gateGenderMale: "שער גברים (גברים בלבד)",
     gateGenderFemale: "שער נשים (נשים בלבד)",

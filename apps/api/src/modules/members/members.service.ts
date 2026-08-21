@@ -15,6 +15,9 @@ import { nextMemberNumber } from '../../common/org-numbering';
 import { findCountryByCode } from '../../data/countries';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { DebtService } from '../debt/debt.service';
+import { NotificationTemplatesService } from '../notifications/notification-templates.service';
+import { SettingsService } from '../settings/settings.service';
+import { resolveWhatsAppSessionBranchId } from '../tenancy/whatsapp-session';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Branch, Member, Sex } from '../../generated/prisma/client';
 
@@ -63,6 +66,8 @@ export class MembersService {
     private readonly prisma: PrismaService,
     private readonly basIpSyncService: BasIpSyncService,
     private readonly debtService: DebtService,
+    private readonly notificationTemplatesService: NotificationTemplatesService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   getReportingDate() {
@@ -551,7 +556,10 @@ export class MembersService {
   }
 
   /**
-   * Sends the QR code download link to the member's WhatsApp number.
+   * Sends the QR code as a WhatsApp image attachment to the member's
+   * number, in the tenant's default language (owner-editable at
+   * /app/settings/notifications/templates under "Member QR code").
+   * Same shape/behavior as EmployeeAttendanceService.sendQrViaWhatsApp.
    * Returns { sent: true } or { sent: false, reason: string }.
    */
   async sendQrViaWhatsApp(
@@ -581,10 +589,22 @@ export class MembersService {
     }
 
     const qrUrl = makeQrPublicUrl(member.id);
-    const message =
-      `Hi ${member.fullName}, your gym QR code is ready!\n\n` +
-      `Tap this link to download your QR code, then show it at the entrance to enter:\n${qrUrl}\n\n` +
-      `Save the image to your phone so you can access it even without internet.`;
+    const [{ defaultLanguage }, branch, sessionId] = await Promise.all([
+      this.settingsService.getSettingsForTenant(tenantId),
+      this.prisma.branch.findUniqueOrThrow({
+        where: { id: member.homeBranchId },
+        select: { name: true },
+      }),
+      resolveWhatsAppSessionBranchId(this.prisma, member.homeBranchId),
+    ]);
+    const { body: message } =
+      await this.notificationTemplatesService.getRenderedTemplate(
+        tenantId,
+        'memberQrCode',
+        defaultLanguage,
+        { memberName: member.fullName, qrUrl },
+        branch.name,
+      );
 
     try {
       const res = await fetch(`${baseUrl}/messages/send`, {
@@ -593,7 +613,13 @@ export class MembersService {
           'Content-Type': 'application/json',
           'X-API-Key': apiKey,
         },
-        body: JSON.stringify({ channel: 'whatsapp', to: member.phone, message }),
+        body: JSON.stringify({
+          channel: 'whatsapp',
+          to: member.phone,
+          message,
+          mediaUrl: qrUrl,
+          sessionId,
+        }),
       });
 
       if (!res.ok) {

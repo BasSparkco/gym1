@@ -3,6 +3,7 @@
 import { listGates, updateGate, deleteGate } from "@/lib/gates";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
+import { getSettings } from "@/lib/settings";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,12 @@ export default async function EditGatePage({ params }: Props) {
     redirect("/app/dashboard");
   }
 
-  const gates = await listGates(session.branch.id);
+  // Mirrors GatesSettingsPage's scoping: an owner viewing all branches can
+  // land here from any branch's gate card, not just their currently active
+  // one — but a manager stays confined to their single branch either way.
+  const settings = await getSettings();
+  const viewingAllBranches = session.role === "owner" && settings.ownerDataScope === "all";
+  const gates = viewingAllBranches ? await listGates() : await listGates(session.branch.id);
   const gate = gates.find((g) => g.id === gateId);
   if (!gate) notFound();
 

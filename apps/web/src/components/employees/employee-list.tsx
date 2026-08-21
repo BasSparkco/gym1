@@ -127,7 +127,7 @@ export function EmployeeList({
                   t={t}
                   updateAction={updateEmployeeAction}
                   toggleStatusAction={toggleEmployeeStatusAction}
-                  gates={allGates.filter((g) => g.branchId === emp.branchId)}
+                  gates={allGates}
                   gateAccess={gateAccessByEmployee[emp.id]}
                   setGatesAction={setEmployeeGatesAction}
                   recentVisits={recentVisitsByEmployee[emp.id]}

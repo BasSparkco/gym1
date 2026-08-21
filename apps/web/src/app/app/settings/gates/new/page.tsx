@@ -1,6 +1,7 @@
 "use server";
 
 import { createGate } from "@/lib/gates";
+import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
@@ -16,11 +17,13 @@ export default async function NewGatePage() {
     redirect("/app/dashboard");
   }
 
+  const branches = await listBranches();
+
   async function handleCreate(formData: FormData) {
     "use server";
     const genderValue = formData.get("genderRestriction") as string;
     await createGate({
-      branchId: session.branch.id,
+      branchId: (formData.get("branchId") as string) || session.branch.id,
       name: (formData.get("name") as string).trim(),
       genderRestriction:
         genderValue === "male" ? "male" : genderValue === "female" ? "female" : null,
@@ -51,6 +54,23 @@ export default async function NewGatePage() {
               placeholder="e.g. Men's Entrance"
               className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
+          </div>
+
+          {/* Branch */}
+          <div className="grid gap-1.5">
+            <label htmlFor="branchId" className="text-sm font-medium">
+              {t.settings.gateBranch}
+            </label>
+            <select
+              id="branchId"
+              name="branchId"
+              defaultValue={session.branch.id}
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            >
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Gender Restriction */}

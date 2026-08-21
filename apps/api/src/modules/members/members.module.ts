@@ -5,6 +5,7 @@ import { DataScopeModule } from '../../common/data-scope.module';
 import { DebtModule } from '../debt/debt.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MessagesModule } from '../messages/messages.module';
+import { SettingsModule } from '../settings/settings.module';
 import { MemberPhotosController } from './member-photos.controller';
 import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
@@ -18,6 +19,7 @@ import { MemberAuthService } from '../member-auth/member-auth.service';
     DebtModule,
     NotificationsModule,
     MessagesModule,
+    SettingsModule,
   ],
   // MemberAuthService is provided directly here (not via MemberAuthModule)
   // because MemberAuthModule itself imports MembersModule for member-facing

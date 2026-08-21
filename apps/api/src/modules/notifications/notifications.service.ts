@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { localDateString, toDateOnlyString } from '../../common/date';
 import {
@@ -9,7 +13,10 @@ import {
 import { NotificationDispatchService } from './notification-dispatch.service';
 import { NotificationTemplatesService } from './notification-templates.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NotificationChannel, NotificationEvent } from '../../generated/prisma/client';
+import {
+  NotificationChannel,
+  NotificationEvent,
+} from '../../generated/prisma/client';
 import { NotificationTemplateKey } from '../../data/notification-templates-seed';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -17,7 +24,11 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 // SMS is reserved for a future paid tier and hidden from every manual-send
 // surface (see Settings -> Notifications), so it's excluded here too even if
 // a caller passes it.
-const MANUAL_SEND_CHANNELS: readonly NotificationChannel[] = ['whatsapp', 'email', 'app'];
+const MANUAL_SEND_CHANNELS: readonly NotificationChannel[] = [
+  'whatsapp',
+  'email',
+  'app',
+];
 
 export type CreateNotificationContext = {
   templateKey: NotificationTemplateKey;
@@ -96,9 +107,7 @@ export class NotificationsService {
     memberId: string,
     context: CreateNotificationContext,
   ) {
-    const rule = (await this.getNotificationSettingsForTenant(tenantId))[
-      event
-    ];
+    const rule = (await this.getNotificationSettingsForTenant(tenantId))[event];
 
     if (!rule.enabled) {
       return [];
@@ -112,12 +121,19 @@ export class NotificationsService {
       return [];
     }
 
-    const lang = await this.getTenantDefaultLanguage(tenantId);
+    const [lang, member] = await Promise.all([
+      this.getTenantDefaultLanguage(tenantId),
+      this.prisma.member.findUniqueOrThrow({
+        where: { id: memberId },
+        select: { homeBranch: { select: { name: true } } },
+      }),
+    ]);
     const { subject, body } = await this.templatesService.getRenderedTemplate(
       tenantId,
       context.templateKey,
       lang,
       context.variables ?? {},
+      member.homeBranch.name,
     );
 
     const created = await Promise.all(
@@ -248,7 +264,10 @@ export class NotificationsService {
 
     for (const member of members) {
       const dob = member.dateOfBirth!;
-      if (dob.getUTCMonth() + 1 !== todayMonth || dob.getUTCDate() !== todayDay) {
+      if (
+        dob.getUTCMonth() + 1 !== todayMonth ||
+        dob.getUTCDate() !== todayDay
+      ) {
         continue;
       }
 
@@ -355,8 +374,8 @@ export class NotificationsService {
       throw new BadRequestException('Subject and body are required.');
     }
 
-    const channels = Array.from(new Set(input.channels ?? [])).filter((channel) =>
-      MANUAL_SEND_CHANNELS.includes(channel),
+    const channels = Array.from(new Set(input.channels ?? [])).filter(
+      (channel) => MANUAL_SEND_CHANNELS.includes(channel),
     );
     if (channels.length === 0) {
       throw new BadRequestException('Select at least one channel.');
@@ -369,7 +388,9 @@ export class NotificationsService {
     );
 
     if (memberIds.length === 0) {
-      throw new BadRequestException('No members matched the selected recipients.');
+      throw new BadRequestException(
+        'No members matched the selected recipients.',
+      );
     }
 
     const created = await Promise.all(

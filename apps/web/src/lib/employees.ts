@@ -78,7 +78,7 @@ export async function createEmployee(data: {
   startDate?: string;
   endDate?: string;
   coachProfile?: { specializations?: string[]; certifications?: string[] };
-  allowAllGates?: boolean;
+  gateAccessScope?: "branch" | "organization" | "selected";
   gateIds?: string[];
 }): Promise<{ employee: Employee; qrDispatch?: { sent: boolean; reason?: string } }> {
   const response = await authedFetch("/employees", {

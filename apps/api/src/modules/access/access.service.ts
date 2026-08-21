@@ -168,18 +168,32 @@ export class AccessService {
     accessMethod: AccessMethod,
     gateId?: string,
   ): Promise<AccessResult> {
-    // Gate allow-list check — mirrors the member gender-restriction check
-    // above, but employees are opt-out (allowAllGates default true) rather
-    // than gender-based.
-    if (gateId && !employee.allowAllGates) {
-      const allowed = await this.prisma.employeeGate.findFirst({
-        where: { employeeId: employee.id, gateId, gate: { tenantId } },
-      });
-      if (!allowed) {
-        return {
-          granted: false,
-          reason: 'This employee is not permitted at this gate.',
-        };
+    // Gate restriction check — mirrors the member gender-restriction check
+    // above, but keyed on the employee's GateAccessScope rather than gender.
+    // 'organization' needs no check beyond the gate belonging to this tenant
+    // (already implied by how gateId is resolved upstream), so only
+    // 'branch' and 'selected' narrow further.
+    if (gateId) {
+      if (employee.gateAccessScope === 'branch') {
+        const gate = await this.prisma.gate.findFirst({
+          where: { id: gateId, tenantId },
+        });
+        if (!gate || gate.branchId !== employee.branchId) {
+          return {
+            granted: false,
+            reason: 'This employee is not permitted at this gate.',
+          };
+        }
+      } else if (employee.gateAccessScope === 'selected') {
+        const allowed = await this.prisma.employeeGate.findFirst({
+          where: { employeeId: employee.id, gateId, gate: { tenantId } },
+        });
+        if (!allowed) {
+          return {
+            granted: false,
+            reason: 'This employee is not permitted at this gate.',
+          };
+        }
       }
     }
 

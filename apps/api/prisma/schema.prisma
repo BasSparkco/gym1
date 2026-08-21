@@ -45,6 +45,17 @@ enum WorkType {
   trainee
 }
 
+// Which gates an employee's QR/card can open. Mirrors the "all vs
+// restricted-to-list" shape of MembershipPlan.allowAllBranches, but with an
+// extra tier: an employee's default home is their own branch, so "all" needs
+// to distinguish "all gates at that one branch" from "all gates across the
+// whole organization".
+enum GateAccessScope {
+  branch
+  organization
+  selected
+}
+
 enum MemberStatus {
   active
   inactive
@@ -246,12 +257,9 @@ model Employee {
   startDate      DateTime?      @db.Date
   endDate        DateTime?      @db.Date
   isUser         Boolean        @default(false)
-  // Whether this employee's QR code opens every gate at their branch
-  // (default) or only the gates explicitly listed in `gates` below —
-  // mirrors MembershipPlan.allowAllBranches/allowAllPrograms: most
-  // employees need no restriction, so the exception list only matters
-  // once this is flipped false for a specific employee.
-  allowAllGates  Boolean        @default(true)
+  // Which gates this employee's QR code opens — see GateAccessScope.
+  // `selected` is the only case where `gates` below is consulted.
+  gateAccessScope GateAccessScope @default(branch)
 
   gates              EmployeeGate[]
   employeeVisits     EmployeeVisit[]
@@ -297,7 +305,7 @@ model Gate {
 }
 
 // Exception list of gates an employee's QR may open, used only when
-// Employee.allowAllGates is false (mirrors MembershipPlanProgram).
+// Employee.gateAccessScope is 'selected' (mirrors MembershipPlanProgram).
 model EmployeeGate {
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)

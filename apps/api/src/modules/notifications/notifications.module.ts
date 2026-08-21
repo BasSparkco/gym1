@@ -27,6 +27,11 @@ import { FcmNotificationProvider } from './providers/fcm-notification.provider';
     SparkcoNotificationProvider,
     FcmNotificationProvider,
   ],
-  exports: [NotificationsService, FcmNotificationProvider, SparkcoNotificationProvider],
+  exports: [
+    NotificationsService,
+    NotificationTemplatesService,
+    FcmNotificationProvider,
+    SparkcoNotificationProvider,
+  ],
 })
 export class NotificationsModule {}

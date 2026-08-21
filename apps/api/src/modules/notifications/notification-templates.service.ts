@@ -12,6 +12,19 @@ import {
 
 const LANGUAGES: Language[] = ['en', 'ar', 'he'];
 
+// Recipients otherwise have no way to tell which branch/organization a
+// message came from — WhatsApp never surfaces `subject` (SparkcoNotificationProvider
+// only forwards it for email), so this is prepended to `body`, the one part
+// of every rendered message every channel actually shows. Not part of the
+// owner-editable template text itself (see templatesLanguageNote on the
+// templates page) so it can't be accidentally dropped when a template is
+// customized.
+const FROM_LABEL: Record<Language, string> = {
+  en: 'From',
+  ar: 'من',
+  he: 'מאת',
+};
+
 export type NotificationTemplateView = {
   templateKey: NotificationTemplateKey;
   lang: Language;
@@ -96,8 +109,9 @@ export class NotificationTemplatesService {
       subject: row.subject,
       body: row.body,
       variables:
-        DEFAULT_NOTIFICATION_TEMPLATES[row.templateKey as NotificationTemplateKey]
-          .variables,
+        DEFAULT_NOTIFICATION_TEMPLATES[
+          row.templateKey as NotificationTemplateKey
+        ].variables,
       isCustomized: true,
     };
   }
@@ -119,22 +133,29 @@ export class NotificationTemplatesService {
    * (templateKey, lang) override, else the in-code default for that
    * language — every language has real in-code text, so there's no need to
    * fall back across languages.
+   *
+   * `branchName` is prepended to the body as a localized "From: <branch>"
+   * line — not a template variable, since it must survive even in a
+   * template an owner has customized (see FROM_LABEL above).
    */
   async getRenderedTemplate(
     tenantId: string,
     templateKey: NotificationTemplateKey,
     lang: Language,
     variables: Record<string, string>,
+    branchName: string,
   ): Promise<RenderedNotification> {
     const row = await this.prisma.notificationTemplate.findUnique({
       where: { tenantId_templateKey_lang: { tenantId, templateKey, lang } },
     });
 
-    const base = row ?? DEFAULT_NOTIFICATION_TEMPLATES[templateKey].translations[lang];
+    const base =
+      row ?? DEFAULT_NOTIFICATION_TEMPLATES[templateKey].translations[lang];
+    const renderedBody = renderNotificationTemplate(base.body, variables);
 
     return {
       subject: renderNotificationTemplate(base.subject, variables),
-      body: renderNotificationTemplate(base.body, variables),
+      body: `${FROM_LABEL[lang]}: ${branchName}\n\n${renderedBody}`,
     };
   }
 

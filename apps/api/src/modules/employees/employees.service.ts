@@ -11,7 +11,11 @@ import { nextEmployeeNumber } from '../../common/org-numbering';
 import { findCountryByCode } from '../../data/countries';
 import { EmployeeAttendanceService } from '../employee-attendance/employee-attendance.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Branch, Employee } from '../../generated/prisma/client';
+import {
+  Branch,
+  Employee,
+  GateAccessScope,
+} from '../../generated/prisma/client';
 
 export type CreateEmployeeInput = {
   fullName: string;
@@ -26,7 +30,7 @@ export type CreateEmployeeInput = {
   startDate?: string;
   endDate?: string;
   coachProfile?: { specializations?: string[]; certifications?: string[] };
-  allowAllGates?: boolean;
+  gateAccessScope?: GateAccessScope;
   gateIds?: string[];
 };
 
@@ -199,18 +203,18 @@ export class EmployeesService {
       },
     });
 
-    if (input.allowAllGates !== undefined) {
+    if (input.gateAccessScope !== undefined) {
       await this.employeeAttendanceService.setEmployeeGates(
         tenantId,
         employee.id,
         {
-          allowAllGates: input.allowAllGates,
+          gateAccessScope: input.gateAccessScope,
           gateIds: input.gateIds ?? [],
         },
       );
       // Keep the returned payload consistent with what was just persisted —
-      // `employee` still holds the create-time default (allowAllGates: true).
-      employee.allowAllGates = input.allowAllGates;
+      // `employee` still holds the create-time default (gateAccessScope: branch).
+      employee.gateAccessScope = input.gateAccessScope;
     }
 
     // Automatic QR delivery on creation — best-effort, doesn't fail employee

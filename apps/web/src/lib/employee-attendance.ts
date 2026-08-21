@@ -22,8 +22,10 @@ export type EmployeeCheckInResult =
       visit: EmployeeVisit;
     };
 
+export type GateAccessScope = "branch" | "organization" | "selected";
+
 export type EmployeeGateAccess = {
-  allowAllGates: boolean;
+  gateAccessScope: GateAccessScope;
   gateIds: string[];
 };
 

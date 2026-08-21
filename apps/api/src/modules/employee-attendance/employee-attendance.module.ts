@@ -2,11 +2,19 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { AccessModule } from '../access/access.module';
 import { DataScopeModule } from '../../common/data-scope.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { SettingsModule } from '../settings/settings.module';
 import { EmployeeAttendanceController } from './employee-attendance.controller';
 import { EmployeeAttendanceService } from './employee-attendance.service';
 
 @Module({
-  imports: [AuthModule, AccessModule, DataScopeModule],
+  imports: [
+    AuthModule,
+    AccessModule,
+    DataScopeModule,
+    NotificationsModule,
+    SettingsModule,
+  ],
   controllers: [EmployeeAttendanceController],
   providers: [EmployeeAttendanceService],
   exports: [EmployeeAttendanceService],

@@ -1,7 +1,7 @@
 "use server";
 
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
@@ -33,6 +33,8 @@ export default async function NotificationTemplatesPage() {
     membershipActivated: t.settings.eventMembershipActivated,
     membershipRenewed: t.settings.eventMembershipRenewed,
     birthday: t.settings.eventBirthday,
+    employeeQrCode: t.settings.eventEmployeeQrCode,
+    memberQrCode: t.settings.eventMemberQrCode,
   };
 
   const eventHelp: Record<NotificationTemplateKey, string> = {
@@ -42,6 +44,8 @@ export default async function NotificationTemplatesPage() {
     membershipActivated: t.settings.eventMembershipActivatedHelp,
     membershipRenewed: t.settings.eventMembershipRenewedHelp,
     birthday: t.settings.eventBirthdayHelp,
+    employeeQrCode: t.settings.eventEmployeeQrCodeHelp,
+    memberQrCode: t.settings.eventMemberQrCodeHelp,
   };
 
   return (
@@ -91,6 +95,11 @@ export default async function NotificationTemplatesPage() {
             {t.settings.options}
           </Link>
         </p>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-foreground/80">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand" strokeWidth={2} />
+        <p>{formatDict(t.settings.templatesFromNote, { branch: session.branch.name })}</p>
       </div>
 
       <div className="grid gap-5">

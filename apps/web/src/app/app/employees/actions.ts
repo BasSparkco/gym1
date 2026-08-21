@@ -1,7 +1,7 @@
 "use server";
 
 import { updateEmployee, upsertCoachProfile, removeCoachProfile, getCoachProfile } from "@/lib/employees";
-import { setEmployeeGates, sendEmployeeQr } from "@/lib/employee-attendance";
+import { setEmployeeGates, sendEmployeeQr, type GateAccessScope } from "@/lib/employee-attendance";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -48,10 +48,10 @@ export async function updateEmployeeAction(formData: FormData) {
 
 export async function setEmployeeGatesAction(formData: FormData) {
   const employeeId = formData.get("employeeId") as string;
-  const allowAllGates = formData.get("allowAllGates") === "true";
+  const gateAccessScope = (formData.get("gateAccessScope") as GateAccessScope) || "branch";
   await setEmployeeGates(employeeId, {
-    allowAllGates,
-    gateIds: allowAllGates ? [] : formData.getAll("gateIds").map(String),
+    gateAccessScope,
+    gateIds: gateAccessScope === "selected" ? formData.getAll("gateIds").map(String) : [],
   });
   revalidateEmployee(employeeId);
 }

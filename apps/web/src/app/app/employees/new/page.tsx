@@ -10,7 +10,9 @@ import DateInput from "@/components/date-input";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { GateAccessScopeField } from "@/components/employees/gate-access-scope-field";
 import { UserPlus } from "lucide-react";
+import type { GateAccessScope } from "@/lib/employee-attendance";
 
 export default async function NewEmployeePage() {
   const session = await requireSession();
@@ -23,7 +25,6 @@ export default async function NewEmployeePage() {
   const [branches, settings, gates] = await Promise.all([listBranches(), getSettings(), listGates()]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
   const branchMap = Object.fromEntries(branches.map((b) => [b.id, b.name]));
-  const gatesSpanMultipleBranches = new Set(gates.map((g) => g.branchId)).size > 1;
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -38,7 +39,7 @@ export default async function NewEmployeePage() {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    const allowAllGates = (formData.get("allowAllGates") as string) !== "false";
+    const gateAccessScope = (formData.get("gateAccessScope") as GateAccessScope) || "branch";
     const gateIds = formData.getAll("gateIds").map(String);
     const { employee, qrDispatch } = await createEmployee({
       fullName: formData.get("fullName") as string,
@@ -53,8 +54,8 @@ export default async function NewEmployeePage() {
       startDate: (formData.get("startDate") as string) || undefined,
       endDate: (formData.get("endDate") as string) || undefined,
       coachProfile: isCoach ? { specializations, certifications } : undefined,
-      allowAllGates,
-      gateIds: allowAllGates ? [] : gateIds,
+      gateAccessScope,
+      gateIds: gateAccessScope === "selected" ? gateIds : [],
     });
 
     if (qrDispatch?.sent) {
@@ -174,36 +175,13 @@ export default async function NewEmployeePage() {
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-brand">
               {t.attendance.gateAccess}
             </p>
-            <div className="grid gap-4">
-              <div className="grid gap-1.5 sm:max-w-xs">
-                <select id="allowAllGates" name="allowAllGates" defaultValue="true" className={selectCls}>
-                  <option value="true">{t.attendance.allGates}</option>
-                  <option value="false">{t.attendance.selectedGatesOnly}</option>
-                </select>
-              </div>
-              {gates.length === 0 ? (
-                <p className="text-sm text-foreground/55">{t.attendance.noGatesYet}</p>
-              ) : (
-                <div className="grid gap-2 rounded-2xl border border-line bg-white px-4 py-3 sm:grid-cols-2">
-                  {gates.map((gate) => (
-                    <label key={gate.id} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        name="gateIds"
-                        value={gate.id}
-                        className="h-4 w-4 rounded border-line accent-brand"
-                      />
-                      <span>
-                        {gate.name}
-                        {gatesSpanMultipleBranches && (
-                          <span className="text-foreground/50"> — {branchMap[gate.branchId] ?? gate.branchId}</span>
-                        )}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+            <GateAccessScopeField
+              gates={gates}
+              branchMap={branchMap}
+              defaultScope="branch"
+              defaultGateIds={[]}
+              t={t}
+            />
           </div>
 
           {/* ── Coach profile (revealed via peer-checked, no client JS) ── */}

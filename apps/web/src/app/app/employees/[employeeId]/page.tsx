@@ -34,7 +34,7 @@ export default async function EmployeeDetailPage({ params }: Props) {
     getCoachProfile(employeeId),
   ]);
   const [gates, gateAccess, recentVisits] = await Promise.all([
-    listGates(employee.branchId),
+    listGates(),
     getEmployeeGates(employeeId),
     listEmployeeVisits(employeeId),
   ]);

@@ -13,8 +13,15 @@ import {
   makeEmployeeQrPublicUrl,
 } from '../../common/qr';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
+import { NotificationTemplatesService } from '../notifications/notification-templates.service';
+import { SettingsService } from '../settings/settings.service';
+import { resolveWhatsAppSessionBranchId } from '../tenancy/whatsapp-session';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AccessMethod, Employee } from '../../generated/prisma/client';
+import {
+  AccessMethod,
+  Employee,
+  GateAccessScope,
+} from '../../generated/prisma/client';
 
 type CheckInInput = {
   employeeIdentifier?: string;
@@ -45,6 +52,8 @@ export class EmployeeAttendanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly basIpSyncService: BasIpSyncService,
+    private readonly notificationTemplatesService: NotificationTemplatesService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async checkIn(
@@ -158,7 +167,9 @@ export class EmployeeAttendanceService {
   }
 
   /**
-   * Sends the QR code download link to the employee's WhatsApp number.
+   * Sends the QR code as a WhatsApp image attachment to the employee's
+   * number, in the tenant's default language (owner-editable at
+   * /app/settings/notifications/templates under "Employee QR code").
    * Same shape/behavior as MembersService.sendQrViaWhatsApp.
    * Returns { sent: true } or { sent: false, reason: string }.
    */
@@ -184,10 +195,22 @@ export class EmployeeAttendanceService {
     }
 
     const qrUrl = makeEmployeeQrPublicUrl(employee.id);
-    const message =
-      `Hi ${employee.fullName}, your staff access QR code is ready!\n\n` +
-      `Tap this link to download your QR code, then show it at the entrance to enter:\n${qrUrl}\n\n` +
-      `Save the image to your phone so you can access it even without internet.`;
+    const [{ defaultLanguage }, branch, sessionId] = await Promise.all([
+      this.settingsService.getSettingsForTenant(tenantId),
+      this.prisma.branch.findUniqueOrThrow({
+        where: { id: employee.branchId },
+        select: { name: true },
+      }),
+      resolveWhatsAppSessionBranchId(this.prisma, employee.branchId),
+    ]);
+    const { body: message } =
+      await this.notificationTemplatesService.getRenderedTemplate(
+        tenantId,
+        'employeeQrCode',
+        defaultLanguage,
+        { employeeName: employee.fullName, qrUrl },
+        branch.name,
+      );
 
     try {
       const res = await fetch(`${baseUrl}/messages/send`, {
@@ -200,6 +223,8 @@ export class EmployeeAttendanceService {
           channel: 'whatsapp',
           to: employee.phone,
           message,
+          mediaUrl: qrUrl,
+          sessionId,
         }),
       });
 
@@ -234,24 +259,30 @@ export class EmployeeAttendanceService {
 
   async getEmployeeGates(tenantId: string, employeeId: string) {
     const employee = await this.getEmployeeRecord(tenantId, employeeId);
-    if (employee.allowAllGates) {
-      return { allowAllGates: true, gateIds: [] as string[] };
+    if (employee.gateAccessScope !== 'selected') {
+      return {
+        gateAccessScope: employee.gateAccessScope,
+        gateIds: [] as string[],
+      };
     }
     const links = await this.prisma.employeeGate.findMany({
       where: { employeeId },
       select: { gateId: true },
     });
-    return { allowAllGates: false, gateIds: links.map((l) => l.gateId) };
+    return {
+      gateAccessScope: 'selected' as const,
+      gateIds: links.map((l) => l.gateId),
+    };
   }
 
   async setEmployeeGates(
     tenantId: string,
     employeeId: string,
-    input: { allowAllGates: boolean; gateIds: string[] },
+    input: { gateAccessScope: GateAccessScope; gateIds: string[] },
   ) {
     const employee = await this.getEmployeeRecord(tenantId, employeeId);
 
-    if (!input.allowAllGates) {
+    if (input.gateAccessScope === 'selected') {
       const gates = await this.prisma.gate.findMany({
         where: { id: { in: input.gateIds }, tenantId },
         select: { id: true },
@@ -266,16 +297,16 @@ export class EmployeeAttendanceService {
     await this.prisma.$transaction([
       this.prisma.employee.update({
         where: { id: employeeId },
-        data: { allowAllGates: input.allowAllGates },
+        data: { gateAccessScope: input.gateAccessScope },
       }),
       this.prisma.employeeGate.deleteMany({ where: { employeeId } }),
-      ...(input.allowAllGates
-        ? []
-        : [
+      ...(input.gateAccessScope === 'selected'
+        ? [
             this.prisma.employeeGate.createMany({
               data: input.gateIds.map((gateId) => ({ employeeId, gateId })),
             }),
-          ]),
+          ]
+        : []),
     ]);
 
     // Best-effort — same fire-and-forget pattern as member QR sync

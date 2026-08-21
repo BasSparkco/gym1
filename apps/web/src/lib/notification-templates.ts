@@ -12,6 +12,8 @@ export const NOTIFICATION_TEMPLATE_KEYS = [
   "membershipActivated",
   "membershipRenewed",
   "birthday",
+  "employeeQrCode",
+  "memberQrCode",
 ] as const;
 
 export type NotificationTemplateKey = (typeof NOTIFICATION_TEMPLATE_KEYS)[number];

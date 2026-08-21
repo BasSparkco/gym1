@@ -14,6 +14,7 @@ import { requireRole } from '../../common/require-role';
 import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { EmployeesService } from './employees.service';
+import { GateAccessScope } from '../../generated/prisma/client';
 
 type CreateEmployeeRequestBody = {
   fullName?: string;
@@ -28,7 +29,7 @@ type CreateEmployeeRequestBody = {
   startDate?: string;
   endDate?: string;
   coachProfile?: { specializations?: string[]; certifications?: string[] };
-  allowAllGates?: boolean;
+  gateAccessScope?: GateAccessScope;
   gateIds?: string[];
 };
 
@@ -87,7 +88,7 @@ export class EmployeesController {
       startDate: body.startDate,
       endDate: body.endDate,
       coachProfile: body.coachProfile,
-      allowAllGates: body.allowAllGates,
+      gateAccessScope: body.gateAccessScope,
       gateIds: body.gateIds,
     });
   }

@@ -20,9 +20,12 @@ export const NOTIFICATION_TEMPLATE_KEYS = [
   'membershipActivated',
   'membershipRenewed',
   'birthday',
+  'employeeQrCode',
+  'memberQrCode',
 ] as const;
 
-export type NotificationTemplateKey = (typeof NOTIFICATION_TEMPLATE_KEYS)[number];
+export type NotificationTemplateKey =
+  (typeof NOTIFICATION_TEMPLATE_KEYS)[number];
 
 export type NotificationTemplateText = {
   subject: string;
@@ -145,6 +148,59 @@ export const DEFAULT_NOTIFICATION_TEMPLATES: Record<
       he: {
         subject: 'יום הולדת שמח!',
         body: 'יום הולדת שמח, {{memberName}}! מאחלים לך שנה נהדרת מכל צוות המכון.',
+      },
+    },
+  },
+  employeeQrCode: {
+    // The QR image itself is attached as WhatsApp media alongside this text
+    // (see EmployeeAttendanceService.sendQrViaWhatsApp), so the body is just
+    // a caption — no "tap this link" / "save the image" instructions, which
+    // would be redundant once the image is already in the chat. `qrUrl`
+    // stays available as a variable in case a tenant customizes the caption
+    // to include a fallback link.
+    variables: ['employeeName', 'qrUrl'],
+    translations: {
+      en: {
+        subject: 'Your staff access QR code',
+        body:
+          'Hi {{employeeName}}, your staff access QR code is ready! Show it ' +
+          'at the entrance to enter.',
+      },
+      ar: {
+        subject: 'رمز QR الخاص بدخول الموظفين',
+        body:
+          'مرحباً {{employeeName}}، رمز QR الخاص بدخولك جاهز الآن! أظهره عند ' +
+          'المدخل للدخول.',
+      },
+      he: {
+        subject: 'קוד ה-QR שלך לכניסת צוות',
+        body:
+          'שלום {{employeeName}}, קוד ה-QR שלך לכניסת צוות מוכן! הצג אותו ' +
+          'בכניסה כדי להיכנס.',
+      },
+    },
+  },
+  memberQrCode: {
+    // Same media-as-attachment shape as employeeQrCode above.
+    variables: ['memberName', 'qrUrl'],
+    translations: {
+      en: {
+        subject: 'Your gym QR code',
+        body:
+          'Hi {{memberName}}, your gym QR code is ready! Show it at the ' +
+          'entrance to enter.',
+      },
+      ar: {
+        subject: 'رمز QR الخاص بك',
+        body:
+          'مرحباً {{memberName}}، رمز QR الخاص بالنادي جاهز الآن! أظهره عند ' +
+          'المدخل للدخول.',
+      },
+      he: {
+        subject: 'קוד ה-QR שלך למכון',
+        body:
+          'שלום {{memberName}}, קוד ה-QR שלך למכון מוכן! הצג אותו בכניסה ' +
+          'כדי להיכנס.',
       },
     },
   },

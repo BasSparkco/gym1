@@ -9,6 +9,7 @@ import type { Gate } from "@/lib/gates";
 import type { EmployeeGateAccess, EmployeeVisit } from "@/lib/employee-attendance";
 import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
+import { GateAccessScopeField } from "@/components/employees/gate-access-scope-field";
 import { Save, Ban, CheckCircle2, QrCode } from "lucide-react";
 
 // The single canonical layout an employee profile is rendered from. Both the
@@ -358,46 +359,28 @@ export function EmployeeProfileView({
           {canEdit && setGatesAction ? (
             <form action={setGatesAction} className="mt-4 grid gap-4">
               <input type="hidden" name="employeeId" value={employee.id} />
-              <select
-                name="allowAllGates"
-                defaultValue={gateAccess.allowAllGates ? "true" : "false"}
-                className={inputCls}
-              >
-                <option value="true">{t.attendance.allGates}</option>
-                <option value="false">{t.attendance.selectedGatesOnly}</option>
-              </select>
-              {gates.length === 0 ? (
-                <p className="text-sm text-foreground/55">{t.attendance.noGatesYet}</p>
-              ) : (
-                <div className="grid gap-2 rounded-2xl border border-line bg-white px-4 py-3 sm:grid-cols-2">
-                  {gates.map((gate) => (
-                    <label key={gate.id} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        name="gateIds"
-                        value={gate.id}
-                        defaultChecked={gateAccess.gateIds.includes(gate.id)}
-                        className="h-4 w-4 rounded border-line accent-brand"
-                      />
-                      <span>{gate.name}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+              <GateAccessScopeField
+                gates={gates}
+                branchMap={branchMap}
+                defaultScope={gateAccess.gateAccessScope}
+                defaultGateIds={gateAccess.gateIds}
+                t={t}
+              />
               <Button type="submit" variant="secondary" size="sm" className="w-fit" icon={<Save className="h-3.5 w-3.5" strokeWidth={2} />}>
                 {t.actions.save}
               </Button>
             </form>
           ) : (
             <p className="mt-3 text-sm">
-              {gateAccess.allowAllGates
-                ? t.attendance.allGates
-                : `${t.attendance.selectedGatesOnly}: ${
-                    gates
-                      .filter((g) => gateAccess.gateIds.includes(g.id))
-                      .map((g) => g.name)
-                      .join(", ") || "—"
-                  }`}
+              {gateAccess.gateAccessScope === "branch" && t.attendance.allGates}
+              {gateAccess.gateAccessScope === "organization" && t.attendance.allOrgGates}
+              {gateAccess.gateAccessScope === "selected" &&
+                `${t.attendance.selectedGatesOnly}: ${
+                  gates
+                    .filter((g) => gateAccess.gateIds.includes(g.id))
+                    .map((g) => g.name)
+                    .join(", ") || "—"
+                }`}
             </p>
           )}
 

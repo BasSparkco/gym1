@@ -17,6 +17,7 @@ import { requireRole } from '../../common/require-role';
 import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
 import { EmployeeAttendanceService } from './employee-attendance.service';
+import { GateAccessScope } from '../../generated/prisma/client';
 
 type CheckInRequestBody = {
   employeeIdentifier?: string;
@@ -24,7 +25,7 @@ type CheckInRequestBody = {
 };
 
 type SetGatesRequestBody = {
-  allowAllGates?: boolean;
+  gateAccessScope?: GateAccessScope;
   gateIds?: string[];
 };
 
@@ -130,7 +131,7 @@ export class EmployeeAttendanceController {
       session.user.tenant.id,
       employeeId,
       {
-        allowAllGates: body.allowAllGates ?? true,
+        gateAccessScope: body.gateAccessScope ?? GateAccessScope.branch,
         gateIds: body.gateIds ?? [],
       },
     );
