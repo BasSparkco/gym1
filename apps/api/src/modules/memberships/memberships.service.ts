@@ -137,6 +137,7 @@ export class MembershipsService {
           branchName: branch?.name ?? '',
         },
         relatedId: membership.id,
+        mediaUrl: qrUrl,
       },
     );
 

@@ -34,6 +34,8 @@ export type CreateNotificationContext = {
   templateKey: NotificationTemplateKey;
   variables?: Record<string, string>;
   relatedId?: string;
+  /** WhatsApp media attachment (e.g. a QR code PNG) — see Notification.mediaUrl. */
+  mediaUrl?: string;
 };
 
 export type NotificationTargetInput =
@@ -148,6 +150,7 @@ export class NotificationsService {
             relatedId: context.relatedId,
             subject,
             body,
+            mediaUrl: context.mediaUrl,
             status: 'pending' as const,
           },
         }),

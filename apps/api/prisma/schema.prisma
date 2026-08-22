@@ -711,6 +711,11 @@ model Notification {
   relatedId    String?
   subject      String
   body         String              @db.Text
+  // Set only when this notification should carry a WhatsApp media
+  // attachment (currently: the member's QR code on initial membership
+  // activation) — never rendered into `body` itself, since the image being
+  // attached makes a text link redundant. See NotificationDispatchService.
+  mediaUrl     String?
   status       NotificationStatus
   sentAt       DateTime?
   failedReason String?             @db.Text

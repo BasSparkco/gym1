@@ -125,6 +125,7 @@ export class NotificationDispatchService {
       subject: notification.subject,
       body: notification.body,
       sessionId,
+      mediaUrl: notification.mediaUrl ?? undefined,
     });
 
     return result.status === 'sent'

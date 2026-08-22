@@ -95,25 +95,32 @@ export const DEFAULT_NOTIFICATION_TEMPLATES: Record<
     },
   },
   membershipActivated: {
+    // The QR image itself is attached as WhatsApp media alongside this text
+    // (see MembershipsService.activateMembership), so the body is just a
+    // caption — no "download your QR code" link, which would be redundant
+    // once the image is already in the chat. `qrUrl` stays available as a
+    // variable in case a tenant customizes the caption to include a
+    // fallback link.
     variables: ['planName', 'endDate', 'qrUrl', 'branchName'],
     translations: {
       en: {
         subject: 'Welcome to {{branchName}}',
         body:
-          'Your {{planName}} membership is now active and runs through {{endDate}}.\n\n' +
-          'Download your QR code (show it at the entrance to enter):\n{{qrUrl}}',
+          'Your {{planName}} membership is now active and runs through ' +
+          '{{endDate}}.\n\nHere is your QR code — show it at the entrance ' +
+          'to enter.',
       },
       ar: {
         subject: 'مرحباً بك في {{branchName}}',
         body:
           'اشتراكك في {{planName}} أصبح نشطاً الآن ويستمر حتى {{endDate}}.\n\n' +
-          'حمّل رمز QR الخاص بك (أظهره عند المدخل للدخول):\n{{qrUrl}}',
+          'هذا رمز QR الخاص بك — أظهره عند المدخل للدخول.',
       },
       he: {
         subject: 'ברוכים הבאים ל-{{branchName}}',
         body:
           'המנוי שלך ל-{{planName}} פעיל כעת ותקף עד {{endDate}}.\n\n' +
-          'הורד את קוד ה-QR שלך (הצג אותו בכניסה כדי להיכנס):\n{{qrUrl}}',
+          'זהו קוד ה-QR שלך — הצג אותו בכניסה כדי להיכנס.',
       },
     },
   },

@@ -9,6 +9,8 @@ export type NotificationDeliveryInput = {
   body: string;
   /** Branch/session identifier — routes WhatsApp messages to the correct per-branch session. */
   sessionId?: string;
+  /** WhatsApp media attachment (e.g. the member's QR code PNG) — ignored by other channels. */
+  mediaUrl?: string;
 };
 
 export type NotificationDeliveryResult =
