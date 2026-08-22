@@ -20,6 +20,15 @@ import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
 import { UserRound, PencilLine, MessageCircle } from "lucide-react";
 
+// Card accent border color by gender (css.md convention): blue for male,
+// rose for female, black when unspecified — kept as its own helper since
+// it's a lookup on data, not a fixed per-card token like the rest of css.md.
+function genderBorderClass(sex: Employee["sex"]): string {
+  if (sex === "male") return "border-s-blue-500";
+  if (sex === "female") return "border-s-rose-500";
+  return "border-s-black";
+}
+
 type Props = {
   employees: Employee[];
   branches: Branch[];
@@ -60,6 +69,7 @@ export function EmployeeList({
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {employees.map((emp, index) => {
         const expanded = expandedId === emp.id;
+        const isCoach = coachProfilesByEmployee[emp.id] != null;
 
         return (
           <Fragment key={emp.id}>
@@ -68,7 +78,9 @@ export function EmployeeList({
               animate
               delay={Math.min(index + 1, 6) as 0 | 1 | 2 | 3 | 4 | 5 | 6}
               className={cn(
-                "flex flex-col border-s-4 border-s-brand transition-shadow",
+                "flex flex-col border-s-4 transition-shadow",
+                genderBorderClass(emp.sex),
+                isCoach && "border-e-4 border-e-orange-500",
                 expanded && "ring-2 ring-brand ring-offset-2 ring-offset-background",
               )}
             >
