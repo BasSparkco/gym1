@@ -1,5 +1,7 @@
 "use client";
 
+import { startTransition, useMemo, useState, type FormEvent } from "react";
+import { unstable_rethrow } from "next/navigation";
 import DateInput from "@/components/date-input";
 import { Button } from "@/components/ui/button";
 import { PhoneNumber } from "@/components/phone-number";
@@ -10,7 +12,7 @@ import type { EmployeeGateAccess, EmployeeVisit } from "@/lib/employee-attendanc
 import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
 import { GateAccessScopeField } from "@/components/employees/gate-access-scope-field";
-import { Save, Ban, CheckCircle2, QrCode } from "lucide-react";
+import { Save, Ban, CheckCircle2, QrCode, Loader2 } from "lucide-react";
 
 // The single canonical layout an employee profile is rendered from. Both the
 // dedicated /app/employees/[employeeId] page and the employees-list inline
@@ -40,6 +42,46 @@ type Props = {
   recentVisits?: EmployeeVisit[];
 };
 
+// All editable fields, tracked as strings/booleans (matching how every
+// input/select/checkbox exposes its value) so a plain shallow diff against
+// the last-saved snapshot is enough to know whether the form is dirty — no
+// schema/validation library needed just to answer "did anything change".
+type FormValues = {
+  fullName: string;
+  idNumber: string;
+  phone: string;
+  sex: string;
+  dateOfBirth: string;
+  branchId: string;
+  job: string;
+  salary: string;
+  workType: string;
+  startDate: string;
+  endDate: string;
+  isCoach: boolean;
+  specializations: string;
+  certifications: string;
+};
+
+function toFormValues(employee: Employee, coachProfile: CoachProfile | null): FormValues {
+  return {
+    fullName: employee.fullName ?? "",
+    idNumber: employee.idNumber ?? "",
+    phone: employee.phone ?? "",
+    sex: employee.sex ?? "",
+    dateOfBirth: employee.dateOfBirth ?? "",
+    branchId: employee.branchId ?? "",
+    job: employee.job ?? "",
+    salary: employee.salary != null ? String(employee.salary) : "",
+    workType: employee.workType ?? "",
+    startDate: employee.startDate ?? "",
+    endDate: employee.endDate ?? "",
+    isCoach: coachProfile !== null,
+    specializations: (coachProfile?.specializations ?? []).join(", "),
+    certifications: (coachProfile?.certifications ?? []).join(", "),
+  };
+}
+
 export function EmployeeProfileView({
   employee,
   coachProfile,
@@ -65,6 +107,49 @@ export function EmployeeProfileView({
     trainee: t.employees.trainee,
   } as Record<string, string>;
 
+  // `initialValues` is the last-known-saved snapshot — the baseline the Save
+  // button's dirty check compares against. It starts from the employee/coach
+  // props and is replaced with `values` on every successful save, so "dirty"
+  // always means "differs from what's actually on the server", not from page
+  // load.
+  const [initialValues, setInitialValues] = useState<FormValues>(() => toFormValues(employee, coachProfile));
+  const [values, setValues] = useState<FormValues>(initialValues);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const isDirty = useMemo(
+    () => (Object.keys(initialValues) as (keyof FormValues)[]).some((key) => values[key] !== initialValues[key]),
+    [values, initialValues],
+  );
+
+  function updateField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
+    setValues((prev) => ({ ...prev, [key]: value }));
+    if (saveError) setSaveError(null);
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!isDirty || isSaving) return;
+
+    // Server Actions need to run inside a transition for Next.js to apply
+    // their revalidatePath()-triggered refresh as a scoped patch rather than
+    // a full route reset, matching the pattern used by MemberEditForm.
+    const formData = new FormData(event.currentTarget);
+    setIsSaving(true);
+    setSaveError(null);
+    startTransition(async () => {
+      try {
+        await updateAction(formData);
+        setInitialValues(values);
+      } catch (err) {
+        unstable_rethrow(err);
+        setSaveError(t.employees.saveError);
+      } finally {
+        setIsSaving(false);
+      }
+    });
+  }
+
   return (
     <div className="grid gap-6">
       {/* Employee details */}
@@ -74,7 +159,7 @@ export function EmployeeProfileView({
         </p>
 
         {canEdit ? (
-          <form id={formId} action={updateAction} className="mt-4 grid gap-6">
+          <form id={formId} onSubmit={handleSubmit} className="mt-4 grid gap-6">
             <input type="hidden" name="employeeId" value={employee.id} />
             {/* Personal info */}
             <div>
@@ -86,22 +171,48 @@ export function EmployeeProfileView({
                   <label htmlFor={fid("fullName")} className="text-sm font-medium">
                     {t.employees.fullName} <span className="text-red-500">*</span>
                   </label>
-                  <input id={fid("fullName")} name="fullName" required defaultValue={employee.fullName} className={inputCls} />
+                  <input
+                    id={fid("fullName")}
+                    name="fullName"
+                    required
+                    value={values.fullName}
+                    onChange={(event) => updateField("fullName", event.target.value)}
+                    className={inputCls}
+                  />
                 </div>
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("idNumber")} className="text-sm font-medium">{t.employees.idNumber}</label>
-                  <input id={fid("idNumber")} name="idNumber" defaultValue={employee.idNumber ?? ""} className={inputCls} />
+                  <input
+                    id={fid("idNumber")}
+                    name="idNumber"
+                    value={values.idNumber}
+                    onChange={(event) => updateField("idNumber", event.target.value)}
+                    className={inputCls}
+                  />
                 </div>
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("phone")} className="text-sm font-medium">{t.employees.phone}</label>
-                  <input id={fid("phone")} name="phone" type="tel" defaultValue={employee.phone ?? ""} className={inputCls} />
+                  <input
+                    id={fid("phone")}
+                    name="phone"
+                    type="tel"
+                    value={values.phone}
+                    onChange={(event) => updateField("phone", event.target.value)}
+                    className={inputCls}
+                  />
                 </div>
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("sex")} className="text-sm font-medium">{t.employees.gender}</label>
-                  <select id={fid("sex")} name="sex" defaultValue={employee.sex ?? ""} className={inputCls}>
+                  <select
+                    id={fid("sex")}
+                    name="sex"
+                    value={values.sex}
+                    onChange={(event) => updateField("sex", event.target.value)}
+                    className={inputCls}
+                  >
                     <option value="">—</option>
                     <option value="male">{t.employees.male}</option>
                     <option value="female">{t.employees.female}</option>
@@ -110,7 +221,13 @@ export function EmployeeProfileView({
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("dateOfBirth")} className="text-sm font-medium">{t.employees.dateOfBirth}</label>
-                  <DateInput id={fid("dateOfBirth")} name="dateOfBirth" dateFormat={dateFormat} defaultValue={employee.dateOfBirth} />
+                  <DateInput
+                    id={fid("dateOfBirth")}
+                    name="dateOfBirth"
+                    dateFormat={dateFormat}
+                    defaultValue={employee.dateOfBirth}
+                    onChange={(value) => updateField("dateOfBirth", value)}
+                  />
                 </div>
               </div>
             </div>
@@ -123,7 +240,13 @@ export function EmployeeProfileView({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("branchId")} className="text-sm font-medium">{t.employees.branch}</label>
-                  <select id={fid("branchId")} name="branchId" defaultValue={employee.branchId} className={inputCls}>
+                  <select
+                    id={fid("branchId")}
+                    name="branchId"
+                    value={values.branchId}
+                    onChange={(event) => updateField("branchId", event.target.value)}
+                    className={inputCls}
+                  >
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>{b.name}</option>
                     ))}
@@ -132,17 +255,38 @@ export function EmployeeProfileView({
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("job")} className="text-sm font-medium">{t.employees.job}</label>
-                  <input id={fid("job")} name="job" defaultValue={employee.job ?? ""} className={inputCls} />
+                  <input
+                    id={fid("job")}
+                    name="job"
+                    value={values.job}
+                    onChange={(event) => updateField("job", event.target.value)}
+                    className={inputCls}
+                  />
                 </div>
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("salary")} className="text-sm font-medium">{t.employees.salary}</label>
-                  <input id={fid("salary")} name="salary" type="number" min="0" step="0.01" defaultValue={employee.salary ?? ""} className={inputCls} />
+                  <input
+                    id={fid("salary")}
+                    name="salary"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={values.salary}
+                    onChange={(event) => updateField("salary", event.target.value)}
+                    className={inputCls}
+                  />
                 </div>
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("workType")} className="text-sm font-medium">{t.employees.workType}</label>
-                  <select id={fid("workType")} name="workType" defaultValue={employee.workType ?? ""} className={inputCls}>
+                  <select
+                    id={fid("workType")}
+                    name="workType"
+                    value={values.workType}
+                    onChange={(event) => updateField("workType", event.target.value)}
+                    className={inputCls}
+                  >
                     <option value="">—</option>
                     <option value="fullTime">{t.employees.fullTime}</option>
                     <option value="partTime">{t.employees.partTime}</option>
@@ -152,17 +296,30 @@ export function EmployeeProfileView({
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("startDate")} className="text-sm font-medium">{t.employees.startDate}</label>
-                  <DateInput id={fid("startDate")} name="startDate" dateFormat={dateFormat} defaultValue={employee.startDate} />
+                  <DateInput
+                    id={fid("startDate")}
+                    name="startDate"
+                    dateFormat={dateFormat}
+                    defaultValue={employee.startDate}
+                    onChange={(value) => updateField("startDate", value)}
+                  />
                 </div>
 
                 <div className="grid gap-1.5">
                   <label htmlFor={fid("endDate")} className="text-sm font-medium">{t.employees.endDate}</label>
-                  <DateInput id={fid("endDate")} name="endDate" dateFormat={dateFormat} defaultValue={employee.endDate} />
+                  <DateInput
+                    id={fid("endDate")}
+                    name="endDate"
+                    dateFormat={dateFormat}
+                    defaultValue={employee.endDate}
+                    onChange={(value) => updateField("endDate", value)}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Coach profile (revealed via peer-checked, no client JS) */}
+            {/* Coach profile (revealed via peer-checked, no extra JS needed
+                since the checkbox's `checked` state already drives the CSS) */}
             <div>
               <p className="mb-3 text-xs font-medium text-foreground/50 uppercase tracking-wider">
                 {t.classes.coachProfileTitle}
@@ -172,7 +329,8 @@ export function EmployeeProfileView({
                 id={fid("isCoach")}
                 name="isCoach"
                 value="true"
-                defaultChecked={coachProfile !== null}
+                checked={values.isCoach}
+                onChange={(event) => updateField("isCoach", event.target.checked)}
                 className="peer h-4 w-4 cursor-pointer rounded border-line align-middle accent-brand"
               />
               <label htmlFor={fid("isCoach")} className="ms-3 cursor-pointer align-middle text-sm">
@@ -186,7 +344,8 @@ export function EmployeeProfileView({
                   <input
                     id={fid("specializations")}
                     name="specializations"
-                    defaultValue={(coachProfile?.specializations ?? []).join(", ")}
+                    value={values.specializations}
+                    onChange={(event) => updateField("specializations", event.target.value)}
                     placeholder="CrossFit, HIIT"
                     className={inputCls}
                   />
@@ -198,7 +357,8 @@ export function EmployeeProfileView({
                   <input
                     id={fid("certifications")}
                     name="certifications"
-                    defaultValue={(coachProfile?.certifications ?? []).join(", ")}
+                    value={values.certifications}
+                    onChange={(event) => updateField("certifications", event.target.value)}
                     placeholder="CF-L1"
                     className={inputCls}
                   />
@@ -280,29 +440,45 @@ export function EmployeeProfileView({
         )}
 
         {canEdit && (
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button type="submit" form={formId} variant="primary" size="sm" icon={<Save className="h-3.5 w-3.5" strokeWidth={2} />}>
-              {t.actions.save}
-            </Button>
-
-            <form action={toggleStatusAction}>
-              <input type="hidden" name="employeeId" value={employee.id} />
-              <input type="hidden" name="currentStatus" value={employee.status} />
+          <div className="mt-6 flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 type="submit"
-                variant={employee.status === "active" ? "danger" : "secondary"}
+                form={formId}
+                variant="primary"
                 size="sm"
+                disabled={!isDirty || isSaving}
                 icon={
-                  employee.status === "active" ? (
-                    <Ban className="h-3.5 w-3.5" strokeWidth={2} />
+                  isSaving ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
                   ) : (
-                    <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} />
+                    <Save className="h-3.5 w-3.5" strokeWidth={2} />
                   )
                 }
               >
-                {employee.status === "active" ? t.employees.deactivate : t.employees.reactivate}
+                {isSaving ? t.actions.saving : t.actions.save}
               </Button>
-            </form>
+
+              <form action={toggleStatusAction}>
+                <input type="hidden" name="employeeId" value={employee.id} />
+                <input type="hidden" name="currentStatus" value={employee.status} />
+                <Button
+                  type="submit"
+                  variant={employee.status === "active" ? "danger" : "secondary"}
+                  size="sm"
+                  icon={
+                    employee.status === "active" ? (
+                      <Ban className="h-3.5 w-3.5" strokeWidth={2} />
+                    ) : (
+                      <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} />
+                    )
+                  }
+                >
+                  {employee.status === "active" ? t.employees.deactivate : t.employees.reactivate}
+                </Button>
+              </form>
+            </div>
+            {saveError && <p className="text-sm text-danger">{saveError}</p>}
           </div>
         )}
       </div>

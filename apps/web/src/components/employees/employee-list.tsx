@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,17 @@ export function EmployeeList({
   t,
 }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const expandedPanelRef = useRef<HTMLDivElement | null>(null);
+
+  // The expanded edit panel renders as a new full-width grid row right after
+  // its card, which can land well below the fold when the card being edited
+  // is further down the page — scroll it into view so the opened form is
+  // actually visible instead of silently appearing off-screen.
+  useEffect(() => {
+    if (expandedId) {
+      expandedPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [expandedId]);
 
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -115,7 +126,10 @@ export function EmployeeList({
             </Card>
 
             {expanded && (
-              <div className="animate-fade-in-up rounded-[18px] border border-line bg-surface-muted/40 px-5 py-6 sm:px-7 md:col-span-2 xl:col-span-3">
+              <div
+                ref={expandedPanelRef}
+                className="animate-fade-in-up rounded-[18px] border border-line bg-surface-muted/40 px-5 py-6 sm:px-7 md:col-span-2 xl:col-span-3"
+              >
                 <EmployeeProfileView
                   employee={emp}
                   coachProfile={coachProfilesByEmployee[emp.id] ?? null}

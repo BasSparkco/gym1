@@ -534,6 +534,7 @@ export type Dict = {
     resendQrWhatsApp: string;
     qrSentSuccess: string;
     qrSentFailed: string;
+    saveError: string;
   };
   attendance: {
     checkInTitle: string;
@@ -1475,6 +1476,7 @@ const en: Dict = {
     resendQrWhatsApp: "Resend QR via WhatsApp",
     qrSentSuccess: "QR code sent via WhatsApp!",
     qrSentFailed: "Failed to send QR code.",
+    saveError: "Couldn't save changes. Please try again.",
   },
   attendance: {
     checkInTitle: "Staff Check-In",
@@ -2416,6 +2418,7 @@ const ar: Dict = {
     resendQrWhatsApp: "إعادة إرسال رمز QR عبر واتساب",
     qrSentSuccess: "تم إرسال رمز QR عبر واتساب!",
     qrSentFailed: "فشل إرسال رمز QR.",
+    saveError: "تعذّر حفظ التغييرات. حاول مرة أخرى.",
   },
   attendance: {
     checkInTitle: "تسجيل حضور الموظفين",
@@ -3357,6 +3360,7 @@ const he: Dict = {
     resendQrWhatsApp: "שלח מחדש קוד QR ב-WhatsApp",
     qrSentSuccess: "קוד QR נשלח ב-WhatsApp!",
     qrSentFailed: "שליחת קוד QR נכשלה.",
+    saveError: "לא ניתן היה לשמור את השינויים. נסה שוב.",
   },
   attendance: {
     checkInTitle: "נוכחות עובדים",
