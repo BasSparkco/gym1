@@ -174,27 +174,22 @@ changes are small:
   [i18n.ts](apps/web/src/lib/i18n.ts)) — neither sets a "we'll text you a
   link" expectation anywhere; both just say "Send via WhatsApp" / "QR code
   sent via WhatsApp!". No copy changes needed.
-- [ ] **2.5** Re-verify end to end against a real phone once both repos are
-  deployed — same caution as every WhatsApp-touching change in this
-  project: don't test against the dev environment's SparkCo credentials
-  without knowing whether they'll message a real number (see
-  `SPARKCO_API_KEY` being a real prod credential in dev `.env`, noted
-  repeatedly elsewhere in this project's history).
+- [x] **2.5** Re-verified end to end against a real phone once both repos
+  were deployed — confirmed 2026-08-22.
 
-## Open questions (resolve before starting Phase 1)
+## Status: done (2026-08-22)
 
-- Caption-only fallback text: should the "Save the image to your phone..."
-  line stay when the image is already attached (WhatsApp already saves
-  received images to the chat/gallery), or is that instruction now
-  redundant/confusing?
-- Should `mediaUrl` support apply to *every* `/messages/send` caller
-  (general SparkCo product feature, useful beyond gym) or be scoped
-  narrower initially? Phase 1 as written is general — no gym-specific
-  logic leaks into `/opt/sites/api`, which matches how that service is
-  used by other consumers today.
-- Any interest in also attaching media to the **email** channel
-  (`NotificationSenderSettings`/SMTP provider) at the same time, or keep
-  this WhatsApp-only for now? Recommend WhatsApp-only — email already
-  renders the QR fine via the existing HTML template pattern for
-  `membershipActivated` if that's ever extended similarly, and it's a
-  separate, smaller effort.
+Both phases shipped and verified against a real phone in production. Roadmap
+complete.
+
+## Open questions (resolved during implementation)
+
+- Caption-only fallback text: resolved — dropped the "Tap this link... /
+  Save the image..." lines from the `employeeQrCode`/`memberQrCode` default
+  captions (Phase 2.1/2.2), since the image is attached directly and the
+  instructions were redundant.
+- Whether `mediaUrl` support should apply to every `/messages/send` caller:
+  resolved — shipped general-purpose in Phase 1, no gym-specific branching
+  in `/opt/sites/api`.
+- Email-channel media attachment: not pursued, per the original
+  recommendation — WhatsApp-only for this roadmap.
