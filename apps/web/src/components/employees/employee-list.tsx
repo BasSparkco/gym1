@@ -80,7 +80,7 @@ export function EmployeeList({
               className={cn(
                 "flex flex-col border-s-4 transition-shadow",
                 genderBorderClass(emp.sex),
-                isCoach && "border-e-4 border-e-orange-500",
+                isCoach && "border-e-4 border-e-violet-500",
                 expanded && "ring-2 ring-brand ring-offset-2 ring-offset-background",
               )}
             >
