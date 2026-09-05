@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { toDateOnlyString } from '../../common/date';
+import { parseDateOnly, toDateOnlyString } from '../../common/date';
 import { toNumber } from '../../common/decimal';
 import { normalizePhone } from '../../common/phone';
 import { nextEmployeeNumber } from '../../common/org-numbering';
@@ -49,8 +49,11 @@ export type UpdateEmployeeInput = {
   endDate?: string;
 };
 
-function toDate(value: string | undefined): Date | undefined {
-  return value ? new Date(value) : undefined;
+function toDate(
+  value: string | undefined,
+  fieldName: string,
+): Date | undefined {
+  return parseDateOnly(value, fieldName);
 }
 
 @Injectable()
@@ -184,12 +187,12 @@ export class EmployeesService {
         idNumber: input.idNumber,
         phone,
         sex: input.sex,
-        dateOfBirth: toDate(input.dateOfBirth),
+        dateOfBirth: toDate(input.dateOfBirth, 'Date of birth'),
         job: input.job,
         salary: input.salary,
         workType: input.workType,
-        startDate: toDate(input.startDate),
-        endDate: toDate(input.endDate),
+        startDate: toDate(input.startDate, 'Start date'),
+        endDate: toDate(input.endDate, 'End date'),
         // Nested create keeps "employee + coach profile" atomic — no
         // half-created coach if the request fails partway.
         ...(input.coachProfile && {
@@ -264,15 +267,17 @@ export class EmployeesService {
         ...(input.phone !== undefined && { phone }),
         ...(input.sex !== undefined && { sex: input.sex }),
         ...(input.dateOfBirth !== undefined && {
-          dateOfBirth: toDate(input.dateOfBirth),
+          dateOfBirth: toDate(input.dateOfBirth, 'Date of birth'),
         }),
         ...(input.job !== undefined && { job: input.job }),
         ...(input.salary !== undefined && { salary: input.salary }),
         ...(input.workType !== undefined && { workType: input.workType }),
         ...(input.startDate !== undefined && {
-          startDate: toDate(input.startDate),
+          startDate: toDate(input.startDate, 'Start date'),
         }),
-        ...(input.endDate !== undefined && { endDate: toDate(input.endDate) }),
+        ...(input.endDate !== undefined && {
+          endDate: toDate(input.endDate, 'End date'),
+        }),
       },
     });
 

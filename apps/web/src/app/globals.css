@@ -205,6 +205,20 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 20%, transparent) !important;
 }
 
+.date-input-wrapper.date-input-invalid .react-date-picker__wrapper {
+  border-color: var(--danger) !important;
+}
+
+.date-input-wrapper.date-input-invalid .react-date-picker__wrapper:focus-within {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 20%, transparent) !important;
+}
+
+.date-input-error {
+  color: var(--danger);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
 .date-input-wrapper .react-date-picker__inputGroup {
   flex: 1;
   min-width: 0;

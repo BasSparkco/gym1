@@ -4,11 +4,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { parseDateOnly } from '../../common/date';
 import { toNumber } from '../../common/decimal';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DebtService } from '../debt/debt.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Payment, PaymentMethod, PaymentStatus } from '../../generated/prisma/client';
+import {
+  Payment,
+  PaymentMethod,
+  PaymentStatus,
+} from '../../generated/prisma/client';
 
 type CreatePaymentInput = {
   branchId?: string;
@@ -66,11 +71,13 @@ export class PaymentsService {
     return payments.map((p) => this.serialize(p));
   }
 
-  async createPayment(tenantId: string, branchId: string, input: CreatePaymentInput) {
+  async createPayment(
+    tenantId: string,
+    branchId: string,
+    input: CreatePaymentInput,
+  ) {
     if (!input.memberId || !input.paymentDate) {
-      throw new BadRequestException(
-        'Member and payment date are required.',
-      );
+      throw new BadRequestException('Member and payment date are required.');
     }
 
     if (typeof input.amount !== 'number' || input.amount <= 0) {
@@ -117,7 +124,7 @@ export class PaymentsService {
         memberId: input.memberId,
         membershipId,
         amount: input.amount,
-        paymentDate: new Date(input.paymentDate),
+        paymentDate: parseDateOnly(input.paymentDate, 'Payment date') as Date,
         status,
         paymentMethod: input.paymentMethod ?? 'cash',
       },

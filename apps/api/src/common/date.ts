@@ -1,3 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
+
 /**
  * Returns a date as a YYYY-MM-DD string in the server's local timezone.
  * Using toISOString() would give the UTC date, which differs from local date
@@ -34,6 +36,10 @@ export function addDays(dateStr: string, days: number): string {
  * comparisons or display the value as text (both exist in the frontend, e.g.
  * comparing membership.endDate against a "YYYY-MM-DD" cutoff, or rendering
  * a member's date of birth) would see a full ISO datetime instead.
+ *
+ * Guards against invalid Date values (e.g. a pre-existing corrupted row) so
+ * one bad record degrades to `null` instead of throwing and taking down
+ * every other row in the same list response.
  */
 export function toDateOnlyString(date: Date): string;
 export function toDateOnlyString(date: Date | null): string | null;
@@ -45,5 +51,32 @@ export function toDateOnlyString(
 ): string | null | undefined {
   if (date === null) return null;
   if (date === undefined) return undefined;
+  if (Number.isNaN(date.getTime())) return null;
   return date.toISOString().slice(0, 10);
+}
+
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2100;
+
+/**
+ * Parses a "YYYY-MM-DD" (or any JS-parseable) date string from a request
+ * body, rejecting anything that isn't a real calendar date or falls outside
+ * a sane range. Without this, a typo like "20026-08-28" (extra digit) turns
+ * into a JS `Invalid Date` that Prisma writes to Postgres without error,
+ * then crashes every later read of that row via `toDateOnlyString`.
+ */
+export function parseDateOnly(
+  value: string | undefined,
+  fieldName: string,
+): Date | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() < MIN_YEAR ||
+    date.getFullYear() > MAX_YEAR
+  ) {
+    throw new BadRequestException(`${fieldName} is not a valid date.`);
+  }
+  return date;
 }

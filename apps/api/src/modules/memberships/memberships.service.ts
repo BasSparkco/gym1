@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { addDays, localDateString, toDateOnlyString } from '../../common/date';
+import {
+  addDays,
+  localDateString,
+  parseDateOnly,
+  toDateOnlyString,
+} from '../../common/date';
 import { toNumber } from '../../common/decimal';
 import { makeQrPublicUrl } from '../../common/qr';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
@@ -70,7 +75,7 @@ const validMembershipStatuses = new Set<MembershipStatus>([
 ]);
 
 function toDateOnly(dateStr: string): Date {
-  return new Date(dateStr);
+  return parseDateOnly(dateStr, 'Date') as Date;
 }
 
 @Injectable()
@@ -97,7 +102,11 @@ export class MembershipsService {
     });
 
     const dueDrafts = await this.prisma.membership.findMany({
-      where: { member: { tenantId }, status: 'draft', startDate: { lte: today } },
+      where: {
+        member: { tenantId },
+        status: 'draft',
+        startDate: { lte: today },
+      },
       include: { member: true, plan: true },
     });
 
@@ -106,7 +115,12 @@ export class MembershipsService {
         where: { id: draft.id },
         data: { status: 'active' },
       });
-      await this.activateMembership(tenantId, draft.member, draft.plan, activated);
+      await this.activateMembership(
+        tenantId,
+        draft.member,
+        draft.plan,
+        activated,
+      );
       await this.debtService.recompute(draft.memberId);
     }
   }
@@ -175,7 +189,10 @@ export class MembershipsService {
     return this.serializePlan(plan);
   }
 
-  async createMembershipPlan(tenantId: string, input: CreateMembershipPlanInput) {
+  async createMembershipPlan(
+    tenantId: string,
+    input: CreateMembershipPlanInput,
+  ) {
     const name = input.name?.trim();
 
     if (!name) {
@@ -246,9 +263,7 @@ export class MembershipsService {
         durationDays:
           planType === 'duration'
             ? (input.durationDays ??
-              (current.planType === 'duration'
-                ? current.durationDays
-                : null))
+              (current.planType === 'duration' ? current.durationDays : null))
             : null,
         sessionCount:
           planType === 'session'
@@ -504,12 +519,8 @@ export class MembershipsService {
       );
     }
 
-    const start = new Date(input.startDate);
-    const end = new Date(input.endDate);
-
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      throw new BadRequestException('Invalid freeze dates.');
-    }
+    const start = parseDateOnly(input.startDate, 'Freeze start date') as Date;
+    const end = parseDateOnly(input.endDate, 'Freeze end date') as Date;
 
     if (end <= start) {
       throw new BadRequestException(

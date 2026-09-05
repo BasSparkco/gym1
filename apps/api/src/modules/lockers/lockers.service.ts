@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { addDays, localDateString, toDateOnlyString } from '../../common/date';
+import {
+  addDays,
+  localDateString,
+  parseDateOnly,
+  toDateOnlyString,
+} from '../../common/date';
 import { toNumber } from '../../common/decimal';
 import { DebtService } from '../debt/debt.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -48,7 +53,7 @@ type CreateLockerRentalInput = {
 };
 
 function toDateOnly(dateStr: string): Date {
-  return new Date(dateStr);
+  return parseDateOnly(dateStr, 'Date') as Date;
 }
 
 @Injectable()
@@ -84,7 +89,11 @@ export class LockersService {
 
   async listLockers(
     tenantId: string,
-    options: { scopedBranchId?: string; branchId?: string; memberId?: string } = {},
+    options: {
+      scopedBranchId?: string;
+      branchId?: string;
+      memberId?: string;
+    } = {},
   ) {
     await this.autoExpireStaleForTenant(tenantId);
 
@@ -95,7 +104,9 @@ export class LockersService {
         where: {
           id: options.memberId,
           tenantId,
-          ...(options.scopedBranchId ? { homeBranchId: options.scopedBranchId } : {}),
+          ...(options.scopedBranchId
+            ? { homeBranchId: options.scopedBranchId }
+            : {}),
         },
         select: { homeBranchId: true },
       });
