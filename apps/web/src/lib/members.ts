@@ -70,6 +70,11 @@ export async function getMember(memberId: string): Promise<Member> {
   return payload.member;
 }
 
+export type PinDispatchResult = {
+  whatsapp?: { sent: boolean; reason?: string };
+  email?: { sent: boolean; reason?: string };
+};
+
 export async function createMember(data: {
   fullName: string;
   homeBranchId?: string;
@@ -86,12 +91,14 @@ export async function createMember(data: {
   emergencyContactPhone?: string;
   medicalNotes?: string;
   rfidTag?: string;
-}): Promise<Member> {
+}): Promise<Member & { pinDispatch?: PinDispatchResult }> {
   const response = await authedFetch("/members", {
     method: "POST",
     body: JSON.stringify(data),
   });
-  const payload = (await response.json()) as { member: Member };
+  const payload = (await response.json()) as {
+    member: Member & { pinDispatch?: PinDispatchResult };
+  };
   return payload.member;
 }
 

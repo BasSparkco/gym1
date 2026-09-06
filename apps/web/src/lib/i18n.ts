@@ -171,6 +171,8 @@ export type Dict = {
     sendQrWhatsApp: string;
     qrSentSuccess: string;
     qrSentFailed: string;
+    pinSentSuccess: string;
+    pinSentFailed: string;
     setAppPin: string;
     sendMessage: string;
     appPinTitle: string;
@@ -744,6 +746,8 @@ export type Dict = {
     eventEmployeeQrCodeHelp: string;
     eventMemberQrCode: string;
     eventMemberQrCodeHelp: string;
+    eventMemberPin: string;
+    eventMemberPinHelp: string;
     templates: string;
     templatesTitle: string;
     templatesDescription: string;
@@ -1113,6 +1117,8 @@ const en: Dict = {
     sendQrWhatsApp: "Send via WhatsApp",
     qrSentSuccess: "QR code sent via WhatsApp!",
     qrSentFailed: "Failed to send QR code.",
+    pinSentSuccess: "App PIN sent to the member.",
+    pinSentFailed: "Couldn't deliver the app PIN.",
     setAppPin: "Set app PIN",
     sendMessage: "Send message",
     appPinTitle: "Mobile App PIN",
@@ -1686,6 +1692,8 @@ const en: Dict = {
     eventEmployeeQrCodeHelp: "Sent via WhatsApp when an employee's QR code is (re)sent from the Employees page.",
     eventMemberQrCode: "Member QR code",
     eventMemberQrCodeHelp: "Sent via WhatsApp when a member's QR code is sent from the member's QR page.",
+    eventMemberPin: "Member app PIN",
+    eventMemberPinHelp: "Sent via WhatsApp and email when a new member is created, so they can sign into the mobile app.",
     templates: "Templates",
     templatesTitle: "Notification templates",
     templatesDescription: "Edit the subject and message text sent for each notification, in each language your gym uses.",
@@ -2055,6 +2063,8 @@ const ar: Dict = {
     sendQrWhatsApp: "إرسال عبر واتساب",
     qrSentSuccess: "تم إرسال رمز QR عبر واتساب!",
     qrSentFailed: "فشل إرسال رمز QR.",
+    pinSentSuccess: "تم إرسال رمز الدخول إلى العضو.",
+    pinSentFailed: "تعذر إرسال رمز الدخول.",
     setAppPin: "تعيين رمز PIN للتطبيق",
     sendMessage: "إرسال رسالة",
     appPinTitle: "رمز PIN لتطبيق الجوال",
@@ -2628,6 +2638,8 @@ const ar: Dict = {
     eventEmployeeQrCodeHelp: "يُرسل عبر واتساب عند إرسال أو إعادة إرسال رمز QR الخاص بموظف من صفحة الموظفين.",
     eventMemberQrCode: "رمز QR للعضو",
     eventMemberQrCodeHelp: "يُرسل عبر واتساب عند إرسال رمز QR الخاص بعضو من صفحة رمز QR الخاصة به.",
+    eventMemberPin: "رمز الدخول للتطبيق",
+    eventMemberPinHelp: "يُرسل عبر واتساب والبريد الإلكتروني عند إنشاء عضو جديد، ليتمكن من تسجيل الدخول إلى تطبيق الجوال.",
     templates: "القوالب",
     templatesTitle: "قوالب الإشعارات",
     templatesDescription: "عدّل نص الموضوع والرسالة المرسلة لكل إشعار، بكل لغة يستخدمها ناديك.",
@@ -2997,6 +3009,8 @@ const he: Dict = {
     sendQrWhatsApp: "שלח ב-WhatsApp",
     qrSentSuccess: "קוד QR נשלח ב-WhatsApp!",
     qrSentFailed: "שליחת קוד QR נכשלה.",
+    pinSentSuccess: "קוד ה-PIN לאפליקציה נשלח לחבר.",
+    pinSentFailed: "לא ניתן היה למסור את קוד ה-PIN.",
     setAppPin: "הגדרת קוד PIN לאפליקציה",
     sendMessage: "שליחת הודעה",
     appPinTitle: "קוד PIN לאפליקציית הנייד",
@@ -3570,6 +3584,8 @@ const he: Dict = {
     eventEmployeeQrCodeHelp: "נשלח בוואטסאפ כאשר קוד ה-QR של עובד נשלח או נשלח מחדש מדף העובדים.",
     eventMemberQrCode: "קוד QR לחבר",
     eventMemberQrCodeHelp: "נשלח בוואטסאפ כאשר קוד ה-QR של חבר נשלח מדף קוד ה-QR שלו.",
+    eventMemberPin: "קוד PIN לאפליקציה",
+    eventMemberPinHelp: "נשלח בוואטסאפ ובדוא\"ל כאשר נוצר חבר חדש, כדי שיוכל להיכנס לאפליקציית הנייד.",
     templates: "תבניות",
     templatesTitle: "תבניות התראות",
     templatesDescription: "ערוך את הנושא וטקסט ההודעה שנשלחים לכל התראה, בכל שפה שהמכון שלך משתמש בה.",

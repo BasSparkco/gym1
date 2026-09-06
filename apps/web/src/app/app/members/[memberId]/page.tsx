@@ -14,10 +14,14 @@ import { computeAge, computeBmi, initials } from "@/components/members/member-pr
 import { MemberProfileView, type MemberProfileData } from "@/components/members/member-profile-view";
 import { ArrowLeft } from "lucide-react";
 
-type Props = { params: Promise<{ memberId: string }> };
+type Props = {
+  params: Promise<{ memberId: string }>;
+  searchParams: Promise<{ pinSent?: string; pinWaError?: string; pinEmailError?: string }>;
+};
 
-export default async function MemberProfilePage({ params }: Props) {
+export default async function MemberProfilePage({ params, searchParams }: Props) {
   const { memberId } = await params;
+  const { pinSent, pinWaError, pinEmailError } = await searchParams;
   await requireSession();
   const t = await getT();
 
@@ -109,6 +113,19 @@ export default async function MemberProfilePage({ params }: Props) {
           {t.members.allMembers}
         </Link>
       </div>
+
+      {pinSent && (
+        <div className="animate-scale-in mb-5 rounded-2xl bg-green-50 border border-green-200 px-5 py-4 text-sm text-green-800 font-medium">
+          {t.members.pinSentSuccess}
+        </div>
+      )}
+      {(pinWaError || pinEmailError) && (
+        <div className="animate-scale-in mb-5 rounded-2xl bg-red-50 border border-red-200 px-5 py-4 text-sm text-red-700">
+          {t.members.pinSentFailed}
+          {pinWaError && ` WhatsApp: ${decodeURIComponent(pinWaError)}.`}
+          {pinEmailError && ` Email: ${decodeURIComponent(pinEmailError)}.`}
+        </div>
+      )}
 
       <MemberProfileView data={data} t={t} dateFormat={dateFormat} editHref={`/app/members/${member.id}/edit`} />
     </div>

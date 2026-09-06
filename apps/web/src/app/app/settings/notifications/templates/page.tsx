@@ -35,6 +35,7 @@ export default async function NotificationTemplatesPage() {
     birthday: t.settings.eventBirthday,
     employeeQrCode: t.settings.eventEmployeeQrCode,
     memberQrCode: t.settings.eventMemberQrCode,
+    memberPin: t.settings.eventMemberPin,
   };
 
   const eventHelp: Record<NotificationTemplateKey, string> = {
@@ -46,6 +47,7 @@ export default async function NotificationTemplatesPage() {
     birthday: t.settings.eventBirthdayHelp,
     employeeQrCode: t.settings.eventEmployeeQrCodeHelp,
     memberQrCode: t.settings.eventMemberQrCodeHelp,
+    memberPin: t.settings.eventMemberPinHelp,
   };
 
   return (

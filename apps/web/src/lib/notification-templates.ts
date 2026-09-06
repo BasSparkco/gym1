@@ -14,6 +14,7 @@ export const NOTIFICATION_TEMPLATE_KEYS = [
   "birthday",
   "employeeQrCode",
   "memberQrCode",
+  "memberPin",
 ] as const;
 
 export type NotificationTemplateKey = (typeof NOTIFICATION_TEMPLATE_KEYS)[number];

@@ -7,7 +7,11 @@ import {
 import { randomUUID } from 'node:crypto';
 import * as QRCode from 'qrcode';
 import { localDateString, toDateOnlyString } from '../../common/date';
-import { generateQrSig, makeQrPublicUrl, memberIdToUuid } from '../../common/qr';
+import {
+  generateQrSig,
+  makeQrPublicUrl,
+  memberIdToUuid,
+} from '../../common/qr';
 import { localPartDigits, normalizePhone } from '../../common/phone';
 import { hashPin, pinMatches } from '../../common/pin-hash';
 import { toNumber } from '../../common/decimal';
@@ -16,6 +20,7 @@ import { findCountryByCode } from '../../data/countries';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { DebtService } from '../debt/debt.service';
 import { NotificationTemplatesService } from '../notifications/notification-templates.service';
+import { SparkcoNotificationProvider } from '../notifications/providers/sparkco-notification.provider';
 import { SettingsService } from '../settings/settings.service';
 import { resolveWhatsAppSessionBranchId } from '../tenancy/whatsapp-session';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -67,6 +72,7 @@ export class MembersService {
     private readonly basIpSyncService: BasIpSyncService,
     private readonly debtService: DebtService,
     private readonly notificationTemplatesService: NotificationTemplatesService,
+    private readonly sparkcoProvider: SparkcoNotificationProvider,
     private readonly settingsService: SettingsService,
   ) {}
 
@@ -126,7 +132,8 @@ export class MembersService {
       homeBranchId,
     );
 
-    const registeredEmployeeId = input.registeredEmployeeId?.trim() || undefined;
+    const registeredEmployeeId =
+      input.registeredEmployeeId?.trim() || undefined;
     if (registeredEmployeeId) {
       await this.ensureEmployeeBelongsToTenant(tenantId, registeredEmployeeId);
     }
@@ -136,7 +143,11 @@ export class MembersService {
       where: { id: tenantId },
       select: { code: true },
     });
-    const memberNumber = await nextMemberNumber(this.prisma, tenantId, tenant?.code ?? null);
+    const memberNumber = await nextMemberNumber(
+      this.prisma,
+      tenantId,
+      tenant?.code ?? null,
+    );
 
     const member = await this.prisma.member.create({
       data: {
@@ -167,8 +178,20 @@ export class MembersService {
       },
     });
 
+    // Automatic PIN delivery on creation — best-effort, doesn't fail member
+    // creation if SparkCo is unreachable. Without a phone the mobile app has
+    // no way to sign the member in (it authenticates by phone + PIN), so
+    // there's nothing to generate or send.
+    const pinDispatch = member.phone
+      ? await this.issueAndSendPin(tenantId, member, dialCode)
+      : undefined;
+
     // A brand-new member can't have an existing active membership yet.
-    return { ...this.serializeMember(member), status: 'inactive' as const };
+    return {
+      ...this.serializeMember(member),
+      status: 'inactive' as const,
+      pinDispatch,
+    };
   }
 
   async updateMember(
@@ -221,7 +244,7 @@ export class MembersService {
         phone:
           input.phone === undefined
             ? undefined
-            : normalizePhone(input.phone, dialCode) ?? null,
+            : (normalizePhone(input.phone, dialCode) ?? null),
         email:
           input.email === undefined
             ? undefined
@@ -273,7 +296,7 @@ export class MembersService {
         emergencyContactPhone:
           input.emergencyContactPhone === undefined
             ? undefined
-            : normalizePhone(input.emergencyContactPhone, dialCode) ?? null,
+            : (normalizePhone(input.emergencyContactPhone, dialCode) ?? null),
         medicalNotes:
           input.medicalNotes === undefined
             ? undefined
@@ -358,32 +381,13 @@ export class MembersService {
       );
     }
 
-    // The app signs in by phone (international or local form) and
-    // disambiguates by PIN, so the same identifier + PIN pair must be unique
-    // across ALL tenants (one person can be a member of two gyms with the
-    // same phone — different PINs keep the accounts distinguishable at
-    // sign-in). Matching on the local digits too is deliberately broader
-    // than exact phone equality: two numbers that only differ in country
-    // code collide on the local sign-in form.
-    const localDigits = localPartDigits(
+    const available = await this.isPinAvailableForPhone(
       member.phone,
       this.getDialCodeForBranch(member.homeBranch),
+      memberId,
+      pin,
     );
-    const samePhoneMembers = await this.prisma.member.findMany({
-      where: {
-        OR: [
-          { phone: member.phone },
-          ...(localDigits ? [{ phone: { endsWith: localDigits } }] : []),
-        ],
-        pinHash: { not: null },
-        id: { not: memberId },
-      },
-      select: { pinHash: true },
-    });
-    const pinTaken = samePhoneMembers.some(
-      (other) => other.pinHash && pinMatches(other.pinHash, pin),
-    );
-    if (pinTaken) {
+    if (!available) {
       throw new BadRequestException(
         'Another member with this phone number already uses this PIN. Choose a different PIN.',
       );
@@ -393,6 +397,146 @@ export class MembersService {
       where: { id: memberId },
       data: { pinHash: hashPin(pin) },
     });
+  }
+
+  // The app signs in by phone (international or local form) and
+  // disambiguates by PIN, so the same identifier + PIN pair must be unique
+  // across ALL tenants (one person can be a member of two gyms with the
+  // same phone — different PINs keep the accounts distinguishable at
+  // sign-in). Matching on the local digits too is deliberately broader
+  // than exact phone equality: two numbers that only differ in country
+  // code collide on the local sign-in form.
+  private async isPinAvailableForPhone(
+    phone: string,
+    dialCode: string | undefined,
+    excludeMemberId: string,
+    pin: string,
+  ): Promise<boolean> {
+    const localDigits = localPartDigits(phone, dialCode);
+    const samePhoneMembers = await this.prisma.member.findMany({
+      where: {
+        OR: [
+          { phone },
+          ...(localDigits ? [{ phone: { endsWith: localDigits } }] : []),
+        ],
+        pinHash: { not: null },
+        id: { not: excludeMemberId },
+      },
+      select: { pinHash: true },
+    });
+    return !samePhoneMembers.some(
+      (other) => other.pinHash && pinMatches(other.pinHash, pin),
+    );
+  }
+
+  /**
+   * Picks a random 6-digit PIN that isn't already in use by another member
+   * sharing this phone number (see isPinAvailableForPhone). Collisions are
+   * rare enough that a handful of retries is always enough in practice.
+   */
+  private async generateUniquePin(
+    phone: string,
+    dialCode: string | undefined,
+    excludeMemberId: string,
+  ): Promise<string> {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const pin = String(Math.floor(100000 + Math.random() * 900000));
+      if (
+        await this.isPinAvailableForPhone(phone, dialCode, excludeMemberId, pin)
+      ) {
+        return pin;
+      }
+    }
+    throw new Error('Could not generate a unique app PIN.');
+  }
+
+  /**
+   * Generates this new member's app-sign-in PIN, stores its hash, and sends
+   * the plaintext PIN once over WhatsApp and (if on file) email — the only
+   * way a member ever learns it, since it's never returned by the API or
+   * shown in the UI once hashed. Best-effort per channel: a delivery
+   * failure is reported back but never throws, so it can't block member
+   * creation itself.
+   */
+  private async issueAndSendPin(
+    tenantId: string,
+    member: Member,
+    dialCode: string | undefined,
+  ): Promise<{
+    whatsapp?: { sent: boolean; reason?: string };
+    email?: { sent: boolean; reason?: string };
+  }> {
+    const pin = await this.generateUniquePin(
+      member.phone!,
+      dialCode,
+      member.id,
+    );
+    await this.prisma.member.update({
+      where: { id: member.id },
+      data: { pinHash: hashPin(pin) },
+    });
+
+    const [{ defaultLanguage }, branch] = await Promise.all([
+      this.settingsService.getSettingsForTenant(tenantId),
+      this.prisma.branch.findUniqueOrThrow({
+        where: { id: member.homeBranchId },
+        select: { name: true },
+      }),
+    ]);
+    const { subject, body } =
+      await this.notificationTemplatesService.getRenderedTemplate(
+        tenantId,
+        'memberPin',
+        defaultLanguage,
+        { memberName: member.fullName, pin },
+        branch.name,
+      );
+
+    const result: {
+      whatsapp?: { sent: boolean; reason?: string };
+      email?: { sent: boolean; reason?: string };
+    } = {};
+
+    const sessionId = await resolveWhatsAppSessionBranchId(
+      this.prisma,
+      member.homeBranchId,
+    );
+    const waResult = await this.sparkcoProvider.send({
+      channel: 'whatsapp',
+      to: member.phone!,
+      subject: '',
+      body,
+      sessionId,
+    });
+    result.whatsapp =
+      waResult.status === 'sent'
+        ? { sent: true }
+        : { sent: false, reason: waResult.error };
+    if (waResult.status !== 'sent') {
+      this.logger.warn(
+        `PIN WhatsApp send failed for ${member.id}: ${waResult.error}`,
+      );
+    }
+
+    if (member.email) {
+      const emailResult = await this.sparkcoProvider.send({
+        channel: 'email',
+        to: member.email,
+        subject,
+        body,
+      });
+      result.email =
+        emailResult.status === 'sent'
+          ? { sent: true }
+          : { sent: false, reason: emailResult.error };
+      if (emailResult.status !== 'sent') {
+        this.logger.warn(
+          `PIN email send failed for ${member.id}: ${emailResult.error}`,
+        );
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -442,9 +586,7 @@ export class MembersService {
   private withComputedStatus(member: Member, activeIds: Set<string>) {
     return {
       ...this.serializeMember(member),
-      status: (activeIds.has(member.id) ? 'active' : 'inactive') as
-        | 'active'
-        | 'inactive',
+      status: activeIds.has(member.id) ? 'active' : 'inactive',
     };
   }
 
@@ -585,7 +727,10 @@ export class MembersService {
       process.env.SPARKCO_API_URL ?? 'https://api.sparkco.vip/api/v1';
 
     if (!apiKey) {
-      return { sent: false, reason: 'SparkCo is not configured (set SPARKCO_API_KEY).' };
+      return {
+        sent: false,
+        reason: 'SparkCo is not configured (set SPARKCO_API_KEY).',
+      };
     }
 
     const qrUrl = makeQrPublicUrl(member.id);
@@ -629,7 +774,9 @@ export class MembersService {
         return { sent: false, reason };
       }
 
-      this.logger.log(`QR code sent via WhatsApp to ${member.phone} (${memberId})`);
+      this.logger.log(
+        `QR code sent via WhatsApp to ${member.phone} (${memberId})`,
+      );
       return { sent: true };
     } catch (err) {
       const reason = (err as Error).message;
@@ -644,5 +791,4 @@ export class MembersService {
     const uuid = memberIdToUuid(memberId);
     return QRCode.toBuffer(uuid, { type: 'png', width: 400, margin: 2 });
   }
-
 }

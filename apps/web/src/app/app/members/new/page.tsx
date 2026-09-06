@@ -44,7 +44,14 @@ export default async function NewMemberPage() {
     if (picture && picture.size > 0) {
       await uploadMemberPhoto(member.id, picture);
     }
-    redirect(`/app/members/${member.id}`);
+
+    const params = new URLSearchParams();
+    const { whatsapp, email } = member.pinDispatch ?? {};
+    if (whatsapp?.sent || email?.sent) params.set("pinSent", "1");
+    if (whatsapp && !whatsapp.sent) params.set("pinWaError", whatsapp.reason ?? "unknown");
+    if (email && !email.sent) params.set("pinEmailError", email.reason ?? "unknown");
+    const query = params.toString();
+    redirect(`/app/members/${member.id}${query ? `?${query}` : ""}`);
   }
 
   const inputClass = "rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";

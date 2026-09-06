@@ -22,6 +22,7 @@ export const NOTIFICATION_TEMPLATE_KEYS = [
   'birthday',
   'employeeQrCode',
   'memberQrCode',
+  'memberPin',
 ] as const;
 
 export type NotificationTemplateKey =
@@ -208,6 +209,33 @@ export const DEFAULT_NOTIFICATION_TEMPLATES: Record<
         body:
           'שלום {{memberName}}, קוד ה-QR שלך למכון מוכן! הצג אותו בכניסה ' +
           'כדי להיכנס.',
+      },
+    },
+  },
+  memberPin: {
+    // Sent automatically once, right after a member is created (see
+    // MembersService.createMember) — this is the only way a member learns
+    // the PIN they need to sign into the mobile app, so unlike the QR
+    // templates above there's no separate manual "resend" trigger yet.
+    variables: ['memberName', 'pin'],
+    translations: {
+      en: {
+        subject: 'Your mobile app PIN',
+        body:
+          'Hi {{memberName}}, welcome! Use PIN {{pin}} with your phone ' +
+          'number to sign into the mobile app.',
+      },
+      ar: {
+        subject: 'رمز الدخول الخاص بك',
+        body:
+          'مرحباً {{memberName}}، أهلاً بك! استخدم الرمز {{pin}} مع رقم ' +
+          'هاتفك لتسجيل الدخول إلى تطبيق الجوال.',
+      },
+      he: {
+        subject: 'קוד ה-PIN שלך לאפליקציה',
+        body:
+          'שלום {{memberName}}, ברוך הבא! השתמש בקוד {{pin}} יחד עם מספר ' +
+          'הטלפון שלך כדי להיכנס לאפליקציית הנייד.',
       },
     },
   },
