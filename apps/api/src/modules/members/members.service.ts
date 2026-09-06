@@ -14,6 +14,7 @@ import {
 } from '../../common/qr';
 import { localPartDigits, normalizePhone } from '../../common/phone';
 import { hashPin, pinMatches } from '../../common/pin-hash';
+import { decryptPin, encryptPin } from '../../common/pin-crypto';
 import { toNumber } from '../../common/decimal';
 import { nextMemberNumber } from '../../common/org-numbering';
 import { findCountryByCode } from '../../data/countries';
@@ -395,8 +396,74 @@ export class MembersService {
 
     await this.prisma.member.update({
       where: { id: memberId },
-      data: { pinHash: hashPin(pin) },
+      data: { pinHash: hashPin(pin), pinEncrypted: encryptPin(pin) },
     });
+  }
+
+  /**
+   * Staff-facing lookup for the PIN popup: decrypts the currently stored
+   * PIN, if any. Returns null both when no PIN has ever been set and when
+   * one was set before pinEncrypted existed (nothing to decrypt) — either
+   * way the UI's answer is "no PIN on file, set or send a new one".
+   */
+  async getCurrentPin(
+    tenantId: string,
+    branchId: string | undefined,
+    memberId: string,
+  ): Promise<{ pin: string | null }> {
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
+      select: { pinEncrypted: true },
+    });
+    if (!member) {
+      throw new NotFoundException('Member not found.');
+    }
+
+    return {
+      pin: member.pinEncrypted ? decryptPin(member.pinEncrypted) : null,
+    };
+  }
+
+  /**
+   * Staff-triggered: generates a brand-new random PIN and sends it via
+   * WhatsApp/email, same as the automatic one-time send on member creation
+   * (see issueAndSendPin) — used by the PIN popup's "Send new PIN" action to
+   * reissue one, e.g. if the member lost the original message.
+   */
+  async resendPin(
+    tenantId: string,
+    branchId: string | undefined,
+    memberId: string,
+  ): Promise<{
+    whatsapp?: { sent: boolean; reason?: string };
+    email?: { sent: boolean; reason?: string };
+  }> {
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
+      include: { homeBranch: true },
+    });
+    if (!member) {
+      throw new NotFoundException('Member not found.');
+    }
+    if (!member.phone) {
+      throw new BadRequestException(
+        'This member has no phone number on file. The app signs in by phone, so add one first.',
+      );
+    }
+
+    return this.issueAndSendPin(
+      tenantId,
+      member,
+      this.getDialCodeForBranch(member.homeBranch),
+    );
   }
 
   // The app signs in by phone (international or local form) and
@@ -473,7 +540,7 @@ export class MembersService {
     );
     await this.prisma.member.update({
       where: { id: member.id },
-      data: { pinHash: hashPin(pin) },
+      data: { pinHash: hashPin(pin), pinEncrypted: encryptPin(pin) },
     });
 
     const [{ defaultLanguage }, branch] = await Promise.all([
@@ -593,22 +660,31 @@ export class MembersService {
   // Postgres DATE columns come back as JS Date objects from Prisma; the API
   // contract (and the web app's raw string comparisons/display of these
   // fields) expects plain "YYYY-MM-DD" strings, same as the old JSON store.
-  // pinHash is dropped here too — it must never reach a client response.
+  // pinHash/pinEncrypted are dropped here too — neither must ever reach a
+  // client response (the PIN popup fetches pinEncrypted's decrypted value
+  // through its own dedicated, explicit endpoint instead).
   private serializeMember<T extends Member>(
     member: T,
-  ): Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash' | 'debt'> & {
+  ): Omit<
+    T,
+    'dateOfBirth' | 'joinDate' | 'pinHash' | 'pinEncrypted' | 'debt'
+  > & {
     dateOfBirth: string | null;
     joinDate: string | null;
     debt: number;
   } {
-    const { pinHash, ...rest } = member;
+    const { pinHash, pinEncrypted, ...rest } = member;
     void pinHash;
+    void pinEncrypted;
     return {
       ...rest,
       dateOfBirth: toDateOnlyString(member.dateOfBirth),
       joinDate: toDateOnlyString(member.joinDate),
       debt: toNumber(member.debt),
-    } as Omit<T, 'dateOfBirth' | 'joinDate' | 'pinHash' | 'debt'> & {
+    } as Omit<
+      T,
+      'dateOfBirth' | 'joinDate' | 'pinHash' | 'pinEncrypted' | 'debt'
+    > & {
       dateOfBirth: string | null;
       joinDate: string | null;
       debt: number;

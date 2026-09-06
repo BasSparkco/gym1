@@ -181,6 +181,12 @@ export type Dict = {
     confirmPinLabel: string;
     pinMismatch: string;
     appPinSetSuccess: string;
+    pinCodeButton: string;
+    currentPinLabel: string;
+    noPinOnFile: string;
+    sendNewPinLabel: string;
+    sendNewPinDescription: string;
+    sendNewPinButton: string;
     filterAll: string;
     filterActiveMembership: string;
     filterFrozen: string;
@@ -1127,6 +1133,12 @@ const en: Dict = {
     confirmPinLabel: "Confirm PIN",
     pinMismatch: "PINs do not match.",
     appPinSetSuccess: "PIN updated successfully.",
+    pinCodeButton: "PIN code",
+    currentPinLabel: "Current PIN",
+    noPinOnFile: "No PIN on file yet.",
+    sendNewPinLabel: "Send a new PIN",
+    sendNewPinDescription: "Generates a new PIN and sends it via WhatsApp and email, replacing the current one.",
+    sendNewPinButton: "Send new PIN",
     filterAll: "All",
     filterActiveMembership: "Active membership",
     filterFrozen: "Frozen",
@@ -2073,6 +2085,12 @@ const ar: Dict = {
     confirmPinLabel: "تأكيد رمز PIN",
     pinMismatch: "رمزا PIN غير متطابقين.",
     appPinSetSuccess: "تم تحديث رمز PIN بنجاح.",
+    pinCodeButton: "رمز الدخول",
+    currentPinLabel: "رمز الدخول الحالي",
+    noPinOnFile: "لا يوجد رمز دخول مسجّل بعد.",
+    sendNewPinLabel: "إرسال رمز جديد",
+    sendNewPinDescription: "ينشئ رمزاً جديداً ويرسله عبر واتساب والبريد الإلكتروني، ليحل محل الرمز الحالي.",
+    sendNewPinButton: "إرسال رمز جديد",
     filterAll: "الكل",
     filterActiveMembership: "عضوية نشطة",
     filterFrozen: "مجمّدة",
@@ -3019,6 +3037,12 @@ const he: Dict = {
     confirmPinLabel: "אימות קוד PIN",
     pinMismatch: "קודי ה-PIN אינם תואמים.",
     appPinSetSuccess: "קוד ה-PIN עודכן בהצלחה.",
+    pinCodeButton: "קוד PIN",
+    currentPinLabel: "קוד ה-PIN הנוכחי",
+    noPinOnFile: "אין עדיין קוד PIN רשום.",
+    sendNewPinLabel: "שליחת קוד PIN חדש",
+    sendNewPinDescription: "יוצר קוד PIN חדש ושולח אותו בוואטסאפ ובדוא\"ל, במקום הקוד הנוכחי.",
+    sendNewPinButton: "שליחת קוד חדש",
     filterAll: "הכל",
     filterActiveMembership: "מנוי פעיל",
     filterFrozen: "מוקפא",

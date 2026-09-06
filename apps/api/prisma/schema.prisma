@@ -365,6 +365,13 @@ model Member {
   // format as User.passwordHash). Null until staff assigns one — most
   // members won't have the mobile app, so this is opt-in per member.
   pinHash               String?
+  // Same PIN as pinHash, but reversibly encrypted (AES-256-GCM, see
+  // common/pin-crypto.ts) instead of hashed — lets staff look up a member's
+  // current PIN in the PIN popup without resetting it. Populated alongside
+  // pinHash from this feature's ship date onward; null for any PIN set
+  // before that, since there's no way to recover a PIN that was only ever
+  // hashed.
+  pinEncrypted          String?
   // Cached total owed across every membership/locker-rental/course
   // enrollment minus every 'paid' payment — recomputed by DebtService
   // whenever any of those change (see modules/debt/debt.service.ts), not

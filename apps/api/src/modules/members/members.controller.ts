@@ -83,7 +83,9 @@ export class MembersController {
             session.user.tenant.id,
             branchId,
           )
-        : await this.membersService.listMembersForTenant(session.user.tenant.id),
+        : await this.membersService.listMembersForTenant(
+            session.user.tenant.id,
+          ),
     };
   }
 
@@ -128,7 +130,9 @@ export class MembersController {
             (m) =>
               m.fullName.toLowerCase().includes(query) ||
               m.memberNumber.toLowerCase().includes(query) ||
-              (queryDigits.length >= 4 && m.phone && m.phone.replace(/\D/g, '').includes(queryDigits)) ||
+              (queryDigits.length >= 4 &&
+                m.phone &&
+                m.phone.replace(/\D/g, '').includes(queryDigits)) ||
               (m.idNumber && m.idNumber.toLowerCase().includes(query)),
           )
           .slice(0, 8)
@@ -143,7 +147,10 @@ export class MembersController {
   }
 
   @Get(':memberId')
-  async getMember(@Req() request: Request, @Param('memberId') memberId: string) {
+  async getMember(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+  ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     const branchId = await this.dataScopeService.resolveBranchId(session.user);
     return {
@@ -214,7 +221,8 @@ export class MembersController {
     if (!this.membersService.verifyQrSig(memberId, sig ?? '')) {
       throw new UnauthorizedException('Invalid or missing signature.');
     }
-    const buffer = await this.membersService.getMemberQrCodeBufferById(memberId);
+    const buffer =
+      await this.membersService.getMemberQrCodeBufferById(memberId);
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Content-Disposition', 'attachment; filename="gym-qr.png"');
     res.setHeader('Cache-Control', 'public, max-age=3600');
@@ -238,11 +246,14 @@ export class MembersController {
 
   // Uses memory storage (default) — file is uploaded to MinIO object storage
   @Post(':memberId/photo')
-  @UseInterceptors(FileInterceptor('picture', { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('picture', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
   async uploadMemberPhoto(
     @Req() request: Request,
     @Param('memberId') memberId: string,
-    @UploadedFile() file: { originalname: string; buffer: Buffer; mimetype: string },
+    @UploadedFile()
+    file: { originalname: string; buffer: Buffer; mimetype: string },
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     const branchId = await this.dataScopeService.resolveBranchId(session.user);
@@ -283,6 +294,38 @@ export class MembersController {
       branchId,
       memberId,
       body.pin ?? '',
+    );
+  }
+
+  // Staff-facing lookup for the PIN popup — decrypts the currently stored PIN.
+  @Get(':memberId/pin')
+  async getMemberPin(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    return this.membersService.getCurrentPin(
+      session.user.tenant.id,
+      branchId,
+      memberId,
+    );
+  }
+
+  // Staff-triggered: generates and sends a brand-new PIN, same delivery as
+  // the automatic one on member creation. Used by the PIN popup's "Send new
+  // PIN" action.
+  @Post(':memberId/pin/resend')
+  async resendMemberPin(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    return this.membersService.resendPin(
+      session.user.tenant.id,
+      branchId,
+      memberId,
     );
   }
 

@@ -30,10 +30,10 @@ import {
   PlusCircle,
   LogIn,
   KeySquare,
-  KeyRound,
   GraduationCap,
   MessageCircle,
 } from "lucide-react";
+import { MemberPinDialog } from "@/components/members/member-pin-dialog";
 
 export type MembershipRow = {
   id: string;
@@ -237,10 +237,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
 
       {/* Quick actions rail */}
       <div role="toolbar" aria-label={t.members.quickActions} className="mt-5 flex flex-wrap gap-3">
-        <Link href={`/app/members/${member.id}/pin`} className={railBtn}>
-          <KeyRound className="h-4 w-4" strokeWidth={2.2} />
-          {t.members.setAppPin}
-        </Link>
+        {member.phone && <MemberPinDialog memberId={member.id} t={t} />}
         {data.hasActiveMembership ? (
           <Link href={`/app/members/${member.id}/payments/new`} className={railBtnPrimary}>
             <Wallet className="h-4 w-4" strokeWidth={2.2} />

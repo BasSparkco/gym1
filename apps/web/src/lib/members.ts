@@ -175,6 +175,18 @@ export async function setMemberPin(memberId: string, pin: string): Promise<void>
   });
 }
 
+export async function getMemberPin(memberId: string): Promise<{ pin: string | null }> {
+  const response = await authedFetch(`/members/${memberId}/pin`);
+  return (await response.json()) as { pin: string | null };
+}
+
+export async function resendMemberPin(memberId: string): Promise<PinDispatchResult> {
+  const response = await authedFetch(`/members/${memberId}/pin/resend`, {
+    method: "POST",
+  });
+  return (await response.json()) as PinDispatchResult;
+}
+
 export async function sendMemberQr(
   memberId: string,
 ): Promise<{ sent: boolean; reason?: string }> {
