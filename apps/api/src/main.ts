@@ -11,8 +11,12 @@ async function bootstrap() {
   // real client address (sign-in throttling keys on it).
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
+  const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:3001')
+    .split(',')
+    .map((origin) => origin.trim());
+
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:3001',
+    origin: allowedOrigins,
     credentials: true,
   });
   app.setGlobalPrefix('api');

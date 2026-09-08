@@ -330,7 +330,7 @@ export default async function MembersPage({
                 href={pageUrl(Math.max(1, currentPage - 1))}
                 variant="secondary"
                 size="sm"
-                icon={<ChevronLeft className="h-3.5 w-3.5" strokeWidth={2} />}
+                icon={<ChevronLeft className="h-3.5 w-3.5 rtl:rotate-180" strokeWidth={2} />}
                 className={currentPage <= 1 ? "pointer-events-none opacity-40" : ""}
               >
                 {t.actions.prev}
@@ -339,7 +339,7 @@ export default async function MembersPage({
                 href={pageUrl(Math.min(totalPages, currentPage + 1))}
                 variant="secondary"
                 size="sm"
-                trailingIcon={<ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />}
+                trailingIcon={<ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" strokeWidth={2} />}
                 className={currentPage >= totalPages ? "pointer-events-none opacity-40" : ""}
               >
                 {t.actions.next}

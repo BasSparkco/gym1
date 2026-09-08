@@ -32,7 +32,7 @@ export default async function ExpiringSoonReportPage({ searchParams }: Props) {
         title={t.reports.expiringSoon}
         description={formatDict(t.reports.expiringSoonDescription, { total: report.total, plural: report.total !== 1 ? "s" : "", days: report.days, asOfDate: report.asOfDate })}
         actions={
-          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />}>
             {t.reports.allReports}
           </Button>
         }

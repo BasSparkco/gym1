@@ -89,7 +89,7 @@ export default async function LockerDetailPage({ params, searchParams }: Props) 
         eyebrow={t.lockers.title}
         title={`${t.lockers.editLocker} — ${locker.lockerNumber}`}
         actions={
-          <Button href="/app/lockers" variant="secondary" icon={<ChevronLeft className="h-4 w-4" strokeWidth={2} />}>
+          <Button href="/app/lockers" variant="secondary" icon={<ChevronLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />}>
             {t.lockers.allLockers}
           </Button>
         }

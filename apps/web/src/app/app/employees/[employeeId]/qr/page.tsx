@@ -42,7 +42,7 @@ export default async function EmployeeQrPage({ params, searchParams }: Props) {
         title={t.attendance.qrCode}
         description={employee.fullName}
         actions={
-          <Button href={`/app/employees/${employee.id}`} variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+          <Button href={`/app/employees/${employee.id}`} variant="secondary" icon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />}>
             {t.actions.back}
           </Button>
         }

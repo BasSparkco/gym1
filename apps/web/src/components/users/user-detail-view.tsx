@@ -8,6 +8,10 @@ import type { ReactNode } from "react";
 
 type LinkedEmployee = { id: string; fullName: string; employeeNumber: string };
 
+function roleLabelKey(role: string): "owner" | "manager" | "frontDesk" {
+  return role === "owner" ? "owner" : role === "manager" ? "manager" : "frontDesk";
+}
+
 // The single canonical shape a user detail view is built from. Both the
 // dedicated /app/users/[userId] page and the users-list inline expansion
 // (UsersGrid) render through this component, so the two never drift apart.
@@ -35,7 +39,7 @@ export function UserDetailView({ user, linkedEmployee, t, headerAction }: Props)
           </div>
           <div>
             <dt className="text-foreground/55">{t.users.role}</dt>
-            <dd className="mt-0.5 font-medium capitalize">{user.role}</dd>
+            <dd className="mt-0.5 font-medium">{t.roles[roleLabelKey(user.role)]}</dd>
           </div>
           <div>
             <dt className="text-foreground/55">{t.users.homeBranch}</dt>

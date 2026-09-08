@@ -205,7 +205,7 @@ export default async function DashboardPage() {
               className="flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
             >
               {t.visits.allVisits}
-              <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+              <ArrowRight className="h-3 w-3 rtl:rotate-180" strokeWidth={2.5} />
             </Link>
           </div>
           <div className="mt-4 grid">
@@ -256,7 +256,7 @@ export default async function DashboardPage() {
               className="flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
             >
               {t.reports.expiringSoon}
-              <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+              <ArrowRight className="h-3 w-3 rtl:rotate-180" strokeWidth={2.5} />
             </Link>
           </div>
           <div className="mt-4 grid">

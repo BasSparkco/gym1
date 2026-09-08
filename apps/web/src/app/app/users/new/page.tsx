@@ -85,9 +85,9 @@ export default async function NewUserPage() {
               defaultValue="front-desk"
               className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
-              <option value="front-desk">Front Desk</option>
-              <option value="manager">Manager</option>
-              <option value="owner">Owner</option>
+              <option value="front-desk">{t.roles.frontDesk}</option>
+              <option value="manager">{t.roles.manager}</option>
+              <option value="owner">{t.roles.owner}</option>
             </select>
           </div>
 

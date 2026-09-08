@@ -29,7 +29,7 @@ export default async function ExpiredMembershipsReportPage() {
         title={t.reports.expiredMemberships}
         description={formatDict(t.reports.expiredMembershipsDescription, { total, plural: total !== 1 ? "s" : "", asOfDate })}
         actions={
-          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />}>
             {t.reports.allReports}
           </Button>
         }

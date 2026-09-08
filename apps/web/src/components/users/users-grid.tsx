@@ -15,6 +15,10 @@ import { PencilLine, UserRound } from "lucide-react";
 
 type EmployeeOption = { id: string; fullName: string; employeeNumber: string };
 
+function roleLabelKey(role: string): "owner" | "manager" | "frontDesk" {
+  return role === "owner" ? "owner" : role === "manager" ? "manager" : "frontDesk";
+}
+
 type Props = {
   users: StaffUser[];
   employeesById: Record<string, EmployeeOption>;
@@ -80,14 +84,16 @@ export function UsersGrid({
                 isActive && "ring-2 ring-brand ring-offset-2 ring-offset-background",
               )}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-white text-foreground/30">
-                    <UserRound className="h-5 w-5" strokeWidth={1.75} />
-                  </div>
-                  <h2 className="mt-1.5 text-lg font-semibold tracking-tight">{user.email}</h2>
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-white text-foreground/30">
+                  <UserRound className="h-5 w-5" strokeWidth={1.75} />
                 </div>
-                <Badge tone={roleTone[user.role] ?? "neutral"}>{user.role}</Badge>
+                <div className="min-w-0 flex-1">
+                  <Badge tone={roleTone[user.role] ?? "neutral"}>{t.roles[roleLabelKey(user.role)]}</Badge>
+                  <h2 className="mt-1.5 truncate text-lg font-semibold tracking-tight text-foreground">
+                    {user.email}
+                  </h2>
+                </div>
               </div>
 
               <div className="mt-3 min-h-10">

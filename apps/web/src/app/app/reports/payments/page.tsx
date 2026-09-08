@@ -47,7 +47,7 @@ export default async function PaymentsReportPage({ searchParams }: Props) {
           </>
         }
         actions={
-          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+          <Button href="/app/reports" variant="secondary" icon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />}>
             {t.reports.allReports}
           </Button>
         }

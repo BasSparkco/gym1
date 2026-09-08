@@ -60,7 +60,7 @@ export default async function EditGatePage({ params }: Props) {
         eyebrow={t.settings.gatesTitle}
         title={gate.name}
         actions={
-          <Button href="/app/settings/gates" variant="secondary" icon={<ChevronLeft className="h-4 w-4" strokeWidth={2} />}>
+          <Button href="/app/settings/gates" variant="secondary" icon={<ChevronLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />}>
             {t.settings.gatesTitle}
           </Button>
         }

@@ -65,7 +65,7 @@ services:
     environment:
       NODE_ENV: "production"
       PORT: "3002"
-      FRONTEND_ORIGIN: "https://${DOMAIN}"
+      FRONTEND_ORIGIN: "https://${DOMAIN},https://gymapp.sparkco.vip"
       DATABASE_URL: "postgresql://gym:${POSTGRES_PASSWORD}@db:5432/gym?schema=public"
       REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379"
       MINIO_ENDPOINT: "minio"

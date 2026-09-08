@@ -47,7 +47,7 @@ export default async function MemberQrPage({ params, searchParams }: Props) {
         title={t.members.qrCode}
         description={member.fullName}
         actions={
-          <Button href={`/app/members/${member.id}`} variant="secondary" icon={<ArrowLeft className="h-4 w-4" strokeWidth={2} />}>
+          <Button href={`/app/members/${member.id}`} variant="secondary" icon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />}>
             {t.actions.back}
           </Button>
         }

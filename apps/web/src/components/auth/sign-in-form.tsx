@@ -145,7 +145,7 @@ export function SignInForm({
         {isSubmitting ? (
           <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
         ) : (
-          <ArrowRight className="h-4 w-4" strokeWidth={2} />
+          <ArrowRight className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />
         )}
         {isSubmitting ? labels.signingIn : labels.continue}
       </button>

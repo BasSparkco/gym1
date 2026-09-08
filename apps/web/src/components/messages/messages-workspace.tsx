@@ -257,7 +257,7 @@ export function MessagesWorkspace({
                 aria-label={t.messages.backToChats}
                 className="-ms-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground/60 hover:bg-black/[0.04] md:hidden"
               >
-                <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+                <ArrowLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={2} />
               </button>
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
                 <WhatsAppIcon className="h-4 w-4" />

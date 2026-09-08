@@ -109,7 +109,7 @@ export default async function MemberProfilePage({ params, searchParams }: Props)
           href="/app/members"
           className="inline-flex items-center gap-2 rounded-[10px] border border-line bg-surface px-4 py-2 text-[13px] font-semibold text-brand transition-colors hover:border-brand"
         >
-          <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.2} />
+          <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" strokeWidth={2.2} />
           {t.members.allMembers}
         </Link>
       </div>

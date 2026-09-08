@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { BranchRecord } from '../../data/operations-seed';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isValidCurrencyCode } from '../../common/currencies';
+import { TenancyService } from '../tenancy/tenancy.service';
 
 type CreateBranchInput = {
   name?: string;
@@ -33,7 +34,10 @@ const validBranchStatuses = new Set<BranchRecord['status']>([
 
 @Injectable()
 export class BranchesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenancy: TenancyService,
+  ) {}
 
   listBranchesForTenant(tenantId: string) {
     return this.prisma.branch.findMany({ where: { tenantId } });
@@ -88,7 +92,7 @@ export class BranchesService {
       throw new BadRequestException('Branch name is required.');
     }
 
-    return this.prisma.branch.update({
+    const updated = await this.prisma.branch.update({
       where: { id: branchId },
       data: {
         name: nextName,
@@ -115,6 +119,12 @@ export class BranchesService {
             : this.normalizeBranchStatus(input.status),
       },
     });
+
+    if (nextName !== current.name) {
+      void this.tenancy.relabelBranchWhatsApp(branchId, nextName);
+    }
+
+    return updated;
   }
 
   async updateBranchLogo(

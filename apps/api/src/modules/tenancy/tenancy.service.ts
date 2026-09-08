@@ -54,7 +54,24 @@ export class TenancyService {
         "This branch uses the main branch's WhatsApp number — connect from the main branch instead.",
       );
     }
-    return sparkcoFetch(`/me/providers/whatsapp?sessionId=${encodeURIComponent(branchId)}`, 'PUT');
+    return sparkcoFetch(
+      `/me/providers/whatsapp?sessionId=${encodeURIComponent(branchId)}&label=${encodeURIComponent(branch.name)}`,
+      'PUT',
+    );
+  }
+
+  // Best-effort — keeps the SparkCo dashboard's display name for this
+  // branch's WhatsApp session in sync after a rename. Silently no-ops if
+  // the branch has no session there yet (nothing to relabel).
+  async relabelBranchWhatsApp(branchId: string, label: string) {
+    try {
+      await sparkcoFetch(
+        `/me/providers/whatsapp/label?sessionId=${encodeURIComponent(branchId)}&label=${encodeURIComponent(label)}`,
+        'PATCH',
+      );
+    } catch {
+      // no-op — e.g. branch has no WhatsApp session connected
+    }
   }
 
   async getBranchWhatsAppQr(branchId: string) {
