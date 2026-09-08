@@ -182,6 +182,7 @@ model Tenant {
   gates            Gate[]
   members          Member[]
   membershipPlans  MembershipPlan[]
+  discountTypes    DiscountType[]
   payments         Payment[]
   notifications    Notification[]
   settings         TenantSettings?
@@ -454,6 +455,13 @@ model Membership {
   startDate            DateTime         @db.Date
   endDate              DateTime         @db.Date
   status               MembershipStatus
+  // Snapshot of the plan price at sale time, kept alongside finalPrice so a
+  // discount's effect stays visible even if the plan's price changes later.
+  // Backfilled to finalPrice for memberships that predate this feature.
+  regularPrice         Decimal          @db.Decimal(10, 2)
+  discountTypeId       String?
+  discountType         DiscountType?    @relation(fields: [discountTypeId], references: [id], onDelete: SetNull)
+  discountPercent      Decimal          @default(0) @db.Decimal(5, 2)
   finalPrice           Decimal          @db.Decimal(10, 2)
   previousMembershipId String?          @unique
   previousMembership   Membership?      @relation("MembershipRenewalChain", fields: [previousMembershipId], references: [id], onDelete: SetNull)
@@ -466,6 +474,26 @@ model Membership {
   @@index([memberId])
   @@index([planId])
   @@index([status, endDate])
+  @@index([discountTypeId])
+}
+
+// Tenant-defined reason/category for a membership discount (Student,
+// Employee, Family, ...). Deactivated rather than deleted once referenced by
+// a Membership, so historical memberships keep displaying correctly — see
+// discount.md §5.
+model DiscountType {
+  id          String   @id
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships Membership[]
+
+  @@index([tenantId])
 }
 
 model Freeze {

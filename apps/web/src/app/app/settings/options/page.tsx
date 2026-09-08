@@ -110,6 +110,12 @@ export default async function OptionsSettingsPage() {
         >
           {t.settings.gates}
         </Link>
+        <Link
+          href="/app/settings/discount-types"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
+        >
+          {t.settings.discountTypes}
+        </Link>
       </nav>
 
       <section className="rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">

@@ -3,6 +3,7 @@
 import { getMember } from "@/lib/members";
 import { listMembershipsForMember, renewMembership } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
+import { listDiscountTypes } from "@/lib/discount-types";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -23,11 +24,12 @@ export default async function RenewMembershipPage({ params }: Props) {
   await requireSession();
   const t = await getT();
 
-  const [member, memberships, plans, settings] = await Promise.all([
+  const [member, memberships, plans, settings, discountTypes] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
     listMembershipPlans(),
     getSettings(),
+    listDiscountTypes(),
   ]);
   const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
@@ -51,13 +53,15 @@ export default async function RenewMembershipPage({ params }: Props) {
 
     const planId = formData.get("planId") as string;
     const startDate = formData.get("startDate") as string;
-    const rawPrice = formData.get("finalPrice") as string;
-    const finalPrice = rawPrice ? Number(rawPrice) : undefined;
+    const discountTypeId = (formData.get("discountTypeId") as string) || null;
+    const rawDiscountPercent = formData.get("discountPercent") as string;
+    const discountPercent = rawDiscountPercent ? Number(rawDiscountPercent) : undefined;
 
     await renewMembership(currentMembership.id, {
       planId: planId || undefined,
       startDate: startDate || undefined,
-      finalPrice: finalPrice !== undefined && !isNaN(finalPrice) ? finalPrice : undefined,
+      discountTypeId,
+      discountPercent: discountPercent !== undefined && !isNaN(discountPercent) ? discountPercent : undefined,
     });
 
     redirect(`/app/members/${memberId}`);
@@ -75,7 +79,7 @@ export default async function RenewMembershipPage({ params }: Props) {
         <section className="rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 text-sm">
           <p className="font-medium text-yellow-800">{t.memberships.noMembershipHistory}</p>
           <p className="mt-1 text-yellow-700">
-            This member has no membership history.{" "}
+            {t.memberships.noMembershipHistoryDescription}{" "}
             <Link href={`/app/members/${memberId}/memberships/new`} className="underline">
               {t.memberships.sellNewInstead}
             </Link>
@@ -117,17 +121,18 @@ export default async function RenewMembershipPage({ params }: Props) {
             <form action={handleRenew} className="grid gap-5">
               <RenewFormFields
                 plans={plans}
+                discountTypes={discountTypes}
                 initialPlanId={currentMembership.planId}
-                initialPrice={
-                  plans.find((plan) => plan.id === currentMembership.planId)?.price ??
-                  currentMembership.finalPrice
-                }
                 dateFormat={dateFormat}
                 defaultStartDate={defaultStartDate}
                 currencySymbol={currencySymbol}
                 labels={{
                   plan: t.memberships.plan,
                   startDate: t.memberships.startDate,
+                  regularPrice: t.memberships.regularPrice,
+                  discountType: t.memberships.discountType,
+                  discountTypeNone: t.memberships.discountTypeNone,
+                  discountPercent: t.memberships.discountPercent,
                   finalPrice: t.memberships.finalPrice,
                   noPlansAvailable: t.memberships.noPlansAvailable,
                 }}

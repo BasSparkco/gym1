@@ -349,6 +349,9 @@ export async function importJsonDataIntoPrisma(
       startDate: toDate(m.startDate)!,
       endDate: toDate(m.endDate)!,
       status: m.status,
+      // Legacy JSON store predates discounts — treat the imported price as
+      // the regular price with no discount applied (discount.md §17/§18).
+      regularPrice: m.finalPrice,
       finalPrice: m.finalPrice,
       previousMembershipId: m.previousMembershipId,
     })),

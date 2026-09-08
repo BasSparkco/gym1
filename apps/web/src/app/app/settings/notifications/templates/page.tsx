@@ -87,6 +87,12 @@ export default async function NotificationTemplatesPage() {
         >
           {t.settings.gates}
         </Link>
+        <Link
+          href="/app/settings/discount-types"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
+        >
+          {t.settings.discountTypes}
+        </Link>
       </nav>
 
       <div className="flex items-start gap-3 rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-foreground/80">

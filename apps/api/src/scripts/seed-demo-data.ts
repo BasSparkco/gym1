@@ -10,9 +10,11 @@
  * (build first: pnpm run build)
  */
 
+import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 import { addDays, localDateString } from '../common/date';
+import { DEFAULT_DISCOUNT_TYPE_NAMES } from '../modules/discount-types/default-discount-types';
 
 const today = localDateString();
 
@@ -37,6 +39,14 @@ async function main() {
 
     await prisma.tenant.create({
       data: { id: 'tenant-spark-gym', name: 'نادي سبارك الرياضي' },
+    });
+
+    await prisma.discountType.createMany({
+      data: DEFAULT_DISCOUNT_TYPE_NAMES.map((name) => ({
+        id: `discount-type-${randomUUID()}`,
+        tenantId: 'tenant-spark-gym',
+        name,
+      })),
     });
 
     await prisma.branch.createMany({
@@ -527,6 +537,7 @@ async function main() {
           endDate: new Date(addDays(today, 20)),
           status: 'active',
           finalPrice: 150,
+          regularPrice: 150,
         },
         {
           id: 'membership-002',
@@ -536,6 +547,7 @@ async function main() {
           endDate: new Date(addDays(today, 25)),
           status: 'active',
           finalPrice: 120,
+          regularPrice: 120,
         },
         {
           id: 'membership-003',
@@ -545,6 +557,7 @@ async function main() {
           endDate: new Date(addDays(today, 12)),
           status: 'active',
           finalPrice: 150,
+          regularPrice: 150,
         },
         {
           id: 'membership-004',
@@ -554,6 +567,7 @@ async function main() {
           endDate: new Date(addDays(today, -65)),
           status: 'expired',
           finalPrice: 110,
+          regularPrice: 110,
         },
         {
           id: 'membership-005',
@@ -563,6 +577,7 @@ async function main() {
           endDate: new Date(addDays(today, 75)),
           status: 'active',
           finalPrice: 250,
+          regularPrice: 250,
         },
         {
           id: 'membership-006',
@@ -572,6 +587,7 @@ async function main() {
           endDate: new Date(addDays(today, 22)),
           status: 'active',
           finalPrice: 150,
+          regularPrice: 150,
         },
         {
           id: 'membership-007',
@@ -581,6 +597,7 @@ async function main() {
           endDate: new Date(addDays(today, 335)),
           status: 'active',
           finalPrice: 1400,
+          regularPrice: 1400,
         },
         {
           id: 'membership-008',
@@ -590,6 +607,7 @@ async function main() {
           endDate: new Date(addDays(today, 18)),
           status: 'frozen',
           finalPrice: 150,
+          regularPrice: 150,
         },
       ],
     });

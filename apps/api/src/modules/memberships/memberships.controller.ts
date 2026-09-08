@@ -46,7 +46,8 @@ type CreateMembershipRequestBody = {
   startDate?: string;
   endDate?: string;
   status?: 'draft' | 'active' | 'frozen' | 'expired' | 'cancelled';
-  finalPrice?: number;
+  discountTypeId?: string | null;
+  discountPercent?: number;
 };
 
 type UpdateMembershipRequestBody = {
@@ -186,6 +187,11 @@ export class MembershipsController {
     @Body() body: CreateMembershipRequestBody,
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
+    // discount.md §14 proposed default: a 100% discount (a free membership)
+    // needs owner/manager sign-off, not just any front-desk staff.
+    if ((body.discountPercent ?? 0) >= 100) {
+      requireRole(session.user, ['owner', 'manager']);
+    }
 
     return {
       membership: await this.membershipsService.createMembership(
@@ -199,9 +205,18 @@ export class MembershipsController {
   async renewMembership(
     @Req() request: Request,
     @Param('membershipId') membershipId: string,
-    @Body() body: { planId?: string; startDate?: string; finalPrice?: number },
+    @Body()
+    body: {
+      planId?: string;
+      startDate?: string;
+      discountTypeId?: string | null;
+      discountPercent?: number;
+    },
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
+    if ((body.discountPercent ?? 0) >= 100) {
+      requireRole(session.user, ['owner', 'manager']);
+    }
 
     return {
       membership: await this.membershipsService.renewMembership(

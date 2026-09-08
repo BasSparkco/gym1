@@ -21,6 +21,11 @@ type Locker = {
   monthlyPrice: number;
 };
 
+type DiscountType = {
+  id: string;
+  name: string;
+};
+
 function monthsForPlan(plan?: Plan) {
   return plan?.durationDays ? Math.max(1, Math.round(plan.durationDays / 30)) : 1;
 }
@@ -28,6 +33,7 @@ function monthsForPlan(plan?: Plan) {
 export default function MembershipFormFields({
   plans,
   lockers,
+  discountTypes,
   today,
   dateFormat,
   currencySymbol,
@@ -35,6 +41,7 @@ export default function MembershipFormFields({
 }: {
   plans: Plan[];
   lockers: Locker[];
+  discountTypes: DiscountType[];
   today: string;
   dateFormat: DateFormat;
   currencySymbol: string;
@@ -42,6 +49,10 @@ export default function MembershipFormFields({
     membershipPlan: string;
     startDate: string;
     endDate: string;
+    regularPrice: string;
+    discountType: string;
+    discountTypeNone: string;
+    discountPercent: string;
     finalPrice: string;
     noPlansAvailable: string;
     createPlanFirst: string;
@@ -54,7 +65,8 @@ export default function MembershipFormFields({
 }) {
   const [planId, setPlanId] = useState("");
   const [startDate, setStartDate] = useState(today);
-  const [price, setPrice] = useState<number | "">("");
+  const [discountTypeId, setDiscountTypeId] = useState("");
+  const [discountPercent, setDiscountPercent] = useState<number | "">("");
   const [rentLocker, setRentLocker] = useState(false);
   const [lockerId, setLockerId] = useState("");
   const [lockerPrice, setLockerPrice] = useState<number | "">("");
@@ -66,12 +78,20 @@ export default function MembershipFormFields({
       ? addDaysToDateString(startDate, selectedPlan.durationDays)
       : "";
 
+  const regularPrice = selectedPlan?.price ?? 0;
+  const effectiveDiscountPercent = discountTypeId ? Number(discountPercent) || 0 : 0;
+  const finalPrice = regularPrice - (regularPrice * effectiveDiscountPercent) / 100;
+
   function handlePlanChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const id = e.target.value;
     setPlanId(id);
     const plan = plans.find((p) => p.id === id);
-    if (plan) setPrice(plan.price);
     if (selectedLocker) setLockerPrice(selectedLocker.monthlyPrice * monthsForPlan(plan));
+  }
+
+  function handleDiscountTypeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setDiscountTypeId(e.target.value);
+    if (!e.target.value) setDiscountPercent("");
   }
 
   function handleLockerChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -150,20 +170,59 @@ export default function MembershipFormFields({
       </div>
 
       <div className="grid gap-1.5">
-        <label htmlFor="finalPrice" className="text-sm font-medium">
-          {labels.finalPrice}
-        </label>
-        <input
-          id="finalPrice"
-          name="finalPrice"
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="e.g. 120"
-          value={price}
-          onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
-          className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-        />
+        <label className="text-sm font-medium">{labels.regularPrice}</label>
+        <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm text-foreground/70">
+          {currencySymbol}
+          {regularPrice}
+        </p>
+      </div>
+
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        <div className="grid gap-1.5">
+          <label htmlFor="discountTypeId" className="text-sm font-medium">
+            {labels.discountType}
+          </label>
+          <select
+            id="discountTypeId"
+            name="discountTypeId"
+            value={discountTypeId}
+            onChange={handleDiscountTypeChange}
+            className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+          >
+            <option value="">{labels.discountTypeNone}</option>
+            {discountTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid gap-1.5">
+          <label htmlFor="discountPercent" className="text-sm font-medium">
+            {labels.discountPercent}
+          </label>
+          <input
+            id="discountPercent"
+            name="discountPercent"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            disabled={!discountTypeId}
+            value={discountPercent}
+            onChange={(e) => setDiscountPercent(e.target.value === "" ? "" : Number(e.target.value))}
+            className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-line/20 disabled:text-foreground/40"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-1.5">
+        <label className="text-sm font-medium">{labels.finalPrice}</label>
+        <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm font-semibold text-foreground">
+          {currencySymbol}
+          {finalPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+        </p>
       </div>
 
       <div className="grid gap-1.5">

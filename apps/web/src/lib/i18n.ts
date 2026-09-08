@@ -266,6 +266,7 @@ export type Dict = {
     unfreeze: string;
     activeMembershipExists: string;
     noMembershipHistory: string;
+    noMembershipHistoryDescription: string;
     noActiveMembership: string;
     noFrozenMembership: string;
     freezeNotAllowed: string;
@@ -278,6 +279,10 @@ export type Dict = {
     period: string;
     startDate: string;
     endDate: string;
+    regularPrice: string;
+    discountType: string;
+    discountTypeNone: string;
+    discountPercent: string;
     finalPrice: string;
     activateMembership: string;
     reactivateMembership: string;
@@ -859,6 +864,20 @@ export type Dict = {
     gateDeleteConfirm: string;
     gateDeviceConfigured: string;
     gateDeviceNotConfigured: string;
+    discountTypes: string;
+    discountTypesTitle: string;
+    discountTypesDescription: string;
+    discountTypesEmpty: string;
+    discountTypeAddButton: string;
+    discountTypeName: string;
+    discountTypeDescriptionField: string;
+    discountTypeStatus: string;
+    discountTypeStatusActive: string;
+    discountTypeStatusInactive: string;
+    discountTypeCreate: string;
+    discountTypeUpdate: string;
+    discountTypeDeactivate: string;
+    discountTypeReactivate: string;
   };
   classes: {
     title: string;
@@ -1218,6 +1237,7 @@ const en: Dict = {
     unfreeze: "Unfreeze membership",
     activeMembershipExists: "Active membership exists",
     noMembershipHistory: "No membership to renew",
+    noMembershipHistoryDescription: "This member has no membership history.",
     noActiveMembership: "No active membership",
     noFrozenMembership: "No frozen membership",
     freezeNotAllowed: "Freeze not allowed",
@@ -1230,6 +1250,10 @@ const en: Dict = {
     period: "Period",
     startDate: "Start date",
     endDate: "End date",
+    regularPrice: "Regular price",
+    discountType: "Discount type",
+    discountTypeNone: "None",
+    discountPercent: "Discount %",
     finalPrice: "Final price",
     activateMembership: "Activate membership",
     reactivateMembership: "Re-activate membership",
@@ -1811,6 +1835,20 @@ const en: Dict = {
     gateDeleteConfirm: "Delete this gate? This cannot be undone.",
     gateDeviceConfigured: "Device configured",
     gateDeviceNotConfigured: "No device configured",
+    discountTypes: "Discount Types",
+    discountTypesTitle: "Discount Types",
+    discountTypesDescription: "Manage the discount reasons staff can apply when selling or renewing a membership — Student, Family, Renewal, and so on.",
+    discountTypesEmpty: "No discount types yet.",
+    discountTypeAddButton: "Add Discount Type",
+    discountTypeName: "Name",
+    discountTypeDescriptionField: "Description",
+    discountTypeStatus: "Status",
+    discountTypeStatusActive: "Active",
+    discountTypeStatusInactive: "Inactive",
+    discountTypeCreate: "Create discount type",
+    discountTypeUpdate: "Save changes",
+    discountTypeDeactivate: "Deactivate",
+    discountTypeReactivate: "Reactivate",
   },
   classes: {
     title: "Courses",
@@ -2170,6 +2208,7 @@ const ar: Dict = {
     unfreeze: "إلغاء تجميد الاشتراك",
     activeMembershipExists: "يوجد اشتراك نشط",
     noMembershipHistory: "لا يوجد اشتراك للتجديد",
+    noMembershipHistoryDescription: "لا يوجد سجل اشتراكات سابق لهذا العضو.",
     noActiveMembership: "لا يوجد اشتراك نشط",
     noFrozenMembership: "لا يوجد اشتراك مجمد",
     freezeNotAllowed: "التجميد غير مسموح",
@@ -2182,6 +2221,10 @@ const ar: Dict = {
     period: "الفترة",
     startDate: "تاريخ البدء",
     endDate: "تاريخ الانتهاء",
+    regularPrice: "السعر الأساسي",
+    discountType: "نوع الخصم",
+    discountTypeNone: "بدون",
+    discountPercent: "نسبة الخصم %",
     finalPrice: "السعر النهائي",
     activateMembership: "تفعيل الاشتراك",
     reactivateMembership: "إعادة تفعيل الاشتراك",
@@ -2763,6 +2806,20 @@ const ar: Dict = {
     gateDeleteConfirm: "حذف هذه البوابة؟ لا يمكن التراجع عن هذا الإجراء.",
     gateDeviceConfigured: "الجهاز مضبوط",
     gateDeviceNotConfigured: "لا يوجد جهاز مضبوط",
+    discountTypes: "أنواع الخصومات",
+    discountTypesTitle: "أنواع الخصومات",
+    discountTypesDescription: "إدارة أسباب الخصم التي يمكن للموظفين استخدامها عند بيع أو تجديد اشتراك — طالب، عائلة، تجديد، وغيرها.",
+    discountTypesEmpty: "لا توجد أنواع خصومات بعد.",
+    discountTypeAddButton: "إضافة نوع خصم",
+    discountTypeName: "الاسم",
+    discountTypeDescriptionField: "الوصف",
+    discountTypeStatus: "الحالة",
+    discountTypeStatusActive: "نشط",
+    discountTypeStatusInactive: "غير نشط",
+    discountTypeCreate: "إنشاء نوع خصم",
+    discountTypeUpdate: "حفظ التغييرات",
+    discountTypeDeactivate: "تعطيل",
+    discountTypeReactivate: "إعادة تفعيل",
   },
   classes: {
     title: "الدورات",
@@ -3122,6 +3179,7 @@ const he: Dict = {
     unfreeze: "בטל הקפאת מנוי",
     activeMembershipExists: "קיים מנוי פעיל",
     noMembershipHistory: "אין מנוי לחידוש",
+    noMembershipHistoryDescription: "לחבר זה אין היסטוריית מנויים.",
     noActiveMembership: "אין מנוי פעיל",
     noFrozenMembership: "אין מנוי מוקפא",
     freezeNotAllowed: "הקפאה אינה מותרת",
@@ -3134,6 +3192,10 @@ const he: Dict = {
     period: "תקופה",
     startDate: "תאריך התחלה",
     endDate: "תאריך סיום",
+    regularPrice: "מחיר רגיל",
+    discountType: "סוג הנחה",
+    discountTypeNone: "ללא",
+    discountPercent: "אחוז הנחה",
     finalPrice: "מחיר סופי",
     activateMembership: "הפעל מנוי",
     reactivateMembership: "הפעל מחדש מנוי",
@@ -3715,6 +3777,20 @@ const he: Dict = {
     gateDeleteConfirm: "למחוק שער זה? לא ניתן לבטל פעולה זו.",
     gateDeviceConfigured: "מכשיר מוגדר",
     gateDeviceNotConfigured: "אין מכשיר מוגדר",
+    discountTypes: "סוגי הנחות",
+    discountTypesTitle: "סוגי הנחות",
+    discountTypesDescription: "נהל את סיבות ההנחה שהצוות יכול להחיל בעת מכירה או חידוש מנוי — סטודנט, משפחה, חידוש ועוד.",
+    discountTypesEmpty: "עדיין אין סוגי הנחות.",
+    discountTypeAddButton: "הוסף סוג הנחה",
+    discountTypeName: "שם",
+    discountTypeDescriptionField: "תיאור",
+    discountTypeStatus: "סטטוס",
+    discountTypeStatusActive: "פעיל",
+    discountTypeStatusInactive: "לא פעיל",
+    discountTypeCreate: "צור סוג הנחה",
+    discountTypeUpdate: "שמור שינויים",
+    discountTypeDeactivate: "השבת",
+    discountTypeReactivate: "הפעל מחדש",
   },
   classes: {
     title: "קורסים",

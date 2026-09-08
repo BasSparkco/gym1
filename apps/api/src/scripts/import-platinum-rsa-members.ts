@@ -279,6 +279,7 @@ async function main() {
               startDate: dateRange.start,
               endDate: dateRange.end,
               status,
+              regularPrice: new Prisma.Decimal(plan.price),
               finalPrice: new Prisma.Decimal(plan.price),
             },
           });

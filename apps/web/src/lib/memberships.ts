@@ -12,6 +12,9 @@ export type Membership = {
   startDate: string;
   endDate: string;
   status: "draft" | "active" | "frozen" | "expired" | "cancelled";
+  regularPrice: number;
+  discountTypeId: string | null;
+  discountPercent: number;
   finalPrice: number;
   plan?: MembershipPlan | null;
 };
@@ -55,7 +58,8 @@ export async function createMembership(data: {
   planId: string;
   startDate: string;
   endDate?: string;
-  finalPrice?: number;
+  discountTypeId?: string | null;
+  discountPercent?: number;
   status?: Membership["status"];
 }): Promise<Membership> {
   const res = await authedFetch("/memberships", {
@@ -76,7 +80,12 @@ export type Freeze = {
 
 export async function renewMembership(
   membershipId: string,
-  data: { planId?: string; startDate?: string; finalPrice?: number },
+  data: {
+    planId?: string;
+    startDate?: string;
+    discountTypeId?: string | null;
+    discountPercent?: number;
+  },
 ): Promise<Membership> {
   const res = await authedFetch(`/memberships/${membershipId}/renew`, {
     method: "POST",

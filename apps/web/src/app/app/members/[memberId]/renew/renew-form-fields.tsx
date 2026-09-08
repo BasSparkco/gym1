@@ -13,31 +13,53 @@ type Plan = {
   sessionCount?: number;
 };
 
+type DiscountType = {
+  id: string;
+  name: string;
+};
+
 export default function RenewFormFields({
   plans,
+  discountTypes,
   initialPlanId,
-  initialPrice,
   dateFormat,
   defaultStartDate,
   currencySymbol,
   labels,
 }: {
   plans: Plan[];
+  discountTypes: DiscountType[];
   initialPlanId: string;
-  initialPrice: number;
   dateFormat: DateFormat;
   defaultStartDate: string;
   currencySymbol: string;
-  labels: { plan: string; startDate: string; finalPrice: string; noPlansAvailable: string };
+  labels: {
+    plan: string;
+    startDate: string;
+    regularPrice: string;
+    discountType: string;
+    discountTypeNone: string;
+    discountPercent: string;
+    finalPrice: string;
+    noPlansAvailable: string;
+  };
 }) {
   const [planId, setPlanId] = useState(initialPlanId);
-  const [price, setPrice] = useState<number | "">(initialPrice);
+  const [discountTypeId, setDiscountTypeId] = useState("");
+  const [discountPercent, setDiscountPercent] = useState<number | "">("");
+
+  const selectedPlan = plans.find((plan) => plan.id === planId);
+  const regularPrice = selectedPlan?.price ?? 0;
+  const effectiveDiscountPercent = discountTypeId ? Number(discountPercent) || 0 : 0;
+  const finalPrice = regularPrice - (regularPrice * effectiveDiscountPercent) / 100;
 
   function handlePlanChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const id = e.target.value;
-    setPlanId(id);
-    const plan = plans.find((p) => p.id === id);
-    if (plan) setPrice(plan.price);
+    setPlanId(e.target.value);
+  }
+
+  function handleDiscountTypeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setDiscountTypeId(e.target.value);
+    if (!e.target.value) setDiscountPercent("");
   }
 
   return (
@@ -73,32 +95,70 @@ export default function RenewFormFields({
         )}
       </div>
 
+      <div className="grid gap-1.5">
+        <label htmlFor="startDate" className="text-sm font-medium">
+          {labels.startDate}{" "}
+          <span className="text-foreground/40 font-normal">
+            — defaults to day after current end
+          </span>
+        </label>
+        <DateInput id="startDate" name="startDate" dateFormat={dateFormat} defaultValue={defaultStartDate} />
+      </div>
+
+      <div className="grid gap-1.5">
+        <label className="text-sm font-medium">{labels.regularPrice}</label>
+        <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm text-foreground/70">
+          {currencySymbol}
+          {regularPrice}
+        </p>
+      </div>
+
       <div className="grid gap-1.5 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <label htmlFor="startDate" className="text-sm font-medium">
-            {labels.startDate}{" "}
-            <span className="text-foreground/40 font-normal">
-              — defaults to day after current end
-            </span>
+          <label htmlFor="discountTypeId" className="text-sm font-medium">
+            {labels.discountType}
           </label>
-          <DateInput id="startDate" name="startDate" dateFormat={dateFormat} defaultValue={defaultStartDate} />
+          <select
+            id="discountTypeId"
+            name="discountTypeId"
+            value={discountTypeId}
+            onChange={handleDiscountTypeChange}
+            className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+          >
+            <option value="">{labels.discountTypeNone}</option>
+            {discountTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="grid gap-1.5">
-          <label htmlFor="finalPrice" className="text-sm font-medium">
-            {labels.finalPrice}
+          <label htmlFor="discountPercent" className="text-sm font-medium">
+            {labels.discountPercent}
           </label>
           <input
-            id="finalPrice"
-            name="finalPrice"
+            id="discountPercent"
+            name="discountPercent"
             type="number"
             min="0"
+            max="100"
             step="0.01"
-            value={price}
-            onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
-            className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            disabled={!discountTypeId}
+            value={discountPercent}
+            onChange={(e) => setDiscountPercent(e.target.value === "" ? "" : Number(e.target.value))}
+            className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-line/20 disabled:text-foreground/40"
           />
         </div>
+      </div>
+
+      <div className="grid gap-1.5">
+        <label className="text-sm font-medium">{labels.finalPrice}</label>
+        <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm font-semibold text-foreground">
+          {currencySymbol}
+          {finalPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+        </p>
       </div>
     </>
   );

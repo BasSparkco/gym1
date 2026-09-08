@@ -15,6 +15,7 @@ import { makeQrPublicUrl } from '../../common/qr';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DebtService } from '../debt/debt.service';
+import { DiscountTypesService } from '../discount-types/discount-types.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   Freeze,
@@ -22,6 +23,7 @@ import {
   Membership,
   MembershipPlan,
   MembershipStatus,
+  Prisma,
 } from '../../generated/prisma/client';
 
 type CreateMembershipPlanInput = {
@@ -56,7 +58,8 @@ type CreateMembershipInput = {
   startDate?: string;
   endDate?: string;
   status?: MembershipStatus;
-  finalPrice?: number;
+  discountTypeId?: string | null;
+  discountPercent?: number;
 };
 
 type UpdateMembershipInput = {
@@ -78,6 +81,35 @@ function toDateOnly(dateStr: string): Date {
   return parseDateOnly(dateStr, 'Date') as Date;
 }
 
+/**
+ * discount.md §9/§19 Rule 1-2: the backend is the sole source of truth for
+ * finalPrice — a client-supplied finalPrice is never read, only
+ * regularPrice + discountPercent, which the server itself resolves here.
+ */
+function computeFinalPrice(
+  regularPrice: Prisma.Decimal,
+  discountPercent: Prisma.Decimal,
+): Prisma.Decimal {
+  const discountAmount = regularPrice.mul(discountPercent).div(100);
+  return regularPrice.sub(discountAmount);
+}
+
+function parseDiscountPercent(value: number | undefined): Prisma.Decimal {
+  if (value === undefined) {
+    return new Prisma.Decimal(0);
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new BadRequestException('Discount percentage must be a finite number.');
+  }
+
+  if (value < 0 || value > 100) {
+    throw new BadRequestException('Discount percentage must be between 0 and 100.');
+  }
+
+  return new Prisma.Decimal(value);
+}
+
 @Injectable()
 export class MembershipsService {
   constructor(
@@ -85,7 +117,33 @@ export class MembershipsService {
     private readonly notificationsService: NotificationsService,
     private readonly basIpSyncService: BasIpSyncService,
     private readonly debtService: DebtService,
+    private readonly discountTypesService: DiscountTypesService,
   ) {}
+
+  /**
+   * Resolves and validates the discount for a new/renewed membership.
+   * discount.md §19 Rule 3/4: discountTypeId must belong to the tenant and
+   * be active; §12: no type selected forces discount back to 0% regardless
+   * of what was submitted, matching the "None" option's contract.
+   */
+  private async resolveDiscount(
+    tenantId: string,
+    input: { discountTypeId?: string | null; discountPercent?: number },
+  ): Promise<{ discountTypeId: string | null; discountPercent: Prisma.Decimal }> {
+    const discountType = await this.discountTypesService.requireActiveForNewMembership(
+      tenantId,
+      input.discountTypeId,
+    );
+
+    if (!discountType) {
+      return { discountTypeId: null, discountPercent: new Prisma.Decimal(0) };
+    }
+
+    return {
+      discountTypeId: discountType.id,
+      discountPercent: parseDiscountPercent(input.discountPercent),
+    };
+  }
 
   /**
    * Keeps membership status in sync with the calendar: expires actives past
@@ -414,7 +472,12 @@ export class MembershipsService {
   async renewMembership(
     tenantId: string,
     membershipId: string,
-    input: { planId?: string; startDate?: string; finalPrice?: number },
+    input: {
+      planId?: string;
+      startDate?: string;
+      discountTypeId?: string | null;
+      discountPercent?: number;
+    },
   ) {
     const old = await this.prisma.membership.findFirst({
       where: { id: membershipId, member: { tenantId } },
@@ -450,6 +513,9 @@ export class MembershipsService {
     }
 
     const renewalId = `membership-${randomUUID()}`;
+    const { discountTypeId, discountPercent } = await this.resolveDiscount(tenantId, input);
+    const regularPrice = plan.price;
+    const finalPrice = computeFinalPrice(regularPrice, discountPercent);
 
     const renewal = await this.prisma.$transaction(async (tx) => {
       if (old.status === 'active') {
@@ -467,7 +533,10 @@ export class MembershipsService {
           startDate: toDateOnly(startDate),
           endDate: toDateOnly(endDate),
           status: 'active',
-          finalPrice: input.finalPrice ?? plan.price,
+          regularPrice,
+          discountTypeId,
+          discountPercent,
+          finalPrice,
           previousMembershipId: old.id,
         },
       });
@@ -679,6 +748,10 @@ export class MembershipsService {
       status = 'draft';
     }
 
+    const { discountTypeId, discountPercent } = await this.resolveDiscount(tenantId, input);
+    const regularPrice = plan.price;
+    const finalPrice = computeFinalPrice(regularPrice, discountPercent);
+
     const membership = await this.prisma.membership.create({
       data: {
         id: `membership-${randomUUID()}`,
@@ -687,7 +760,10 @@ export class MembershipsService {
         startDate: toDateOnly(input.startDate),
         endDate: toDateOnly(endDate),
         status,
-        finalPrice: input.finalPrice ?? plan.price,
+        regularPrice,
+        discountTypeId,
+        discountPercent,
+        finalPrice,
       },
     });
 
@@ -729,6 +805,8 @@ export class MembershipsService {
       ...membership,
       startDate: toDateOnlyString(membership.startDate),
       endDate: toDateOnlyString(membership.endDate),
+      regularPrice: toNumber(membership.regularPrice),
+      discountPercent: toNumber(membership.discountPercent),
       finalPrice: toNumber(membership.finalPrice),
     };
   }

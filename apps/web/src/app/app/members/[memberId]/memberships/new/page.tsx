@@ -4,6 +4,7 @@ import { getMember } from "@/lib/members";
 import { listMembershipsForMember, createMembership } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { listLockers, createLockerRental } from "@/lib/lockers";
+import { listDiscountTypes } from "@/lib/discount-types";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
@@ -26,12 +27,13 @@ export default async function SellMembershipPage({ params, searchParams }: Props
   await requireSession();
   const t = await getT();
 
-  const [member, memberships, plans, allLockers, settings] = await Promise.all([
+  const [member, memberships, plans, allLockers, settings, discountTypes] = await Promise.all([
     getMember(memberId),
     listMembershipsForMember(memberId),
     listMembershipPlans(),
     listLockers({ memberId }),
     getSettings(),
+    listDiscountTypes(),
   ]);
   const currencySymbol = await getActiveCurrencySymbol(member.homeBranchId);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
@@ -50,8 +52,9 @@ export default async function SellMembershipPage({ params, searchParams }: Props
     "use server";
     const planId = formData.get("planId") as string;
     const startDate = formData.get("startDate") as string;
-    const rawPrice = formData.get("finalPrice") as string;
-    const finalPrice = rawPrice ? Number(rawPrice) : undefined;
+    const discountTypeId = (formData.get("discountTypeId") as string) || null;
+    const rawDiscountPercent = formData.get("discountPercent") as string;
+    const discountPercent = rawDiscountPercent ? Number(rawDiscountPercent) : undefined;
     const endDate = (formData.get("endDate") as string) || undefined;
     const lockerId = formData.get("lockerId") as string;
     const rawLockerPrice = formData.get("lockerFinalPrice") as string;
@@ -63,7 +66,8 @@ export default async function SellMembershipPage({ params, searchParams }: Props
         planId,
         startDate,
         endDate,
-        finalPrice: finalPrice !== undefined && !isNaN(finalPrice) ? finalPrice : undefined,
+        discountTypeId,
+        discountPercent: discountPercent !== undefined && !isNaN(discountPercent) ? discountPercent : undefined,
         status: "active",
       });
     } catch (err) {
@@ -120,6 +124,7 @@ export default async function SellMembershipPage({ params, searchParams }: Props
           <MembershipFormFields
             plans={plans}
             lockers={availableLockers}
+            discountTypes={discountTypes}
             today={today}
             dateFormat={dateFormat}
             currencySymbol={currencySymbol}
@@ -127,6 +132,10 @@ export default async function SellMembershipPage({ params, searchParams }: Props
               membershipPlan: t.memberships.membershipPlan,
               startDate: t.memberships.startDate,
               endDate: t.memberships.endDate,
+              regularPrice: t.memberships.regularPrice,
+              discountType: t.memberships.discountType,
+              discountTypeNone: t.memberships.discountTypeNone,
+              discountPercent: t.memberships.discountPercent,
               finalPrice: t.memberships.finalPrice,
               noPlansAvailable: t.memberships.noPlansAvailable,
               createPlanFirst: t.memberships.createPlanFirst,

@@ -139,6 +139,12 @@ export default async function NotificationSettingsPage() {
         >
           {t.settings.gates}
         </Link>
+        <Link
+          href="/app/settings/discount-types"
+          className="rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:text-brand hover:shadow-sm"
+        >
+          {t.settings.discountTypes}
+        </Link>
       </nav>
 
       <form action={handleSave} className="grid gap-5">

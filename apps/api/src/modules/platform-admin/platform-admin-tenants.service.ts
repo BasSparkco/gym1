@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { hashPassword } from '../../common/password';
 import { isValidCurrencyCode } from '../../common/currencies';
 import { nextEmployeeNumber } from '../../common/org-numbering';
+import { DEFAULT_DISCOUNT_TYPE_NAMES } from '../discount-types/default-discount-types';
 
 export type BranchInput = {
   name: string;
@@ -226,6 +227,13 @@ export class PlatformAdminTenantsService {
           branchName: branch.branchName,
           employeeId,
         },
+      }),
+      this.prisma.discountType.createMany({
+        data: DEFAULT_DISCOUNT_TYPE_NAMES.map((name) => ({
+          id: `discount-type-${randomUUID()}`,
+          tenantId,
+          name,
+        })),
       }),
     ]);
 
