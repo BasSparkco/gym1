@@ -5,7 +5,7 @@ import { listMembershipsForMember, renewMembership } from "@/lib/memberships";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { listDiscountTypes } from "@/lib/discount-types";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, getLang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getActiveCurrencySymbol } from "@/lib/currency";
 import Link from "next/link";
@@ -23,6 +23,7 @@ export default async function RenewMembershipPage({ params }: Props) {
   const { memberId } = await params;
   await requireSession();
   const t = await getT();
+  const lang = await getLang();
 
   const [member, memberships, plans, settings, discountTypes] = await Promise.all([
     getMember(memberId),
@@ -122,6 +123,7 @@ export default async function RenewMembershipPage({ params }: Props) {
               <RenewFormFields
                 plans={plans}
                 discountTypes={discountTypes}
+                lang={lang}
                 initialPlanId={currentMembership.planId}
                 dateFormat={dateFormat}
                 defaultStartDate={defaultStartDate}
@@ -135,6 +137,8 @@ export default async function RenewMembershipPage({ params }: Props) {
                   discountPercent: t.memberships.discountPercent,
                   finalPrice: t.memberships.finalPrice,
                   noPlansAvailable: t.memberships.noPlansAvailable,
+                  daysUnit: t.plans.daysUnit,
+                  sessionsUnit: t.plans.sessionsUnit,
                 }}
               />
 

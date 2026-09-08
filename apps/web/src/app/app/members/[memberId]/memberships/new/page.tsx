@@ -6,7 +6,7 @@ import { listMembershipPlans } from "@/lib/membership-plans";
 import { listLockers, createLockerRental } from "@/lib/lockers";
 import { listDiscountTypes } from "@/lib/discount-types";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, getLang } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getActiveCurrencySymbol } from "@/lib/currency";
 import { formatDate } from "@/lib/date-format";
@@ -26,6 +26,7 @@ export default async function SellMembershipPage({ params, searchParams }: Props
   const { error } = await searchParams;
   await requireSession();
   const t = await getT();
+  const lang = await getLang();
 
   const [member, memberships, plans, allLockers, settings, discountTypes] = await Promise.all([
     getMember(memberId),
@@ -125,6 +126,7 @@ export default async function SellMembershipPage({ params, searchParams }: Props
             plans={plans}
             lockers={availableLockers}
             discountTypes={discountTypes}
+            lang={lang}
             today={today}
             dateFormat={dateFormat}
             currencySymbol={currencySymbol}
@@ -144,6 +146,8 @@ export default async function SellMembershipPage({ params, searchParams }: Props
               noLockersAvailable: t.lockers.noLockersAvailable,
               createLockerFirst: t.lockers.createLockerFirst,
               lockerFinalPrice: t.memberships.lockerFinalPrice,
+              daysUnit: t.plans.daysUnit,
+              sessionsUnit: t.plans.sessionsUnit,
             }}
           />
 

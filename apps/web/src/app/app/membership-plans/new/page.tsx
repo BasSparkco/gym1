@@ -3,17 +3,19 @@
 import { createMembershipPlan, setEntitledBranchIds } from "@/lib/membership-plans";
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, buildDurationOptions } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { BranchAccessField } from "@/components/membership-plans/branch-access-field";
+import { DurationSessionFields } from "@/components/membership-plans/duration-session-fields";
 import { PlusCircle } from "lucide-react";
 
 export default async function NewMembershipPlanPage() {
   await requireSession();
   const t = await getT();
   const branches = await listBranches();
+  const durationOptions = buildDurationOptions(t);
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -64,71 +66,49 @@ export default async function NewMembershipPlanPage() {
             />
           </div>
 
-          <div className="grid gap-1.5 sm:grid-cols-2">
-            <div className="grid gap-1.5">
-              <label htmlFor="planType" className="text-sm font-medium">
-                {t.plans.planType} <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="planType"
-                name="planType"
-                defaultValue="duration"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
-                <option value="duration">{t.plans.durationBased}</option>
-                <option value="session">{t.plans.sessionBased}</option>
-              </select>
-            </div>
-
-            <div className="grid gap-1.5">
-              <label htmlFor="durationDays" className="text-sm font-medium">
-                {t.plans.duration} (days) <span className="text-foreground/40 font-normal">— for duration plans</span>
-              </label>
-              <select
-                id="durationDays"
-                name="durationDays"
-                defaultValue="30"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
-                <option value="30">30 days (1 month)</option>
-                <option value="60">60 days (2 months)</option>
-                <option value="90">90 days (3 months)</option>
-                <option value="180">180 days (6 months)</option>
-                <option value="365">365 days (1 year)</option>
-              </select>
-            </div>
+          <div className="grid gap-1.5">
+            <label htmlFor="planType" className="text-sm font-medium">
+              {t.plans.planType} <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="planType"
+              name="planType"
+              defaultValue="duration"
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            >
+              <option value="duration">{t.plans.durationBased}</option>
+              <option value="session">{t.plans.sessionBased}</option>
+            </select>
           </div>
 
           <div className="grid gap-1.5 sm:grid-cols-2">
-            <div className="grid gap-1.5">
-              <label htmlFor="sessionCount" className="text-sm font-medium">
-                {t.plans.sessionCount} <span className="text-foreground/40 font-normal">— for session plans</span>
-              </label>
-              <input
-                id="sessionCount"
-                name="sessionCount"
-                type="number"
-                min="1"
-                placeholder="e.g. 12"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </div>
+            <DurationSessionFields
+              durationOptions={durationOptions}
+              initialDurationDays={30}
+              labels={{
+                durationDaysLabel: t.plans.durationDaysLabel,
+                forDurationPlansHint: t.plans.forDurationPlansHint,
+                selectPlaceholder: t.plans.selectPlaceholder,
+                sessionCountLabel: t.plans.sessionCount,
+                forSessionPlansHint: t.plans.forSessionPlansHint,
+              }}
+            />
+          </div>
 
-            <div className="grid gap-1.5">
-              <label htmlFor="price" className="text-sm font-medium">
-                {t.plans.defaultPrice} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="price"
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                placeholder="e.g. 120"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </div>
+          <div className="grid gap-1.5">
+            <label htmlFor="price" className="text-sm font-medium">
+              {t.plans.defaultPrice} <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="price"
+              name="price"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+              placeholder="e.g. 120"
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            />
           </div>
 
           <div className="grid items-start gap-5 sm:grid-cols-2">

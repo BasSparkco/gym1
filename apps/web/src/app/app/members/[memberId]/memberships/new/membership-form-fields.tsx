@@ -4,6 +4,9 @@ import { useState } from "react";
 import DateInput from "@/components/date-input";
 import { addDaysToDateString, formatDate } from "@/lib/date-format";
 import type { DateFormat } from "@/lib/settings";
+import type { Lang } from "@/lib/i18n";
+import { formatDict } from "@/lib/format-dict";
+import { localizedDiscountTypeName } from "@/lib/discount-type-utils";
 
 type Plan = {
   id: string;
@@ -24,6 +27,9 @@ type Locker = {
 type DiscountType = {
   id: string;
   name: string;
+  nameAr: string | null;
+  nameHe: string | null;
+  defaultPercent: number;
 };
 
 function monthsForPlan(plan?: Plan) {
@@ -34,6 +40,7 @@ export default function MembershipFormFields({
   plans,
   lockers,
   discountTypes,
+  lang,
   today,
   dateFormat,
   currencySymbol,
@@ -42,6 +49,7 @@ export default function MembershipFormFields({
   plans: Plan[];
   lockers: Locker[];
   discountTypes: DiscountType[];
+  lang: Lang;
   today: string;
   dateFormat: DateFormat;
   currencySymbol: string;
@@ -61,8 +69,19 @@ export default function MembershipFormFields({
     noLockersAvailable: string;
     createLockerFirst: string;
     lockerFinalPrice: string;
+    daysUnit: string;
+    sessionsUnit: string;
   };
 }) {
+  function planDurationLabel(plan: Plan): string {
+    if (plan.planType === "duration") {
+      const count = plan.durationDays ?? 0;
+      return formatDict(labels.daysUnit, { count, plural: count === 1 ? "" : "s" });
+    }
+    const count = plan.sessionCount ?? 0;
+    return formatDict(labels.sessionsUnit, { count, plural: count === 1 ? "" : "s" });
+  }
+
   const [planId, setPlanId] = useState("");
   const [startDate, setStartDate] = useState(today);
   const [discountTypeId, setDiscountTypeId] = useState("");
@@ -90,8 +109,10 @@ export default function MembershipFormFields({
   }
 
   function handleDiscountTypeChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    setDiscountTypeId(e.target.value);
-    if (!e.target.value) setDiscountPercent("");
+    const id = e.target.value;
+    setDiscountTypeId(id);
+    const type = discountTypes.find((t) => t.id === id);
+    setDiscountPercent(type ? type.defaultPercent : "");
   }
 
   function handleLockerChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -126,10 +147,7 @@ export default function MembershipFormFields({
             <option value="">Select a plan…</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} — {currencySymbol}{plan.price}
-                {plan.planType === "duration"
-                  ? ` · ${plan.durationDays}d`
-                  : ` · ${plan.sessionCount} sessions`}
+                {plan.name} — {currencySymbol}{plan.price} · {planDurationLabel(plan)}
               </option>
             ))}
           </select>
@@ -192,7 +210,7 @@ export default function MembershipFormFields({
             <option value="">{labels.discountTypeNone}</option>
             {discountTypes.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.name}
+                {localizedDiscountTypeName(type, lang)}
               </option>
             ))}
           </select>

@@ -3,6 +3,9 @@
 import { useState } from "react";
 import DateInput from "@/components/date-input";
 import type { DateFormat } from "@/lib/settings";
+import type { Lang } from "@/lib/i18n";
+import { formatDict } from "@/lib/format-dict";
+import { localizedDiscountTypeName } from "@/lib/discount-type-utils";
 
 type Plan = {
   id: string;
@@ -16,11 +19,15 @@ type Plan = {
 type DiscountType = {
   id: string;
   name: string;
+  nameAr: string | null;
+  nameHe: string | null;
+  defaultPercent: number;
 };
 
 export default function RenewFormFields({
   plans,
   discountTypes,
+  lang,
   initialPlanId,
   dateFormat,
   defaultStartDate,
@@ -29,6 +36,7 @@ export default function RenewFormFields({
 }: {
   plans: Plan[];
   discountTypes: DiscountType[];
+  lang: Lang;
   initialPlanId: string;
   dateFormat: DateFormat;
   defaultStartDate: string;
@@ -42,8 +50,19 @@ export default function RenewFormFields({
     discountPercent: string;
     finalPrice: string;
     noPlansAvailable: string;
+    daysUnit: string;
+    sessionsUnit: string;
   };
 }) {
+  function planDurationLabel(plan: Plan): string {
+    if (plan.planType === "duration") {
+      const count = plan.durationDays ?? 0;
+      return formatDict(labels.daysUnit, { count, plural: count === 1 ? "" : "s" });
+    }
+    const count = plan.sessionCount ?? 0;
+    return formatDict(labels.sessionsUnit, { count, plural: count === 1 ? "" : "s" });
+  }
+
   const [planId, setPlanId] = useState(initialPlanId);
   const [discountTypeId, setDiscountTypeId] = useState("");
   const [discountPercent, setDiscountPercent] = useState<number | "">("");
@@ -58,8 +77,10 @@ export default function RenewFormFields({
   }
 
   function handleDiscountTypeChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    setDiscountTypeId(e.target.value);
-    if (!e.target.value) setDiscountPercent("");
+    const id = e.target.value;
+    setDiscountTypeId(id);
+    const type = discountTypes.find((t) => t.id === id);
+    setDiscountPercent(type ? type.defaultPercent : "");
   }
 
   return (
@@ -85,10 +106,7 @@ export default function RenewFormFields({
           >
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} — {currencySymbol}{plan.price}
-                {plan.planType === "duration"
-                  ? ` · ${plan.durationDays}d`
-                  : ` · ${plan.sessionCount} sessions`}
+                {plan.name} — {currencySymbol}{plan.price} · {planDurationLabel(plan)}
               </option>
             ))}
           </select>
@@ -128,7 +146,7 @@ export default function RenewFormFields({
             <option value="">{labels.discountTypeNone}</option>
             {discountTypes.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.name}
+                {localizedDiscountTypeName(type, lang)}
               </option>
             ))}
           </select>

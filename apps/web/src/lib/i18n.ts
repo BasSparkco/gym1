@@ -1,11 +1,9 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { formatDict } from "@/lib/format-dict";
 
 export type Lang = "en" | "ar" | "he";
-
-export function formatDict(template: string, vars: Record<string, string | number>): string {
-  return Object.entries(vars).reduce((acc, [key, value]) => acc.replaceAll(`{${key}}`, String(value)), template);
-}
+export { formatDict };
 
 export type Dict = {
   nav: {
@@ -230,6 +228,10 @@ export type Dict = {
     mostSubscribed: string;
     sessionBased: string;
     duration: string;
+    durationDaysLabel: string;
+    forDurationPlansHint: string;
+    forSessionPlansHint: string;
+    selectPlaceholder: string;
     sessionCount: string;
     defaultPrice: string;
     branchAccess: string;
@@ -258,6 +260,7 @@ export type Dict = {
     monthsUnit: string;
     daysUnit: string;
     sessionsUnit: string;
+    yearUnit: string;
   };
   memberships: {
     sell: string;
@@ -870,7 +873,11 @@ export type Dict = {
     discountTypesEmpty: string;
     discountTypeAddButton: string;
     discountTypeName: string;
+    discountTypeNameAr: string;
+    discountTypeNameHe: string;
     discountTypeDescriptionField: string;
+    discountTypeDefaultPercent: string;
+    discountTypeDefaultPercentHelp: string;
     discountTypeStatus: string;
     discountTypeStatusActive: string;
     discountTypeStatusInactive: string;
@@ -1201,6 +1208,10 @@ const en: Dict = {
     mostSubscribed: "Most subscribed",
     sessionBased: "Session-based",
     duration: "Duration",
+    durationDaysLabel: "Duration (days)",
+    forDurationPlansHint: "for duration plans",
+    forSessionPlansHint: "for session plans",
+    selectPlaceholder: "Select…",
     sessionCount: "Session count",
     defaultPrice: "Default price",
     branchAccess: "Branch access",
@@ -1229,6 +1240,7 @@ const en: Dict = {
     monthsUnit: "{count} month{plural}",
     daysUnit: "{count} day{plural}",
     sessionsUnit: "{count} session{plural}",
+    yearUnit: "{count} year{plural}",
   },
   memberships: {
     sell: "Sell membership",
@@ -1841,7 +1853,11 @@ const en: Dict = {
     discountTypesEmpty: "No discount types yet.",
     discountTypeAddButton: "Add Discount Type",
     discountTypeName: "Name",
+    discountTypeNameAr: "Name (Arabic)",
+    discountTypeNameHe: "Name (Hebrew)",
     discountTypeDescriptionField: "Description",
+    discountTypeDefaultPercent: "Default discount %",
+    discountTypeDefaultPercentHelp: "Pre-fills the discount % when this type is picked while selling or renewing a membership — staff can still change it.",
     discountTypeStatus: "Status",
     discountTypeStatusActive: "Active",
     discountTypeStatusInactive: "Inactive",
@@ -2172,6 +2188,10 @@ const ar: Dict = {
     mostSubscribed: "الأكثر اشتراكًا",
     sessionBased: "مبنية على الجلسات",
     duration: "المدة",
+    durationDaysLabel: "المدة (بالأيام)",
+    forDurationPlansHint: "للخطط المحددة بمدة",
+    forSessionPlansHint: "للخطط المحددة بعدد الجلسات",
+    selectPlaceholder: "اختر…",
     sessionCount: "عدد الجلسات",
     defaultPrice: "السعر الافتراضي",
     branchAccess: "صلاحية الفروع",
@@ -2200,6 +2220,7 @@ const ar: Dict = {
     monthsUnit: "{count} شهر",
     daysUnit: "{count} يوم",
     sessionsUnit: "{count} حصة",
+    yearUnit: "{count} سنة",
   },
   memberships: {
     sell: "بيع اشتراك",
@@ -2812,7 +2833,11 @@ const ar: Dict = {
     discountTypesEmpty: "لا توجد أنواع خصومات بعد.",
     discountTypeAddButton: "إضافة نوع خصم",
     discountTypeName: "الاسم",
+    discountTypeNameAr: "الاسم (بالعربية)",
+    discountTypeNameHe: "الاسم (بالعبرية)",
     discountTypeDescriptionField: "الوصف",
+    discountTypeDefaultPercent: "نسبة الخصم الافتراضية %",
+    discountTypeDefaultPercentHelp: "تُستخدم لتعبئة نسبة الخصم مسبقًا عند اختيار هذا النوع أثناء بيع أو تجديد الاشتراك — يمكن للموظف تغييرها.",
     discountTypeStatus: "الحالة",
     discountTypeStatusActive: "نشط",
     discountTypeStatusInactive: "غير نشط",
@@ -3143,6 +3168,10 @@ const he: Dict = {
     mostSubscribed: "המנוי הפופולרי ביותר",
     sessionBased: "מבוסס מפגשים",
     duration: "משך",
+    durationDaysLabel: "משך (בימים)",
+    forDurationPlansHint: "עבור תוכניות לפי משך",
+    forSessionPlansHint: "עבור תוכניות לפי מספר מפגשים",
+    selectPlaceholder: "בחר…",
     sessionCount: "מספר מפגשים",
     defaultPrice: "מחיר ברירת מחדל",
     branchAccess: "גישה לסניף",
@@ -3171,6 +3200,7 @@ const he: Dict = {
     monthsUnit: "{count} חודשים",
     daysUnit: "{count} ימים",
     sessionsUnit: "{count} מפגשים",
+    yearUnit: "{count} שנה",
   },
   memberships: {
     sell: "מכור מנוי",
@@ -3783,7 +3813,11 @@ const he: Dict = {
     discountTypesEmpty: "עדיין אין סוגי הנחות.",
     discountTypeAddButton: "הוסף סוג הנחה",
     discountTypeName: "שם",
+    discountTypeNameAr: "שם (ערבית)",
+    discountTypeNameHe: "שם (עברית)",
     discountTypeDescriptionField: "תיאור",
+    discountTypeDefaultPercent: "אחוז הנחה ברירת מחדל",
+    discountTypeDefaultPercentHelp: "ממלא מראש את אחוז ההנחה כאשר בוחרים סוג זה בעת מכירה או חידוש מנוי — ניתן לשנות זאת.",
     discountTypeStatus: "סטטוס",
     discountTypeStatusActive: "פעיל",
     discountTypeStatusInactive: "לא פעיל",
@@ -3902,4 +3936,20 @@ export async function getLang(): Promise<Lang> {
 export async function getT(): Promise<Dict> {
   const lang = await getLang();
   return dictionaries[lang];
+}
+
+// The membership-plans "duration" select's fixed preset options, localized.
+// Shared by the new/edit plan pages so the two never drift apart.
+export function buildDurationOptions(t: Dict): { value: string; label: string }[] {
+  const days = (count: number) => formatDict(t.plans.daysUnit, { count, plural: count === 1 ? "" : "s" });
+  const months = (count: number) => formatDict(t.plans.monthsUnit, { count, plural: count === 1 ? "" : "s" });
+  const years = (count: number) => formatDict(t.plans.yearUnit, { count, plural: count === 1 ? "" : "s" });
+
+  return [
+    { value: "30", label: `${days(30)} (${months(1)})` },
+    { value: "60", label: `${days(60)} (${months(2)})` },
+    { value: "90", label: `${days(90)} (${months(3)})` },
+    { value: "180", label: `${days(180)} (${months(6)})` },
+    { value: "365", label: `${days(365)} (${years(1)})` },
+  ];
 }
