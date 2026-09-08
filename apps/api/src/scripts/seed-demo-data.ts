@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 import { addDays, localDateString } from '../common/date';
-import { DEFAULT_DISCOUNT_TYPE_NAMES } from '../modules/discount-types/default-discount-types';
+import { DEFAULT_DISCOUNT_TYPES } from '../modules/discount-types/default-discount-types';
 
 const today = localDateString();
 
@@ -42,10 +42,10 @@ async function main() {
     });
 
     await prisma.discountType.createMany({
-      data: DEFAULT_DISCOUNT_TYPE_NAMES.map((name) => ({
+      data: DEFAULT_DISCOUNT_TYPES.map((type) => ({
         id: `discount-type-${randomUUID()}`,
         tenantId: 'tenant-spark-gym',
-        name,
+        ...type,
       })),
     });
 

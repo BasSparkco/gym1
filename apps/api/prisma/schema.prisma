@@ -482,14 +482,23 @@ model Membership {
 // a Membership, so historical memberships keep displaying correctly — see
 // discount.md §5.
 model DiscountType {
-  id          String   @id
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  name        String
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id       String @id
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  name     String
+  // Optional per-locale display names — falls back to `name` when unset.
+  // See lib/discount-types.ts's `localizedDiscountTypeName` on the web side.
+  nameAr          String?
+  nameHe          String?
+  description     String?
+  // Pre-fills the Discount % field when this type is picked at membership
+  // creation/renewal; staff can still change it there (discount.md §13 keeps
+  // discount % an entry, not a fixed rule — this is only a convenience
+  // starting value, not enforced server-side as a ceiling or fixed rate).
+  defaultPercent  Decimal  @default(0) @db.Decimal(5, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   memberships Membership[]
 

@@ -16,12 +16,18 @@ import { DiscountTypesService } from './discount-types.service';
 
 type CreateDiscountTypeRequestBody = {
   name?: string;
+  nameAr?: string;
+  nameHe?: string;
   description?: string;
+  defaultPercent?: number;
 };
 
 type UpdateDiscountTypeRequestBody = {
   name?: string;
+  nameAr?: string | null;
+  nameHe?: string | null;
   description?: string | null;
+  defaultPercent?: number;
   isActive?: boolean;
 };
 

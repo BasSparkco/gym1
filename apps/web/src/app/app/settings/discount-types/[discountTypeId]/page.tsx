@@ -36,9 +36,14 @@ export default async function EditDiscountTypePage({ params }: Props) {
 
   async function handleUpdate(formData: FormData) {
     "use server";
+    const rawDefaultPercent = formData.get("defaultPercent") as string;
+    const defaultPercent = rawDefaultPercent ? Number(rawDefaultPercent) : undefined;
     await updateDiscountType(discountTypeId, {
       name: (formData.get("name") as string).trim(),
+      nameAr: (formData.get("nameAr") as string).trim() || null,
+      nameHe: (formData.get("nameHe") as string).trim() || null,
       description: (formData.get("description") as string).trim() || null,
+      defaultPercent: defaultPercent !== undefined && !isNaN(defaultPercent) ? defaultPercent : undefined,
     });
     redirect("/app/settings/discount-types");
   }
@@ -92,6 +97,36 @@ export default async function EditDiscountTypePage({ params }: Props) {
             />
           </div>
 
+          <div className="grid gap-1.5 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <label htmlFor="nameAr" className="text-sm font-medium">
+                {t.settings.discountTypeNameAr}
+              </label>
+              <input
+                id="nameAr"
+                name="nameAr"
+                dir="rtl"
+                defaultValue={discountType.nameAr ?? ""}
+                placeholder="مثال: طالب"
+                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <label htmlFor="nameHe" className="text-sm font-medium">
+                {t.settings.discountTypeNameHe}
+              </label>
+              <input
+                id="nameHe"
+                name="nameHe"
+                dir="rtl"
+                defaultValue={discountType.nameHe ?? ""}
+                placeholder="לדוגמה: סטודנט"
+                className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+            </div>
+          </div>
+
           <div className="grid gap-1.5">
             <label htmlFor="description" className="text-sm font-medium">
               {t.settings.discountTypeDescriptionField}
@@ -103,6 +138,23 @@ export default async function EditDiscountTypePage({ params }: Props) {
               defaultValue={discountType.description ?? ""}
               className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
+          </div>
+
+          <div className="grid gap-1.5">
+            <label htmlFor="defaultPercent" className="text-sm font-medium">
+              {t.settings.discountTypeDefaultPercent}
+            </label>
+            <input
+              id="defaultPercent"
+              name="defaultPercent"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              defaultValue={discountType.defaultPercent}
+              className="w-32 rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            />
+            <p className="text-xs text-foreground/50">{t.settings.discountTypeDefaultPercentHelp}</p>
           </div>
 
           <div className="flex gap-3 pt-2">

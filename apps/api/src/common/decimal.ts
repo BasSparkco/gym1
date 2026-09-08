@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 
 /**
@@ -17,4 +18,29 @@ export function toNumber(
   if (value === null) return null;
   if (value === undefined) return undefined;
   return Number(value);
+}
+
+/**
+ * Validates and converts a 0-100 percentage input (discount %, default
+ * discount %, ...) to a Decimal. Shared so every caller applies the same
+ * range/finiteness rule — see discount.md §9/§19 Rule for why this can't
+ * drift between the membership discount and the discount type's default.
+ */
+export function parsePercent(
+  value: number | undefined,
+  fieldLabel: string,
+): Prisma.Decimal {
+  if (value === undefined) {
+    return new Prisma.Decimal(0);
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new BadRequestException(`${fieldLabel} must be a finite number.`);
+  }
+
+  if (value < 0 || value > 100) {
+    throw new BadRequestException(`${fieldLabel} must be between 0 and 100.`);
+  }
+
+  return new Prisma.Decimal(value);
 }

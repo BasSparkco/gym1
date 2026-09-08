@@ -1,9 +1,9 @@
 "use server";
 
 import Link from "next/link";
-import { listDiscountTypes } from "@/lib/discount-types";
+import { listDiscountTypes, localizedDiscountTypeName } from "@/lib/discount-types";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, getLang } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { Percent, Plus } from "lucide-react";
 export default async function DiscountTypesSettingsPage() {
   const session = await requireSession();
   const t = await getT();
+  const lang = await getLang();
 
   if (session.role !== "owner" && session.role !== "manager") {
     redirect("/app/dashboard");
@@ -93,6 +94,7 @@ export default async function DiscountTypesSettingsPage() {
                 <tr className="border-b border-line text-start">
                   <th className="pb-3 pe-6 font-semibold">{t.settings.discountTypeName}</th>
                   <th className="pb-3 pe-6 font-semibold">{t.settings.discountTypeDescriptionField}</th>
+                  <th className="pb-3 pe-6 font-semibold">{t.settings.discountTypeDefaultPercent}</th>
                   <th className="pb-3 pe-6 font-semibold">{t.settings.discountTypeStatus}</th>
                   <th className="pb-3 font-semibold" />
                 </tr>
@@ -100,8 +102,9 @@ export default async function DiscountTypesSettingsPage() {
               <tbody className="divide-y divide-line">
                 {discountTypes.map((type) => (
                   <tr key={type.id}>
-                    <td className="py-3 pe-6 font-medium">{type.name}</td>
+                    <td className="py-3 pe-6 font-medium">{localizedDiscountTypeName(type, lang)}</td>
                     <td className="py-3 pe-6 text-foreground/60">{type.description ?? "—"}</td>
+                    <td className="py-3 pe-6 text-foreground/60">{type.defaultPercent}%</td>
                     <td className="py-3 pe-6">
                       <Badge tone={type.isActive ? "success" : "neutral"}>
                         {type.isActive ? t.settings.discountTypeStatusActive : t.settings.discountTypeStatusInactive}

@@ -13,7 +13,7 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
-import { DEFAULT_DISCOUNT_TYPE_NAMES } from '../modules/discount-types/default-discount-types';
+import { DEFAULT_DISCOUNT_TYPES } from '../modules/discount-types/default-discount-types';
 
 async function main() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
@@ -28,10 +28,10 @@ async function main() {
       if (existingCount > 0) continue;
 
       await prisma.discountType.createMany({
-        data: DEFAULT_DISCOUNT_TYPE_NAMES.map((name) => ({
+        data: DEFAULT_DISCOUNT_TYPES.map((type) => ({
           id: `discount-type-${randomUUID()}`,
           tenantId: tenant.id,
-          name,
+          ...type,
         })),
       });
       seeded++;

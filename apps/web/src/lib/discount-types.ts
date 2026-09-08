@@ -4,15 +4,9 @@ import { apiBaseUrl } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export type DiscountType = {
-  id: string;
-  tenantId: string;
-  name: string;
-  description: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+export type { DiscountType } from "@/lib/discount-type-utils";
+export { localizedDiscountTypeName } from "@/lib/discount-type-utils";
+import type { DiscountType } from "@/lib/discount-type-utils";
 
 async function authedFetch(path: string, init?: RequestInit) {
   const cookieStore = await cookies();
@@ -51,7 +45,10 @@ export async function getDiscountType(discountTypeId: string): Promise<DiscountT
 
 export async function createDiscountType(data: {
   name: string;
+  nameAr?: string;
+  nameHe?: string;
   description?: string;
+  defaultPercent?: number;
 }): Promise<DiscountType> {
   const res = await authedFetch("/discount-types", {
     method: "POST",
@@ -63,7 +60,14 @@ export async function createDiscountType(data: {
 
 export async function updateDiscountType(
   discountTypeId: string,
-  data: { name?: string; description?: string | null; isActive?: boolean },
+  data: {
+    name?: string;
+    nameAr?: string | null;
+    nameHe?: string | null;
+    description?: string | null;
+    defaultPercent?: number;
+    isActive?: boolean;
+  },
 ): Promise<DiscountType> {
   const res = await authedFetch(`/discount-types/${discountTypeId}`, {
     method: "PATCH",

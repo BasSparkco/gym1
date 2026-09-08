@@ -1,16 +1,23 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { parsePercent, toNumber } from '../../common/decimal';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DiscountType } from '../../generated/prisma/client';
 
 type CreateDiscountTypeInput = {
   name?: string;
+  nameAr?: string;
+  nameHe?: string;
   description?: string;
+  defaultPercent?: number;
 };
 
 type UpdateDiscountTypeInput = {
   name?: string;
+  nameAr?: string | null;
+  nameHe?: string | null;
   description?: string | null;
+  defaultPercent?: number;
   isActive?: boolean;
 };
 
@@ -53,7 +60,10 @@ export class DiscountTypesService {
         id: `discount-type-${randomUUID()}`,
         tenantId,
         name,
+        nameAr: input.nameAr?.trim() || null,
+        nameHe: input.nameHe?.trim() || null,
         description: input.description?.trim() || null,
+        defaultPercent: parsePercent(input.defaultPercent, 'Default discount percentage'),
         isActive: true,
       },
     });
@@ -80,8 +90,14 @@ export class DiscountTypesService {
       where: { id: discountTypeId },
       data: {
         name,
+        nameAr: input.nameAr === undefined ? current.nameAr : input.nameAr?.trim() || null,
+        nameHe: input.nameHe === undefined ? current.nameHe : input.nameHe?.trim() || null,
         description:
           input.description === undefined ? current.description : input.description?.trim() || null,
+        defaultPercent:
+          input.defaultPercent === undefined
+            ? current.defaultPercent
+            : parsePercent(input.defaultPercent, 'Default discount percentage'),
         isActive: input.isActive ?? current.isActive,
       },
     });
@@ -126,6 +142,6 @@ export class DiscountTypesService {
   }
 
   private serialize(type: DiscountType) {
-    return type;
+    return { ...type, defaultPercent: toNumber(type.defaultPercent) };
   }
 }

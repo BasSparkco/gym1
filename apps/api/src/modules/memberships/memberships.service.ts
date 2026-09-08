@@ -10,7 +10,7 @@ import {
   parseDateOnly,
   toDateOnlyString,
 } from '../../common/date';
-import { toNumber } from '../../common/decimal';
+import { parsePercent, toNumber } from '../../common/decimal';
 import { makeQrPublicUrl } from '../../common/qr';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -94,21 +94,6 @@ function computeFinalPrice(
   return regularPrice.sub(discountAmount);
 }
 
-function parseDiscountPercent(value: number | undefined): Prisma.Decimal {
-  if (value === undefined) {
-    return new Prisma.Decimal(0);
-  }
-
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    throw new BadRequestException('Discount percentage must be a finite number.');
-  }
-
-  if (value < 0 || value > 100) {
-    throw new BadRequestException('Discount percentage must be between 0 and 100.');
-  }
-
-  return new Prisma.Decimal(value);
-}
 
 @Injectable()
 export class MembershipsService {
@@ -141,7 +126,7 @@ export class MembershipsService {
 
     return {
       discountTypeId: discountType.id,
-      discountPercent: parseDiscountPercent(input.discountPercent),
+      discountPercent: parsePercent(input.discountPercent, 'Discount percentage'),
     };
   }
 
