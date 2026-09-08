@@ -29,4 +29,5 @@ Account	Password
 owner@sparkgym.local	VDhcZXtw6aNdsUhX
 manager@sparkgym.local	T6AzehRSBYidWZZS
 frontdesk@sparkgym.local	EB5yETcjfxMQWxVR
+
 Note the passwords in the repo's seed files still say owner123 — that's intentional: those seeds only feed the e2e tests and dev environment, and production no longer accepts them.
