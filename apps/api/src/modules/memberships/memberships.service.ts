@@ -11,7 +11,7 @@ import {
   toDateOnlyString,
 } from '../../common/date';
 import { parsePercent, toNumber } from '../../common/decimal';
-import { makeQrPublicUrl } from '../../common/qr';
+import { makeQrPublicUrl, memberIdToUuid } from '../../common/qr';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DebtService } from '../debt/debt.service';
@@ -804,6 +804,7 @@ export class MembershipsService {
           };
 
     const gates = await this.prisma.gate.findMany({ where: branchWhere });
+    const qrCode = member.qrCode ?? memberIdToUuid(member.id);
     for (const gate of gates) {
       if (gate.genderRestriction && gate.genderRestriction !== member.sex) {
         continue;
@@ -811,6 +812,7 @@ export class MembershipsService {
       void this.basIpSyncService.pushQrIdentifier(
         member.id,
         member.fullName,
+        qrCode,
         toDateOnlyString(membership.startDate),
         toDateOnlyString(membership.endDate),
         gate,

@@ -1,4 +1,27 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, randomInt } from 'node:crypto';
+
+// Crockford base32 alphabet (excludes I, L, O, U to avoid visual ambiguity).
+const SHORT_CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const SHORT_CODE_LENGTH = 12;
+
+/**
+ * Generates a random 12-character code for use as both the QR image content
+ * and the BAS-IP device identifier for a member or employee.
+ *
+ * Short (unlike the UUID-based identifiers below) because BAS-IP device
+ * firmware flags/limits identifiers beyond 12 characters. Random rather than
+ * derived from memberNumber/employeeNumber (which are short but sequential
+ * and guessable) so it keeps the same effectively-unforgeable property a
+ * bearer credential for a physical door needs — 32^12 possibilities is ~60
+ * bits of entropy.
+ */
+export function generateShortCode(): string {
+  let code = '';
+  for (let i = 0; i < SHORT_CODE_LENGTH; i++) {
+    code += SHORT_CODE_ALPHABET[randomInt(SHORT_CODE_ALPHABET.length)];
+  }
+  return code;
+}
 
 /**
  * Converts a member record ID to the UUID that is stored as identifier_number

@@ -8,6 +8,7 @@ import { parseDateOnly, toDateOnlyString } from '../../common/date';
 import { toNumber } from '../../common/decimal';
 import { normalizePhone } from '../../common/phone';
 import { nextEmployeeNumber } from '../../common/org-numbering';
+import { generateShortCode } from '../../common/qr';
 import { findCountryByCode } from '../../data/countries';
 import { EmployeeAttendanceService } from '../employee-attendance/employee-attendance.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -182,6 +183,7 @@ export class EmployeesService {
         tenantId,
         branchId: input.branchId,
         employeeNumber,
+        qrCode: generateShortCode(),
         fullName: input.fullName.trim(),
         status: 'active',
         idNumber: input.idNumber,

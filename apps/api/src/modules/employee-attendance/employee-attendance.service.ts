@@ -250,9 +250,15 @@ export class EmployeeAttendanceService {
 
   private async generateQrBuffer(employeeId: string): Promise<Buffer> {
     // Generate locally, same as MembersService.generateQrBuffer — the
-    // device PNG isn't special, it's the same UUID content either way.
-    const uuid = employeeIdToUuid(employeeId);
-    return QRCode.toBuffer(uuid, { type: 'png', width: 400, margin: 2 });
+    // device PNG isn't special, it's the same content either way.
+    const employee = await this.prisma.employee.findUnique({
+      where: { id: employeeId },
+      select: { qrCode: true },
+    });
+    // Fallback for employees created before qrCode existed and not yet
+    // backfilled — keeps their existing (longer) QR working either way.
+    const content = employee?.qrCode ?? employeeIdToUuid(employeeId);
+    return QRCode.toBuffer(content, { type: 'png', width: 400, margin: 2 });
   }
 
   // ── Gate access ──────────────────────────────────────────────────────
@@ -327,10 +333,12 @@ export class EmployeeAttendanceService {
               where: { tenantId, branchId: employee.branchId },
             });
 
+    const qrCode = employee.qrCode ?? employeeIdToUuid(employee.id);
     for (const gate of gatesToSync) {
       void this.basIpSyncService.pushEmployeeQrIdentifier(
         employee.id,
         employee.fullName,
+        qrCode,
         gate,
       );
     }

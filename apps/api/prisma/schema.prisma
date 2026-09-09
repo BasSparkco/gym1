@@ -261,6 +261,12 @@ model Employee {
   // Which gates this employee's QR code opens — see GateAccessScope.
   // `selected` is the only case where `gates` below is consulted.
   gateAccessScope GateAccessScope @default(branch)
+  // Random 12-character code — the actual QR image content and the
+  // identifier pushed to BAS-IP gate devices. Short so it stays within the
+  // device firmware's identifier length limit; random (not employeeNumber)
+  // so it isn't guessable as a bearer credential for opening a gate. Null
+  // for rows created before this field existed until backfilled.
+  qrCode         String?
 
   gates              EmployeeGate[]
   employeeVisits     EmployeeVisit[]
@@ -271,6 +277,7 @@ model Employee {
   user               User?
 
   @@unique([tenantId, employeeNumber])
+  @@unique([tenantId, qrCode])
   @@index([branchId])
 }
 
@@ -378,6 +385,12 @@ model Member {
   // whenever any of those change (see modules/debt/debt.service.ts), not
   // hand-maintained. Never trust a stale read across a direct DB edit.
   debt                  Decimal       @default(0) @db.Decimal(10, 2)
+  // Random 12-character code — the actual QR image content and the
+  // identifier pushed to BAS-IP gate devices. Short so it stays within the
+  // device firmware's identifier length limit; random (not memberNumber)
+  // so it isn't guessable as a bearer credential for opening a gate. Null
+  // for rows created before this field existed until backfilled.
+  qrCode                String?
 
   memberships        Membership[]
   visits             Visit[]
@@ -393,6 +406,9 @@ model Member {
 
   @@unique([tenantId, memberNumber])
   @@unique([tenantId, rfidTag])
+  @@unique([tenantId, phone])
+  @@unique([tenantId, idNumber])
+  @@unique([tenantId, qrCode])
   @@index([homeBranchId])
 }
 

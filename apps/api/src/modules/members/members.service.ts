@@ -9,6 +9,7 @@ import * as QRCode from 'qrcode';
 import { localDateString, toDateOnlyString } from '../../common/date';
 import {
   generateQrSig,
+  generateShortCode,
   makeQrPublicUrl,
   memberIdToUuid,
 } from '../../common/qr';
@@ -25,7 +26,7 @@ import { SparkcoNotificationProvider } from '../notifications/providers/sparkco-
 import { SettingsService } from '../settings/settings.service';
 import { resolveWhatsAppSessionBranchId } from '../tenancy/whatsapp-session';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Branch, Member, Sex } from '../../generated/prisma/client';
+import { Branch, Member, Prisma, Sex } from '../../generated/prisma/client';
 
 type CreateMemberInput = {
   fullName?: string;
@@ -150,34 +151,44 @@ export class MembersService {
       tenant?.code ?? null,
     );
 
-    const member = await this.prisma.member.create({
-      data: {
-        id: `member-${randomUUID()}`,
-        tenantId,
-        homeBranchId,
-        memberNumber,
-        fullName,
-        joinDate: new Date(localDateString()),
-        phone: normalizePhone(input.phone, dialCode),
-        email: input.email?.trim().toLowerCase() || undefined,
-        dateOfBirth: input.dateOfBirth?.trim()
-          ? new Date(input.dateOfBirth.trim())
-          : undefined,
-        sex: input.sex || undefined,
-        idNumber: input.idNumber?.trim() || undefined,
-        address: input.address?.trim() || undefined,
-        height: input.height ? Number(input.height) : undefined,
-        weight: input.weight ? Number(input.weight) : undefined,
-        registeredEmployeeId,
-        emergencyContactName: input.emergencyContactName?.trim() || undefined,
-        emergencyContactPhone: normalizePhone(
-          input.emergencyContactPhone,
-          dialCode,
-        ),
-        medicalNotes: input.medicalNotes?.trim() || undefined,
-        rfidTag: input.rfidTag?.trim().toUpperCase() || undefined,
-      },
-    });
+    const phone = normalizePhone(input.phone, dialCode);
+    const idNumber = input.idNumber?.trim() || undefined;
+    await this.ensurePhoneAndIdNumberAvailable(tenantId, phone, idNumber);
+
+    let member: Member;
+    try {
+      member = await this.prisma.member.create({
+        data: {
+          id: `member-${randomUUID()}`,
+          tenantId,
+          homeBranchId,
+          memberNumber,
+          qrCode: generateShortCode(),
+          fullName,
+          joinDate: new Date(localDateString()),
+          phone,
+          email: input.email?.trim().toLowerCase() || undefined,
+          dateOfBirth: input.dateOfBirth?.trim()
+            ? new Date(input.dateOfBirth.trim())
+            : undefined,
+          sex: input.sex || undefined,
+          idNumber,
+          address: input.address?.trim() || undefined,
+          height: input.height ? Number(input.height) : undefined,
+          weight: input.weight ? Number(input.weight) : undefined,
+          registeredEmployeeId,
+          emergencyContactName: input.emergencyContactName?.trim() || undefined,
+          emergencyContactPhone: normalizePhone(
+            input.emergencyContactPhone,
+            dialCode,
+          ),
+          medicalNotes: input.medicalNotes?.trim() || undefined,
+          rfidTag: input.rfidTag?.trim().toUpperCase() || undefined,
+        },
+      });
+    } catch (err) {
+      this.rethrowMemberUniqueConflict(err);
+    }
 
     // Automatic PIN delivery on creation — best-effort, doesn't fail member
     // creation if SparkCo is unreachable. Without a phone the mobile app has
@@ -237,77 +248,89 @@ export class MembersService {
 
     const dialCode = this.getDialCodeForBranch(branch);
 
-    const updated = await this.prisma.member.update({
-      where: { id: memberId },
-      data: {
-        fullName: nextFullName,
-        homeBranchId: nextHomeBranchId,
-        phone:
-          input.phone === undefined
-            ? undefined
-            : (normalizePhone(input.phone, dialCode) ?? null),
-        email:
-          input.email === undefined
-            ? undefined
-            : input.email.trim().toLowerCase() || null,
-        dateOfBirth:
-          input.dateOfBirth === undefined
-            ? undefined
-            : input.dateOfBirth.trim()
-              ? new Date(input.dateOfBirth.trim())
-              : null,
-        // Members imported from another system often arrive with no join
-        // date. Staff can fill it in exactly once — once a join date is on
-        // record, this silently ignores further attempts to change it
-        // rather than letting a stray request quietly rewrite a member's
-        // tenure, matching the edit form only rendering the field as
-        // editable while it's still null.
-        joinDate:
-          input.joinDate === undefined || current.joinDate !== null
-            ? undefined
-            : input.joinDate.trim()
-              ? new Date(input.joinDate.trim())
-              : undefined,
-        sex: input.sex === undefined ? undefined : input.sex || null,
-        idNumber:
-          input.idNumber === undefined
-            ? undefined
-            : input.idNumber.trim() || null,
-        address:
-          input.address === undefined
-            ? undefined
-            : input.address.trim() || null,
-        height:
-          input.height === undefined
-            ? undefined
-            : input.height
-              ? Number(input.height)
-              : null,
-        weight:
-          input.weight === undefined
-            ? undefined
-            : input.weight
-              ? Number(input.weight)
-              : null,
-        registeredEmployeeId: nextRegisteredEmployeeId,
-        emergencyContactName:
-          input.emergencyContactName === undefined
-            ? undefined
-            : input.emergencyContactName.trim() || null,
-        emergencyContactPhone:
-          input.emergencyContactPhone === undefined
-            ? undefined
-            : (normalizePhone(input.emergencyContactPhone, dialCode) ?? null),
-        medicalNotes:
-          input.medicalNotes === undefined
-            ? undefined
-            : input.medicalNotes.trim() || null,
-        rfidTag:
-          input.rfidTag === undefined
-            ? undefined
-            : input.rfidTag.trim().toUpperCase() || null,
-      },
-    });
+    const nextPhone =
+      input.phone === undefined
+        ? undefined
+        : (normalizePhone(input.phone, dialCode) ?? null);
+    const nextIdNumber =
+      input.idNumber === undefined ? undefined : input.idNumber.trim() || null;
+    await this.ensurePhoneAndIdNumberAvailable(
+      tenantId,
+      nextPhone,
+      nextIdNumber,
+      memberId,
+    );
+
+    let updated: Member;
+    try {
+      updated = await this.prisma.member.update({
+        where: { id: memberId },
+        data: {
+          fullName: nextFullName,
+          homeBranchId: nextHomeBranchId,
+          phone: nextPhone,
+          email:
+            input.email === undefined
+              ? undefined
+              : input.email.trim().toLowerCase() || null,
+          dateOfBirth:
+            input.dateOfBirth === undefined
+              ? undefined
+              : input.dateOfBirth.trim()
+                ? new Date(input.dateOfBirth.trim())
+                : null,
+          // Members imported from another system often arrive with no join
+          // date. Staff can fill it in exactly once — once a join date is on
+          // record, this silently ignores further attempts to change it
+          // rather than letting a stray request quietly rewrite a member's
+          // tenure, matching the edit form only rendering the field as
+          // editable while it's still null.
+          joinDate:
+            input.joinDate === undefined || current.joinDate !== null
+              ? undefined
+              : input.joinDate.trim()
+                ? new Date(input.joinDate.trim())
+                : undefined,
+          sex: input.sex === undefined ? undefined : input.sex || null,
+          idNumber: nextIdNumber,
+          address:
+            input.address === undefined
+              ? undefined
+              : input.address.trim() || null,
+          height:
+            input.height === undefined
+              ? undefined
+              : input.height
+                ? Number(input.height)
+                : null,
+          weight:
+            input.weight === undefined
+              ? undefined
+              : input.weight
+                ? Number(input.weight)
+                : null,
+          registeredEmployeeId: nextRegisteredEmployeeId,
+          emergencyContactName:
+            input.emergencyContactName === undefined
+              ? undefined
+              : input.emergencyContactName.trim() || null,
+          emergencyContactPhone:
+            input.emergencyContactPhone === undefined
+              ? undefined
+              : (normalizePhone(input.emergencyContactPhone, dialCode) ?? null),
+          medicalNotes:
+            input.medicalNotes === undefined
+              ? undefined
+              : input.medicalNotes.trim() || null,
+          rfidTag:
+            input.rfidTag === undefined
+              ? undefined
+              : input.rfidTag.trim().toUpperCase() || null,
+        },
+      });
+    } catch (err) {
+      this.rethrowMemberUniqueConflict(err);
+    }
 
     const activeIds = await this.buildActiveSet(tenantId);
     return this.withComputedStatus(updated, activeIds);
@@ -744,6 +767,76 @@ export class MembersService {
   }
 
   /**
+   * Phone and idNumber may be blank (lots of members imported from the old
+   * system have neither), but when set they must identify one member —
+   * otherwise staff renewing an existing member tend to accidentally create
+   * a second record for the same person instead of editing the original.
+   */
+  private async ensurePhoneAndIdNumberAvailable(
+    tenantId: string,
+    phone: string | null | undefined,
+    idNumber: string | null | undefined,
+    excludeMemberId?: string,
+  ) {
+    if (!phone && !idNumber) return;
+
+    const conflicts = await this.prisma.member.findMany({
+      where: {
+        tenantId,
+        ...(excludeMemberId ? { id: { not: excludeMemberId } } : {}),
+        OR: [
+          ...(phone ? [{ phone }] : []),
+          ...(idNumber ? [{ idNumber }] : []),
+        ],
+      },
+      select: {
+        memberNumber: true,
+        fullName: true,
+        phone: true,
+        idNumber: true,
+      },
+    });
+
+    const phoneConflict = phone
+      ? conflicts.find((c) => c.phone === phone)
+      : undefined;
+    if (phoneConflict) {
+      throw new BadRequestException(
+        `Phone ${phone} is already used by ${phoneConflict.fullName} (${phoneConflict.memberNumber}). If this is the same person, edit that member instead of creating a new one.`,
+      );
+    }
+
+    const idConflict = idNumber
+      ? conflicts.find((c) => c.idNumber === idNumber)
+      : undefined;
+    if (idConflict) {
+      throw new BadRequestException(
+        `ID number ${idNumber} is already used by ${idConflict.fullName} (${idConflict.memberNumber}). If this is the same person, edit that member instead of creating a new one.`,
+      );
+    }
+  }
+
+  private rethrowMemberUniqueConflict(err: unknown): never {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === 'P2002'
+    ) {
+      const target = (err.meta?.target as string[] | undefined) ?? [];
+      if (target.includes('phone')) {
+        throw new BadRequestException(
+          'That phone number is already used by another member.',
+        );
+      }
+      if (target.includes('idNumber')) {
+        throw new BadRequestException(
+          'That ID number is already used by another member.',
+        );
+      }
+    }
+    throw err;
+  }
+
+  /**
    * Returns the QR code PNG for a member (session-authenticated callers).
    * Tries to fetch the device-generated QR image first; falls back to
    * generating one locally with the qrcode package so the endpoint is always
@@ -862,9 +955,15 @@ export class MembersService {
   }
 
   private async generateQrBuffer(memberId: string): Promise<Buffer> {
-    // Generate locally — same UUID content the device stores, so the gate scans identically.
+    // Generate locally — same content the device stores, so the gate scans identically.
     // The device PNG is not special; fetching it just adds latency and a network dependency.
-    const uuid = memberIdToUuid(memberId);
-    return QRCode.toBuffer(uuid, { type: 'png', width: 400, margin: 2 });
+    const member = await this.prisma.member.findUnique({
+      where: { id: memberId },
+      select: { qrCode: true },
+    });
+    // Fallback for members created before qrCode existed and not yet
+    // backfilled — keeps their existing (longer) QR working either way.
+    const content = member?.qrCode ?? memberIdToUuid(memberId);
+    return QRCode.toBuffer(content, { type: 'png', width: 400, margin: 2 });
   }
 }

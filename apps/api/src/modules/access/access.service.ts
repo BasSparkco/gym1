@@ -242,10 +242,16 @@ export class AccessService {
       return this.prisma.member.findFirst({ where: { tenantId, rfidTag: tag } });
     }
 
-    // qr and input_code: identifier_number is the UUID pushed to the BAS-IP
-    // device. memberIdToUuid() is a computed transform of the id (not a
-    // stored column), so this can't be pushed into a single indexed WHERE —
-    // fetch the tenant's members and match in memory, same as the original.
+    // qr and input_code: identifier_number is normally the member's qrCode
+    // (indexed — the common, fast case). Older identifiers pushed before
+    // qrCode existed used the UUID derived from the member's id instead, so
+    // fall back to a scan-and-match against that (and the memberNumber) for
+    // those still-valid older QR images.
+    const byQrCode = await this.prisma.member.findFirst({
+      where: { tenantId, qrCode: identifierNumber },
+    });
+    if (byQrCode) return byQrCode;
+
     const tenantMembers = await this.prisma.member.findMany({
       where: { tenantId },
     });
@@ -273,6 +279,11 @@ export class AccessService {
     if (identifierType === 'card') {
       return null;
     }
+
+    const byQrCode = await this.prisma.employee.findFirst({
+      where: { tenantId, status: 'active', qrCode: identifierNumber },
+    });
+    if (byQrCode) return byQrCode;
 
     const tenantEmployees = await this.prisma.employee.findMany({
       where: { tenantId, status: 'active' },

@@ -72,6 +72,7 @@ export class BasIpSyncService {
   async pushQrIdentifier(
     memberId: string,
     memberName: string,
+    qrCode: string,
     membershipStartDate: string,
     membershipEndDate: string,
     gate?: GateRecord,
@@ -82,7 +83,7 @@ export class BasIpSyncService {
     const token = await this.authenticate(config);
     if (!token) return null;
 
-    const linkId = memberIdToUuid(memberId);
+    const linkId = qrCode;
     const from = this.dateToUnix(membershipStartDate, 'start');
     const to = this.dateToUnix(membershipEndDate, 'end');
 
@@ -151,6 +152,7 @@ export class BasIpSyncService {
   async pushEmployeeQrIdentifier(
     employeeId: string,
     employeeName: string,
+    qrCode: string,
     gate?: GateRecord,
   ): Promise<number | null> {
     const config = gate ? this.configFromGate(gate) : this.envConfig();
@@ -159,7 +161,7 @@ export class BasIpSyncService {
     const token = await this.authenticate(config);
     if (!token) return null;
 
-    const linkId = employeeIdToUuid(employeeId);
+    const linkId = qrCode;
 
     const body = {
       list_items: [
