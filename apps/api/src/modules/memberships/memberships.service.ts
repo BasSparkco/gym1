@@ -198,7 +198,7 @@ export class MembershipsService {
       },
     );
 
-    this.syncToDevice(member, membership);
+    this.syncToDevice(member, membership, plan);
   }
 
   async listMembershipsForTenant(tenantId: string, branchId?: string) {
@@ -541,7 +541,7 @@ export class MembershipsService {
       },
     );
 
-    this.syncToDevice(old.member, renewal);
+    this.syncToDevice(old.member, renewal, plan);
     await this.debtService.recompute(renewal.memberId);
 
     return this.serializeMembership(renewal);
@@ -635,7 +635,7 @@ export class MembershipsService {
     ]);
 
     // Push updated end date so the device extends the valid window
-    this.syncToDevice(membership.member, frozenMembership);
+    this.syncToDevice(membership.member, frozenMembership, plan);
 
     return {
       freeze: this.serializeFreeze(freeze),
@@ -766,14 +766,56 @@ export class MembershipsService {
    * the device can grant access offline. Every member always gets a QR
    * identifier regardless of whether they have an RFID tag.
    * Failures are logged but never propagated.
+   *
+   * Pushed to every gate the member's plan actually entitles them to (mirrors
+   * EmployeeAttendanceService.setEmployeeGates) — pushing only to a single
+   * legacy device, as this used to do, silently limited every member's QR to
+   * whichever one gate that device happened to be. Gender-restricted gates
+   * are skipped for a mismatched member so the device's local list doesn't
+   * grant access our real-time check would deny.
    */
-  private syncToDevice(member: Member, membership: Membership): void {
-    void this.basIpSyncService.pushQrIdentifier(
-      member.id,
-      member.fullName,
-      toDateOnlyString(membership.startDate),
-      toDateOnlyString(membership.endDate),
-    );
+  private syncToDevice(
+    member: Member,
+    membership: Membership,
+    plan: MembershipPlan,
+  ): void {
+    void this.pushToApplicableGates(member, membership, plan);
+  }
+
+  private async pushToApplicableGates(
+    member: Member,
+    membership: Membership,
+    plan: MembershipPlan,
+  ): Promise<void> {
+    const branchWhere = plan.allowAllBranches
+      ? { tenantId: member.tenantId }
+      : plan.restrictToHomeBranch
+        ? { tenantId: member.tenantId, branchId: member.homeBranchId }
+        : {
+            tenantId: member.tenantId,
+            branchId: {
+              in: (
+                await this.prisma.membershipPlanBranch.findMany({
+                  where: { planId: plan.id },
+                  select: { branchId: true },
+                })
+              ).map((b) => b.branchId),
+            },
+          };
+
+    const gates = await this.prisma.gate.findMany({ where: branchWhere });
+    for (const gate of gates) {
+      if (gate.genderRestriction && gate.genderRestriction !== member.sex) {
+        continue;
+      }
+      void this.basIpSyncService.pushQrIdentifier(
+        member.id,
+        member.fullName,
+        toDateOnlyString(membership.startDate),
+        toDateOnlyString(membership.endDate),
+        gate,
+      );
+    }
   }
 
   // Postgres Decimal/Date columns come back from Prisma as Decimal/Date

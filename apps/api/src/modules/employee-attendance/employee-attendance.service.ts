@@ -282,12 +282,13 @@ export class EmployeeAttendanceService {
   ) {
     const employee = await this.getEmployeeRecord(tenantId, employeeId);
 
+    let selectedGates: { id: string }[] = [];
     if (input.gateAccessScope === 'selected') {
-      const gates = await this.prisma.gate.findMany({
+      selectedGates = await this.prisma.gate.findMany({
         where: { id: { in: input.gateIds }, tenantId },
         select: { id: true },
       });
-      if (gates.length !== new Set(input.gateIds).size) {
+      if (selectedGates.length !== new Set(input.gateIds).size) {
         throw new BadRequestException(
           'One or more gates are invalid for this tenant.',
         );
@@ -309,13 +310,30 @@ export class EmployeeAttendanceService {
         : []),
     ]);
 
-    // Best-effort — same fire-and-forget pattern as member QR sync
-    // (MembershipsService.syncToDevice). Real-time gate validation via
-    // AccessService.checkAccess is authoritative regardless of this push.
-    void this.basIpSyncService.pushEmployeeQrIdentifier(
-      employee.id,
-      employee.fullName,
-    );
+    // Best-effort push to every gate device the employee is now authorized
+    // for, so each device's local access list (its offline fallback) grants
+    // entry too. Real-time gate validation via AccessService.checkAccess is
+    // authoritative when a device can reach us, but pushing only to the
+    // legacy env-configured device — as this used to do — silently limited
+    // every employee's QR to whichever single gate that env var pointed at.
+    const gatesToSync =
+      input.gateAccessScope === 'organization'
+        ? await this.prisma.gate.findMany({ where: { tenantId } })
+        : input.gateAccessScope === 'selected'
+          ? await this.prisma.gate.findMany({
+              where: { id: { in: selectedGates.map((g) => g.id) } },
+            })
+          : await this.prisma.gate.findMany({
+              where: { tenantId, branchId: employee.branchId },
+            });
+
+    for (const gate of gatesToSync) {
+      void this.basIpSyncService.pushEmployeeQrIdentifier(
+        employee.id,
+        employee.fullName,
+        gate,
+      );
+    }
 
     return this.getEmployeeGates(tenantId, employeeId);
   }
