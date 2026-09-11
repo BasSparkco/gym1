@@ -9,7 +9,7 @@ import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import DateInput from "@/components/date-input";
 import AreaCombobox from "@/components/area-combobox";
-import { createAreaAction } from "@/app/app/members/actions";
+import { resolveAreaId } from "@/app/app/members/actions";
 import NewMemberPhotoCapture from "@/components/members/new-member-photo-capture";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
@@ -35,12 +35,7 @@ export default async function NewMemberPage({ searchParams }: Props) {
     const heightRaw = formData.get("height") as string;
     const weightRaw = formData.get("weight") as string;
 
-    let areaId = (formData.get("areaId") as string) || undefined;
-    const areaText = ((formData.get("areaText") as string) || "").trim();
-    if (!areaId && areaText) {
-      const area = await createAreaAction(areaText);
-      areaId = area.id;
-    }
+    const areaId = await resolveAreaId(formData);
 
     let member;
     try {

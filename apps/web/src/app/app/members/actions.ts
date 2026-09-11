@@ -11,17 +11,29 @@ export async function createAreaAction(name: string) {
   return area;
 }
 
+// Below this length a typed area is almost always a typo/stray keystroke
+// (e.g. a lone letter left in the field), not a real place name — skip
+// creating it and leave the member's area empty rather than polluting the
+// area list.
+const MIN_AREA_NAME_LENGTH = 3;
+
+export async function resolveAreaId(formData: FormData): Promise<string | undefined> {
+  const areaId = (formData.get("areaId") as string) || undefined;
+  if (areaId) return areaId;
+
+  const areaText = ((formData.get("areaText") as string) || "").trim();
+  if (areaText.length < MIN_AREA_NAME_LENGTH) return undefined;
+
+  const area = await createAreaAction(areaText);
+  return area.id;
+}
+
 export async function updateMemberAction(formData: FormData) {
   const memberId = formData.get("memberId") as string;
   const heightRaw = formData.get("height") as string;
   const weightRaw = formData.get("weight") as string;
 
-  let areaId = (formData.get("areaId") as string) || undefined;
-  const areaText = ((formData.get("areaText") as string) || "").trim();
-  if (!areaId && areaText) {
-    const area = await createAreaAction(areaText);
-    areaId = area.id;
-  }
+  const areaId = await resolveAreaId(formData);
 
   await updateMember(memberId, {
     fullName: (formData.get("fullName") as string) || undefined,
