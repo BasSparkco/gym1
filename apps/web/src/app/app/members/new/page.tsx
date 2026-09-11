@@ -35,6 +35,13 @@ export default async function NewMemberPage({ searchParams }: Props) {
     const heightRaw = formData.get("height") as string;
     const weightRaw = formData.get("weight") as string;
 
+    let areaId = (formData.get("areaId") as string) || undefined;
+    const areaText = ((formData.get("areaText") as string) || "").trim();
+    if (!areaId && areaText) {
+      const area = await createAreaAction(areaText);
+      areaId = area.id;
+    }
+
     let member;
     try {
       member = await createMember({
@@ -46,7 +53,7 @@ export default async function NewMemberPage({ searchParams }: Props) {
         sex: (formData.get("sex") as "male" | "female") || undefined,
         idNumber: (formData.get("idNumber") as string) || undefined,
         address: (formData.get("address") as string) || undefined,
-        areaId: (formData.get("areaId") as string) || undefined,
+        areaId,
         height: heightRaw ? Number(heightRaw) : undefined,
         weight: weightRaw ? Number(weightRaw) : undefined,
         registeredEmployeeId: (formData.get("registeredEmployeeId") as string) || undefined,
@@ -123,14 +130,14 @@ export default async function NewMemberPage({ searchParams }: Props) {
                 </div>
 
                 <div className="grid gap-1.5">
-                  <label htmlFor="address" className="text-sm font-medium">{t.members.address}</label>
-                  <input id="address" name="address" placeholder="e.g. Al-Irsal St, Ramallah" className={inputClass} />
+                  <label htmlFor="areaId" className="text-sm font-medium">{t.members.area}</label>
+                  <AreaCombobox id="areaId" name="areaId" options={areas} t={t} />
                 </div>
               </div>
 
               <div className="grid gap-1.5">
-                <label htmlFor="areaId" className="text-sm font-medium">{t.members.area}</label>
-                <AreaCombobox id="areaId" name="areaId" options={areas} createArea={createAreaAction} t={t} />
+                <label htmlFor="address" className="text-sm font-medium">{t.members.address}</label>
+                <input id="address" name="address" placeholder="e.g. Al-Irsal St, Ramallah" className={inputClass} />
               </div>
 
               <div className="grid gap-1.5">

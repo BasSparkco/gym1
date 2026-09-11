@@ -16,6 +16,13 @@ export async function updateMemberAction(formData: FormData) {
   const heightRaw = formData.get("height") as string;
   const weightRaw = formData.get("weight") as string;
 
+  let areaId = (formData.get("areaId") as string) || undefined;
+  const areaText = ((formData.get("areaText") as string) || "").trim();
+  if (!areaId && areaText) {
+    const area = await createAreaAction(areaText);
+    areaId = area.id;
+  }
+
   await updateMember(memberId, {
     fullName: (formData.get("fullName") as string) || undefined,
     homeBranchId: (formData.get("homeBranchId") as string) || undefined,
@@ -26,7 +33,7 @@ export async function updateMemberAction(formData: FormData) {
     sex: (formData.get("sex") as "male" | "female") || undefined,
     idNumber: (formData.get("idNumber") as string) || undefined,
     address: (formData.get("address") as string) || undefined,
-    areaId: (formData.get("areaId") as string) || undefined,
+    areaId,
     height: heightRaw ? Number(heightRaw) : undefined,
     weight: weightRaw ? Number(weightRaw) : undefined,
     registeredEmployeeId: (formData.get("registeredEmployeeId") as string) || undefined,

@@ -8,7 +8,6 @@ import DateInput from "@/components/date-input";
 import MemberPhotoUpload from "@/components/members/member-photo-upload";
 import AreaCombobox from "@/components/area-combobox";
 import { apiBaseUrl } from "@/lib/auth";
-import { createAreaAction } from "@/app/app/members/actions";
 import type { Member } from "@/lib/members";
 import type { Branch } from "@/lib/branches";
 import type { Area } from "@/lib/areas";
@@ -40,7 +39,7 @@ type Props = {
 type FormValues = {
   fullName: string;
   address: string;
-  areaId: string;
+  areaName: string;
   sex: string;
   idNumber: string;
   phone: string;
@@ -56,11 +55,11 @@ type FormValues = {
   medicalNotes: string;
 };
 
-function toFormValues(member: Member): FormValues {
+function toFormValues(member: Member, areas: Area[]): FormValues {
   return {
     fullName: member.fullName ?? "",
     address: member.address ?? "",
-    areaId: member.areaId ?? "",
+    areaName: areas.find((a) => a.id === member.areaId)?.name ?? "",
     sex: member.sex ?? "",
     idNumber: member.idNumber ?? "",
     phone: member.phone ?? "",
@@ -87,7 +86,7 @@ export function MemberEditForm({ member, photoUrl, branches, areas, employees, d
   // button's dirty check compares against. It starts from the member prop
   // and is replaced with `values` on every successful save, so "dirty" always
   // means "differs from what's actually on the server", not from page load.
-  const [initialValues, setInitialValues] = useState<FormValues>(() => toFormValues(member));
+  const [initialValues, setInitialValues] = useState<FormValues>(() => toFormValues(member, areas));
   const [values, setValues] = useState<FormValues>(initialValues);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -168,28 +167,27 @@ export function MemberEditForm({ member, photoUrl, branches, areas, employees, d
                 </div>
 
                 <div className="grid gap-1.5">
-                  <label htmlFor={id("address")} className="text-sm font-medium">{t.members.address}</label>
-                  <input
-                    id={id("address")}
-                    name="address"
-                    value={values.address}
-                    onChange={(event) => updateField("address", event.target.value)}
-                    placeholder="e.g. Al-Irsal St, Ramallah"
-                    className={inputCls}
+                  <label htmlFor={id("areaId")} className="text-sm font-medium">{t.members.area}</label>
+                  <AreaCombobox
+                    id={id("areaId")}
+                    name="areaId"
+                    options={areas}
+                    value={values.areaName}
+                    onChange={(areaName) => updateField("areaName", areaName)}
+                    t={t}
                   />
                 </div>
               </div>
 
               <div className="grid gap-1.5">
-                <label htmlFor={id("areaId")} className="text-sm font-medium">{t.members.area}</label>
-                <AreaCombobox
-                  id={id("areaId")}
-                  name="areaId"
-                  options={areas}
-                  value={values.areaId}
-                  onChange={(areaId) => updateField("areaId", areaId)}
-                  createArea={createAreaAction}
-                  t={t}
+                <label htmlFor={id("address")} className="text-sm font-medium">{t.members.address}</label>
+                <input
+                  id={id("address")}
+                  name="address"
+                  value={values.address}
+                  onChange={(event) => updateField("address", event.target.value)}
+                  placeholder="e.g. Al-Irsal St, Ramallah"
+                  className={inputCls}
                 />
               </div>
 
