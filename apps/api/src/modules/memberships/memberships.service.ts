@@ -19,6 +19,7 @@ import { DiscountTypesService } from '../discount-types/discount-types.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   Freeze,
+  Gate,
   Member,
   Membership,
   MembershipPlan,
@@ -94,7 +95,6 @@ function computeFinalPrice(
   return regularPrice.sub(discountAmount);
 }
 
-
 @Injectable()
 export class MembershipsService {
   constructor(
@@ -114,11 +114,15 @@ export class MembershipsService {
   private async resolveDiscount(
     tenantId: string,
     input: { discountTypeId?: string | null; discountPercent?: number },
-  ): Promise<{ discountTypeId: string | null; discountPercent: Prisma.Decimal }> {
-    const discountType = await this.discountTypesService.requireActiveForNewMembership(
-      tenantId,
-      input.discountTypeId,
-    );
+  ): Promise<{
+    discountTypeId: string | null;
+    discountPercent: Prisma.Decimal;
+  }> {
+    const discountType =
+      await this.discountTypesService.requireActiveForNewMembership(
+        tenantId,
+        input.discountTypeId,
+      );
 
     if (!discountType) {
       return { discountTypeId: null, discountPercent: new Prisma.Decimal(0) };
@@ -126,7 +130,10 @@ export class MembershipsService {
 
     return {
       discountTypeId: discountType.id,
-      discountPercent: parsePercent(input.discountPercent, 'Discount percentage'),
+      discountPercent: parsePercent(
+        input.discountPercent,
+        'Discount percentage',
+      ),
     };
   }
 
@@ -498,7 +505,10 @@ export class MembershipsService {
     }
 
     const renewalId = `membership-${randomUUID()}`;
-    const { discountTypeId, discountPercent } = await this.resolveDiscount(tenantId, input);
+    const { discountTypeId, discountPercent } = await this.resolveDiscount(
+      tenantId,
+      input,
+    );
     const regularPrice = plan.price;
     const finalPrice = computeFinalPrice(regularPrice, discountPercent);
 
@@ -733,7 +743,10 @@ export class MembershipsService {
       status = 'draft';
     }
 
-    const { discountTypeId, discountPercent } = await this.resolveDiscount(tenantId, input);
+    const { discountTypeId, discountPercent } = await this.resolveDiscount(
+      tenantId,
+      input,
+    );
     const regularPrice = plan.price;
     const finalPrice = computeFinalPrice(regularPrice, discountPercent);
 
@@ -787,6 +800,31 @@ export class MembershipsService {
     membership: Membership,
     plan: MembershipPlan,
   ): Promise<void> {
+    const gates = await this.applicableGates(member, plan);
+    const qrCode = member.qrCode ?? memberIdToUuid(member.id);
+    for (const gate of gates) {
+      void this.basIpSyncService.pushQrIdentifier(
+        member.id,
+        member.fullName,
+        qrCode,
+        toDateOnlyString(membership.startDate),
+        toDateOnlyString(membership.endDate),
+        gate,
+      );
+    }
+  }
+
+  /**
+   * The gates a member is entitled to under the given plan, honoring
+   * allowAllBranches / restrictToHomeBranch / the plan's explicit branch
+   * list, and filtering out gender-restricted gates that don't match the
+   * member. Shared by the post-sale push above and the branch-change
+   * resync below so both use exactly the same entitlement rules.
+   */
+  private async applicableGates(
+    member: Pick<Member, 'tenantId' | 'homeBranchId' | 'sex'>,
+    plan: MembershipPlan,
+  ): Promise<Gate[]> {
     const branchWhere = plan.allowAllBranches
       ? { tenantId: member.tenantId }
       : plan.restrictToHomeBranch
@@ -804,19 +842,67 @@ export class MembershipsService {
           };
 
     const gates = await this.prisma.gate.findMany({ where: branchWhere });
-    const qrCode = member.qrCode ?? memberIdToUuid(member.id);
-    for (const gate of gates) {
-      if (gate.genderRestriction && gate.genderRestriction !== member.sex) {
-        continue;
+    return gates.filter(
+      (gate) =>
+        !gate.genderRestriction || gate.genderRestriction === member.sex,
+    );
+  }
+
+  /**
+   * Best-effort resync of gate QR access when a member's home branch
+   * changes from editing the member directly (not via a membership
+   * create/renew, which already pushes to the right gates on its own).
+   * Only plans that restrict access to the member's home branch have an
+   * applicable-gate set that depends on homeBranchId at all — for any
+   * other plan shape, old and new gate sets are identical and this is a
+   * no-op. Gates the member is entitled to under both branches are left
+   * untouched; only the actual difference is removed/pushed.
+   */
+  async resyncGatesForHomeBranchChange(
+    member: Member,
+    previousHomeBranchId: string,
+  ): Promise<void> {
+    if (member.homeBranchId === previousHomeBranchId) return;
+
+    const membership = await this.prisma.membership.findFirst({
+      where: { memberId: member.id, status: 'active' },
+      include: { plan: true },
+      orderBy: { startDate: 'desc' },
+    });
+    if (!membership) return;
+
+    const { plan } = membership;
+    if (plan.allowAllBranches || !plan.restrictToHomeBranch) return;
+
+    const [oldGates, newGates] = await Promise.all([
+      this.applicableGates(
+        { ...member, homeBranchId: previousHomeBranchId },
+        plan,
+      ),
+      this.applicableGates(member, plan),
+    ]);
+
+    const oldGateIds = new Set(oldGates.map((gate) => gate.id));
+    const newGateIds = new Set(newGates.map((gate) => gate.id));
+
+    for (const gate of oldGates) {
+      if (!newGateIds.has(gate.id)) {
+        void this.basIpSyncService.removeIdentifier(member.id, gate);
       }
-      void this.basIpSyncService.pushQrIdentifier(
-        member.id,
-        member.fullName,
-        qrCode,
-        toDateOnlyString(membership.startDate),
-        toDateOnlyString(membership.endDate),
-        gate,
-      );
+    }
+
+    const qrCode = member.qrCode ?? memberIdToUuid(member.id);
+    for (const gate of newGates) {
+      if (!oldGateIds.has(gate.id)) {
+        void this.basIpSyncService.pushQrIdentifier(
+          member.id,
+          member.fullName,
+          qrCode,
+          toDateOnlyString(membership.startDate),
+          toDateOnlyString(membership.endDate),
+          gate,
+        );
+      }
     }
   }
 

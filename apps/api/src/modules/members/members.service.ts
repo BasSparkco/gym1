@@ -22,6 +22,7 @@ import { findCountryByCode } from '../../data/countries';
 import { AreasService } from '../areas/areas.service';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { DebtService } from '../debt/debt.service';
+import { MembershipsService } from '../memberships/memberships.service';
 import { NotificationTemplatesService } from '../notifications/notification-templates.service';
 import { SparkcoNotificationProvider } from '../notifications/providers/sparkco-notification.provider';
 import { SettingsService } from '../settings/settings.service';
@@ -77,6 +78,7 @@ export class MembersService {
     private readonly areasService: AreasService,
     private readonly basIpSyncService: BasIpSyncService,
     private readonly debtService: DebtService,
+    private readonly membershipsService: MembershipsService,
     private readonly notificationTemplatesService: NotificationTemplatesService,
     private readonly sparkcoProvider: SparkcoNotificationProvider,
     private readonly settingsService: SettingsService,
@@ -347,6 +349,13 @@ export class MembersService {
       });
     } catch (err) {
       this.rethrowMemberUniqueConflict(err);
+    }
+
+    if (current.homeBranchId !== nextHomeBranchId) {
+      void this.membershipsService.resyncGatesForHomeBranchChange(
+        updated,
+        current.homeBranchId,
+      );
     }
 
     const activeIds = await this.buildActiveSet(tenantId);

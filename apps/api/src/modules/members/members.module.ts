@@ -6,6 +6,7 @@ import { DataScopeModule } from '../../common/data-scope.module';
 import { DebtModule } from '../debt/debt.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MessagesModule } from '../messages/messages.module';
+import { MembershipsModule } from '../memberships/memberships.module';
 import { SettingsModule } from '../settings/settings.module';
 import { MemberPhotosController } from './member-photos.controller';
 import { MembersController } from './members.controller';
@@ -21,6 +22,7 @@ import { MemberAuthService } from '../member-auth/member-auth.service';
     DebtModule,
     NotificationsModule,
     MessagesModule,
+    MembershipsModule,
     SettingsModule,
   ],
   // MemberAuthService is provided directly here (not via MemberAuthModule)
