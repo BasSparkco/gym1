@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/components/ui/cn";
 import type { Area } from "@/lib/areas";
 import type { Dict } from "@/lib/i18n";
@@ -25,11 +25,16 @@ type Props = {
  * text is kept as-is, never cleared, and submits via the `areaText` hidden
  * field alongside `name` (which only carries an id when the text exactly
  * matches an existing area). The member create/update handler resolves the
- * final areaId on submit, creating the area first if it doesn't exist yet. */
+ * final areaId on submit, creating the area first if it doesn't exist yet.
+ * ArrowDown from the input moves focus into the list (starting at the first
+ * result); ArrowUp/ArrowDown then move between results, ArrowUp off the top
+ * returns focus to the input, and Escape closes the list from either. */
 export default function AreaCombobox({ id, name, options, value, defaultValue = "", onChange, t, className }: Props) {
   const [internalText, setInternalText] = useState(defaultValue);
   const text = value ?? internalText;
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function setText(next: string) {
     if (value === undefined) setInternalText(next);
@@ -45,11 +50,31 @@ export default function AreaCombobox({ id, name, options, value, defaultValue = 
 
   const matchedId = options.find((area) => area.name.trim().toLowerCase() === query)?.id ?? "";
 
+  function selectOption(area: Area) {
+    setText(area.name);
+    setOpen(false);
+    inputRef.current?.focus();
+  }
+
+  function focusItem(index: number) {
+    itemRefs.current[index]?.focus();
+  }
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onBlur={(event) => {
+        // Only close when focus leaves the whole combobox (input + list),
+        // not when it moves between the input and a result button.
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setOpen(false);
+        }
+      }}
+    >
       <input type="hidden" name={name} value={matchedId} />
       <input type="hidden" name="areaText" value={text.trim()} />
       <input
+        ref={inputRef}
         id={id}
         type="text"
         autoComplete="off"
@@ -59,9 +84,14 @@ export default function AreaCombobox({ id, name, options, value, defaultValue = 
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
-        onBlur={() => {
-          // Delayed so an option's onMouseDown can fire before the list closes.
-          setTimeout(() => setOpen(false), 150);
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" && matches.length > 0) {
+            event.preventDefault();
+            setOpen(true);
+            focusItem(0);
+          } else if (event.key === "Escape") {
+            setOpen(false);
+          }
         }}
         placeholder={t.members.area}
         className={cn(
@@ -71,14 +101,30 @@ export default function AreaCombobox({ id, name, options, value, defaultValue = 
       />
       {open && matches.length > 0 && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-2xl border border-line bg-white py-1 shadow-lg">
-          {matches.map((area) => (
+          {matches.map((area, index) => (
             <li key={area.id}>
               <button
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
                 type="button"
-                className="block w-full px-4 py-2.5 text-start text-sm transition hover:bg-brand/5"
-                onMouseDown={() => {
-                  setText(area.name);
-                  setOpen(false);
+                className="block w-full px-4 py-2.5 text-start text-sm outline-none transition hover:bg-brand/5 focus:bg-brand/5"
+                onClick={() => selectOption(area)}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    focusItem(Math.min(index + 1, matches.length - 1));
+                  } else if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    if (index === 0) {
+                      inputRef.current?.focus();
+                    } else {
+                      focusItem(index - 1);
+                    }
+                  } else if (event.key === "Escape") {
+                    setOpen(false);
+                    inputRef.current?.focus();
+                  }
                 }}
               >
                 {area.name}
