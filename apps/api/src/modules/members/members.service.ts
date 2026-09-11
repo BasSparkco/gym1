@@ -19,6 +19,7 @@ import { decryptPin, encryptPin } from '../../common/pin-crypto';
 import { toNumber } from '../../common/decimal';
 import { nextMemberNumber } from '../../common/org-numbering';
 import { findCountryByCode } from '../../data/countries';
+import { AreasService } from '../areas/areas.service';
 import { BasIpSyncService } from '../access/bas-ip-sync.service';
 import { DebtService } from '../debt/debt.service';
 import { NotificationTemplatesService } from '../notifications/notification-templates.service';
@@ -37,6 +38,7 @@ type CreateMemberInput = {
   sex?: Sex;
   idNumber?: string;
   address?: string;
+  areaId?: string;
   height?: number;
   weight?: number;
   registeredEmployeeId?: string;
@@ -56,6 +58,7 @@ type UpdateMemberInput = {
   sex?: Sex;
   idNumber?: string;
   address?: string;
+  areaId?: string;
   height?: number;
   weight?: number;
   registeredEmployeeId?: string;
@@ -71,6 +74,7 @@ export class MembersService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly areasService: AreasService,
     private readonly basIpSyncService: BasIpSyncService,
     private readonly debtService: DebtService,
     private readonly notificationTemplatesService: NotificationTemplatesService,
@@ -140,6 +144,11 @@ export class MembersService {
       await this.ensureEmployeeBelongsToTenant(tenantId, registeredEmployeeId);
     }
 
+    const areaId = input.areaId?.trim() || undefined;
+    if (areaId) {
+      await this.areasService.ensureAreaBelongsToTenant(tenantId, areaId);
+    }
+
     const dialCode = this.getDialCodeForBranch(branch);
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -174,6 +183,7 @@ export class MembersService {
           sex: input.sex || undefined,
           idNumber,
           address: input.address?.trim() || undefined,
+          areaId,
           height: input.height ? Number(input.height) : undefined,
           weight: input.weight ? Number(input.weight) : undefined,
           registeredEmployeeId,
@@ -246,6 +256,12 @@ export class MembersService {
       );
     }
 
+    const nextAreaId =
+      input.areaId === undefined ? undefined : input.areaId.trim() || null;
+    if (nextAreaId) {
+      await this.areasService.ensureAreaBelongsToTenant(tenantId, nextAreaId);
+    }
+
     const dialCode = this.getDialCodeForBranch(branch);
 
     const nextPhone =
@@ -297,6 +313,7 @@ export class MembersService {
             input.address === undefined
               ? undefined
               : input.address.trim() || null,
+          areaId: nextAreaId,
           height:
             input.height === undefined
               ? undefined

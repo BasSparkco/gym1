@@ -7,6 +7,7 @@ import { MemberProfileView, type MemberProfileData } from "@/components/members/
 import { MemberEditForm } from "@/components/members/member-edit-form";
 import { updateMemberAction } from "@/app/app/members/actions";
 import type { Branch } from "@/lib/branches";
+import type { Area } from "@/lib/areas";
 import type { Employee } from "@/lib/employees";
 import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
@@ -26,6 +27,7 @@ export type MemberRow = MemberProfileData & {
 type Props = {
   rows: MemberRow[];
   branches: Branch[];
+  areas: Area[];
   employees: Employee[];
   dateFormat: DateFormat;
   t: Dict;
@@ -47,7 +49,7 @@ const secondaryCellCls = "hidden py-3 pe-4 text-start sm:table-cell";
 // was built to avoid. Fixed layout locks the table's width to the header
 // row's column widths; the expanded row's content then wraps/shrinks to fit
 // that width instead of stretching it.
-export function MembersTableBody({ rows, branches, employees, dateFormat, t, showBranchColumn = true }: Props) {
+export function MembersTableBody({ rows, branches, areas, employees, dateFormat, t, showBranchColumn = true }: Props) {
   const [expanded, setExpanded] = useState<{ id: string; mode: "profile" | "edit" } | null>(null);
   const expandedRowRef = useRef<HTMLTableRowElement | null>(null);
   const expandedPanelRef = useRef<HTMLDivElement | null>(null);
@@ -174,6 +176,7 @@ export function MembersTableBody({ rows, branches, employees, dateFormat, t, sho
                             member={row.member}
                             photoUrl={row.photoUrl}
                             branches={branches}
+                            areas={areas}
                             employees={employees}
                             dateFormat={dateFormat}
                             t={t}

@@ -80,6 +80,7 @@ export type MemberProfileData = {
   avatar: string;
   photoUrl: string | null;
   branchName: string;
+  areaName?: string;
   currencySymbol: string;
   registeredEmployeeName?: string;
   age: number | null;
@@ -316,6 +317,14 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                 <span className={fieldKey}>{t.members.address}</span>
                 <span dir={isRtlText(member.address) ? "rtl" : undefined} className={fieldValue}>
                   {member.address}
+                </span>
+              </div>
+            )}
+            {data.areaName && (
+              <div className="flex flex-col gap-1">
+                <span className={fieldKey}>{t.members.area}</span>
+                <span dir={isRtlText(data.areaName) ? "rtl" : undefined} className={fieldValue}>
+                  {data.areaName}
                 </span>
               </div>
             )}

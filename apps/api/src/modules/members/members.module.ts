@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccessModule } from '../access/access.module';
+import { AreasModule } from '../areas/areas.module';
 import { AuthModule } from '../auth/auth.module';
 import { DataScopeModule } from '../../common/data-scope.module';
 import { DebtModule } from '../debt/debt.module';
@@ -14,6 +15,7 @@ import { MemberAuthService } from '../member-auth/member-auth.service';
 @Module({
   imports: [
     AccessModule,
+    AreasModule,
     AuthModule,
     DataScopeModule,
     DebtModule,

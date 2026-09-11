@@ -6,9 +6,12 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DateInput from "@/components/date-input";
 import MemberPhotoUpload from "@/components/members/member-photo-upload";
+import AreaCombobox from "@/components/area-combobox";
 import { apiBaseUrl } from "@/lib/auth";
+import { createAreaAction } from "@/app/app/members/actions";
 import type { Member } from "@/lib/members";
 import type { Branch } from "@/lib/branches";
+import type { Area } from "@/lib/areas";
 import type { Employee } from "@/lib/employees";
 import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
@@ -21,6 +24,7 @@ type Props = {
   member: Member;
   photoUrl: string | null;
   branches: Branch[];
+  areas: Area[];
   employees: Employee[];
   dateFormat: DateFormat;
   t: Dict;
@@ -36,6 +40,7 @@ type Props = {
 type FormValues = {
   fullName: string;
   address: string;
+  areaId: string;
   sex: string;
   idNumber: string;
   phone: string;
@@ -55,6 +60,7 @@ function toFormValues(member: Member): FormValues {
   return {
     fullName: member.fullName ?? "",
     address: member.address ?? "",
+    areaId: member.areaId ?? "",
     sex: member.sex ?? "",
     idNumber: member.idNumber ?? "",
     phone: member.phone ?? "",
@@ -74,7 +80,7 @@ function toFormValues(member: Member): FormValues {
 // Shared by the dedicated /app/members/[memberId]/edit page and the inline
 // edit panel in the members table (MembersTableBody), so the two forms can
 // never drift out of sync — one component, two places it's mounted.
-export function MemberEditForm({ member, photoUrl, branches, employees, dateFormat, t, action, submitIcon, footer }: Props) {
+export function MemberEditForm({ member, photoUrl, branches, areas, employees, dateFormat, t, action, submitIcon, footer }: Props) {
   const id = (field: string) => `${field}-${member.id}`;
 
   // `initialValues` is the last-known-saved snapshot — the baseline the Save
@@ -172,6 +178,19 @@ export function MemberEditForm({ member, photoUrl, branches, employees, dateForm
                     className={inputCls}
                   />
                 </div>
+              </div>
+
+              <div className="grid gap-1.5">
+                <label htmlFor={id("areaId")} className="text-sm font-medium">{t.members.area}</label>
+                <AreaCombobox
+                  id={id("areaId")}
+                  name="areaId"
+                  options={areas}
+                  value={values.areaId}
+                  onChange={(areaId) => updateField("areaId", areaId)}
+                  createArea={createAreaAction}
+                  t={t}
+                />
               </div>
 
               <div className="grid gap-1.5">

@@ -17,6 +17,7 @@ export type Member = {
   sex?: "male" | "female";
   idNumber?: string;
   address?: string;
+  areaId?: string;
   joinDate?: string;
   height?: number;
   weight?: number;
@@ -84,6 +85,7 @@ export async function createMember(data: {
   sex?: "male" | "female";
   idNumber?: string;
   address?: string;
+  areaId?: string;
   height?: number;
   weight?: number;
   registeredEmployeeId?: string;
@@ -114,6 +116,7 @@ export async function updateMember(
     sex?: "male" | "female";
     idNumber?: string;
     address?: string;
+    areaId?: string;
     height?: number;
     weight?: number;
     registeredEmployeeId?: string;

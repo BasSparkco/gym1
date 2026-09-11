@@ -1,7 +1,15 @@
 "use server";
 
 import { updateMember } from "@/lib/members";
+import { createArea } from "@/lib/areas";
 import { revalidatePath } from "next/cache";
+
+export async function createAreaAction(name: string) {
+  const area = await createArea(name);
+  revalidatePath("/app/members");
+  revalidatePath("/app/members/new");
+  return area;
+}
 
 export async function updateMemberAction(formData: FormData) {
   const memberId = formData.get("memberId") as string;
@@ -18,6 +26,7 @@ export async function updateMemberAction(formData: FormData) {
     sex: (formData.get("sex") as "male" | "female") || undefined,
     idNumber: (formData.get("idNumber") as string) || undefined,
     address: (formData.get("address") as string) || undefined,
+    areaId: (formData.get("areaId") as string) || undefined,
     height: heightRaw ? Number(heightRaw) : undefined,
     weight: weightRaw ? Number(weightRaw) : undefined,
     registeredEmployeeId: (formData.get("registeredEmployeeId") as string) || undefined,

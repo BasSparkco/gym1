@@ -5,6 +5,7 @@ import { listLockerRentalsForMember } from "@/lib/lockers";
 import { listEnrollmentsForMember } from "@/lib/training-programs";
 import { listMembershipPlans } from "@/lib/membership-plans";
 import { listBranches } from "@/lib/branches";
+import { listAreas } from "@/lib/areas";
 import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT, formatDict } from "@/lib/i18n";
@@ -58,11 +59,12 @@ export default async function MembersPage({
   const t = await getT();
   const { q, ms, branch: branchFilter, plan: planFilter, page: pageParam } = await searchParams;
 
-  const [allMembers, allMemberships, allPlans, branches, employees, settings] = await Promise.all([
+  const [allMembers, allMemberships, allPlans, branches, areas, employees, settings] = await Promise.all([
     listMembers(),
     listAllMemberships(),
     listMembershipPlans(),
     listBranches(),
+    listAreas(),
     listEmployees(),
     getSettings(),
   ]);
@@ -71,6 +73,7 @@ export default async function MembersPage({
 
   const planMap = new Map(allPlans.map((p) => [p.id, p]));
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
+  const areaMap = new Map(areas.map((a) => [a.id, a.name]));
 
   // Pick the single most-relevant membership per member
   const membershipMap = new Map<string, (typeof allMemberships)[0]>();
@@ -204,6 +207,7 @@ export default async function MembersPage({
       photoUrl: getMemberPhotoUrl(member.pictureUrl),
       planBadge: plan?.name,
       branchName: branchMap.get(member.homeBranchId) ?? "—",
+      areaName: member.areaId ? areaMap.get(member.areaId) : undefined,
       expiresText: primaryMs ? formatDate(primaryMs.endDate, dateFormat) : "—",
       expiryColorClass,
       statusTone,
@@ -310,6 +314,7 @@ export default async function MembersPage({
           <MembersTableBody
             rows={rows}
             branches={branches}
+            areas={areas}
             employees={employees}
             dateFormat={dateFormat}
             t={t}

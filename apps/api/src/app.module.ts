@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AccessModule } from './modules/access/access.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
+import { AreasModule } from './modules/areas/areas.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { ClosedDatesModule } from './modules/closed-dates/closed-dates.module';
@@ -41,6 +42,7 @@ import { RedisModule } from './redis/redis.module';
     AuthModule,
     TenancyModule,
     BranchesModule,
+    AreasModule,
     EmployeesModule,
     GatesModule,
     UsersModule,

@@ -4,6 +4,7 @@ import { listPaymentsForMember } from "@/lib/payments";
 import { listLockerRentalsForMember } from "@/lib/lockers";
 import { listEnrollmentsForMember } from "@/lib/training-programs";
 import { listBranches } from "@/lib/branches";
+import { listAreas } from "@/lib/areas";
 import { listEmployees } from "@/lib/employees";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
@@ -25,7 +26,7 @@ export default async function MemberProfilePage({ params, searchParams }: Props)
   await requireSession();
   const t = await getT();
 
-  const [member, memberships, payments, lockerRentals, courseEnrollments, branches, employees, settings] =
+  const [member, memberships, payments, lockerRentals, courseEnrollments, branches, areas, employees, settings] =
     await Promise.all([
       getMember(memberId),
       listMembershipsForMember(memberId),
@@ -33,6 +34,7 @@ export default async function MemberProfilePage({ params, searchParams }: Props)
       listLockerRentalsForMember(memberId),
       listEnrollmentsForMember(memberId),
       listBranches(),
+      listAreas(),
       listEmployees(),
       getSettings(),
     ]);
@@ -41,12 +43,14 @@ export default async function MemberProfilePage({ params, searchParams }: Props)
   const homeBranch = branches.find((b) => b.id === member.homeBranchId);
   const currencySymbol = getCurrencySymbol(homeBranch?.operatingCurrencyCode);
   const registeredEmployee = employees.find((e) => e.id === member.registeredEmployeeId);
+  const area = areas.find((a) => a.id === member.areaId);
 
   const data: MemberProfileData = {
     member,
     avatar: initials(member.fullName),
     photoUrl: getMemberPhotoUrl(member.pictureUrl),
     branchName: homeBranch?.name ?? "—",
+    areaName: area?.name,
     currencySymbol,
     registeredEmployeeName: registeredEmployee?.fullName,
     age: computeAge(member.dateOfBirth),

@@ -33,6 +33,7 @@ type CreateMemberRequestBody = {
   sex?: 'male' | 'female';
   idNumber?: string;
   address?: string;
+  areaId?: string;
   height?: number;
   weight?: number;
   registeredEmployeeId?: string;
@@ -53,6 +54,7 @@ type UpdateMemberRequestBody = {
   sex?: 'male' | 'female';
   idNumber?: string;
   address?: string;
+  areaId?: string;
   height?: number;
   weight?: number;
   registeredEmployeeId?: string;

@@ -181,6 +181,7 @@ model Tenant {
   employees        Employee[]
   gates            Gate[]
   members          Member[]
+  areas            Area[]
   membershipPlans  MembershipPlan[]
   discountTypes    DiscountType[]
   payments         Payment[]
@@ -236,6 +237,22 @@ model Branch {
   closedDates      ClosedDate[]
   entitledForPlans MembershipPlanBranch[]
 
+  @@index([tenantId])
+}
+
+// Freeform "neighborhood" a member lives in, e.g. "Jerusalem" — staff were
+// typing the same handful of area names into the address field instead of a
+// full street address, so this gives them a per-tenant pick list (with
+// inline "add new") instead of retyping it every time.
+model Area {
+  id       String @id
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  name     String
+
+  members Member[]
+
+  @@unique([tenantId, name])
   @@index([tenantId])
 }
 
@@ -359,6 +376,8 @@ model Member {
   sex                   Sex?
   idNumber              String?
   address               String?
+  areaId                String?
+  area                  Area?         @relation(fields: [areaId], references: [id], onDelete: SetNull)
   joinDate              DateTime?     @db.Date
   height                Float?
   weight                Float?
@@ -410,6 +429,7 @@ model Member {
   @@unique([tenantId, idNumber])
   @@unique([tenantId, qrCode])
   @@index([homeBranchId])
+  @@index([areaId])
 }
 
 model MembershipPlan {

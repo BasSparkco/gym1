@@ -3,43 +3,69 @@
 import { createMember, uploadMemberPhoto } from "@/lib/members";
 import { requireSession } from "@/lib/session";
 import { listBranches } from "@/lib/branches";
+import { listAreas } from "@/lib/areas";
 import { listEmployees } from "@/lib/employees";
 import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import DateInput from "@/components/date-input";
+import AreaCombobox from "@/components/area-combobox";
+import { createAreaAction } from "@/app/app/members/actions";
 import NewMemberPhotoCapture from "@/components/members/new-member-photo-capture";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 
-export default async function NewMemberPage() {
+type Props = { searchParams: Promise<{ error?: string }> };
+
+export default async function NewMemberPage({ searchParams }: Props) {
+  const { error } = await searchParams;
   const session = await requireSession();
   const t = await getT();
-  const [branches, employees, settings] = await Promise.all([listBranches(), listEmployees(), getSettings()]);
+  const [branches, areas, employees, settings] = await Promise.all([
+    listBranches(),
+    listAreas(),
+    listEmployees(),
+    getSettings(),
+  ]);
   const dateFormat = settings.dateFormat ?? "dd/mm/yyyy";
 
   async function handleCreate(formData: FormData) {
     "use server";
     const heightRaw = formData.get("height") as string;
     const weightRaw = formData.get("weight") as string;
-    const member = await createMember({
-      fullName: formData.get("fullName") as string,
-      homeBranchId: (formData.get("homeBranchId") as string) || undefined,
-      phone: (formData.get("phone") as string) || undefined,
-      email: (formData.get("email") as string) || undefined,
-      dateOfBirth: (formData.get("dateOfBirth") as string) || undefined,
-      sex: (formData.get("sex") as "male" | "female") || undefined,
-      idNumber: (formData.get("idNumber") as string) || undefined,
-      address: (formData.get("address") as string) || undefined,
-      height: heightRaw ? Number(heightRaw) : undefined,
-      weight: weightRaw ? Number(weightRaw) : undefined,
-      registeredEmployeeId: (formData.get("registeredEmployeeId") as string) || undefined,
-      emergencyContactName: (formData.get("emergencyContactName") as string) || undefined,
-      emergencyContactPhone: (formData.get("emergencyContactPhone") as string) || undefined,
-      medicalNotes: (formData.get("medicalNotes") as string) || undefined,
-      rfidTag: (formData.get("rfidTag") as string) || undefined,
-    });
+
+    let member;
+    try {
+      member = await createMember({
+        fullName: formData.get("fullName") as string,
+        homeBranchId: (formData.get("homeBranchId") as string) || undefined,
+        phone: (formData.get("phone") as string) || undefined,
+        email: (formData.get("email") as string) || undefined,
+        dateOfBirth: (formData.get("dateOfBirth") as string) || undefined,
+        sex: (formData.get("sex") as "male" | "female") || undefined,
+        idNumber: (formData.get("idNumber") as string) || undefined,
+        address: (formData.get("address") as string) || undefined,
+        areaId: (formData.get("areaId") as string) || undefined,
+        height: heightRaw ? Number(heightRaw) : undefined,
+        weight: weightRaw ? Number(weightRaw) : undefined,
+        registeredEmployeeId: (formData.get("registeredEmployeeId") as string) || undefined,
+        emergencyContactName: (formData.get("emergencyContactName") as string) || undefined,
+        emergencyContactPhone: (formData.get("emergencyContactPhone") as string) || undefined,
+        medicalNotes: (formData.get("medicalNotes") as string) || undefined,
+        rfidTag: (formData.get("rfidTag") as string) || undefined,
+      });
+    } catch (err) {
+      let message = err instanceof Error ? err.message : String(err);
+      try {
+        const parsed = JSON.parse(message) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // not JSON, use as-is
+      }
+      redirect(`/app/members/new?error=${encodeURIComponent(message)}`);
+    }
+
     const picture = formData.get("picture") as File | null;
     if (picture && picture.size > 0) {
       await uploadMemberPhoto(member.id, picture);
@@ -63,6 +89,12 @@ export default async function NewMemberPage() {
         title={t.members.newMember}
         description="Register a new member. Full name is required."
       />
+
+      {error && (
+        <section className="animate-scale-in rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          {decodeURIComponent(error)}
+        </section>
+      )}
 
       <section className="animate-fade-in-up stagger-1 rounded-[2rem] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(86,57,28,0.06)]">
         <form action={handleCreate} className="grid gap-6" encType="multipart/form-data">
@@ -94,6 +126,11 @@ export default async function NewMemberPage() {
                   <label htmlFor="address" className="text-sm font-medium">{t.members.address}</label>
                   <input id="address" name="address" placeholder="e.g. Al-Irsal St, Ramallah" className={inputClass} />
                 </div>
+              </div>
+
+              <div className="grid gap-1.5">
+                <label htmlFor="areaId" className="text-sm font-medium">{t.members.area}</label>
+                <AreaCombobox id="areaId" name="areaId" options={areas} createArea={createAreaAction} t={t} />
               </div>
 
               <div className="grid gap-1.5">

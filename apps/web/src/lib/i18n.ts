@@ -139,6 +139,9 @@ export type Dict = {
     female: string;
     idNumber: string;
     address: string;
+    area: string;
+    addNewArea: string;
+    areaName: string;
     joinDate: string;
     joinDateHelp: string;
     height: string;
@@ -1119,6 +1122,9 @@ const en: Dict = {
     female: "Female",
     idNumber: "ID Number",
     address: "Address",
+    area: "Area",
+    addNewArea: "+ Add new area…",
+    areaName: "Area name",
     joinDate: "Join date",
     joinDateHelp: "Missing from import — set it once and it locks in.",
     height: "Height (cm)",
@@ -2099,6 +2105,9 @@ const ar: Dict = {
     female: "أنثى",
     idNumber: "رقم الهوية",
     address: "العنوان",
+    area: "المنطقة",
+    addNewArea: "+ إضافة منطقة جديدة…",
+    areaName: "اسم المنطقة",
     joinDate: "تاريخ الانتساب",
     joinDateHelp: "غير متوفر من عملية الاستيراد — عيّنه مرة واحدة ولن يمكن تعديله لاحقًا.",
     height: "الطول (سم)",
@@ -3079,6 +3088,9 @@ const he: Dict = {
     female: "נקבה",
     idNumber: "מספר תעודת זהות",
     address: "כתובת",
+    area: "אזור",
+    addNewArea: "+ הוספת אזור חדש…",
+    areaName: "שם האזור",
     joinDate: "תאריך הצטרפות",
     joinDateHelp: "חסר מהייבוא — הגדר פעם אחת ולא ניתן יהיה לשנות זאת לאחר מכן.",
     height: "גובה (ס\"מ)",
