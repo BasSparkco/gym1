@@ -431,6 +431,98 @@ export class BasIpSyncService {
     return this.lookupUidByLinkId(memberIdToUuid(memberId), token, config);
   }
 
+  /**
+   * Returns every identifier currently stored on the device's local list
+   * (paginated server-side), or null if the device is unreachable. Used for
+   * one-off gate hygiene (audit what's on a device before a bulk clear) —
+   * no runtime call site needs this.
+   */
+  async listIdentifiers(
+    gate: GateRecord,
+  ): Promise<{ linkId: string; name: string; type: string }[] | null> {
+    const config = this.configFromGate(gate);
+    const token = await this.authenticate(config);
+    if (!token) return null;
+
+    const items: { linkId: string; name: string; type: string }[] = [];
+    const limit = 100;
+    for (let page = 1; ; page++) {
+      try {
+        const res = await fetch(
+          `${config.deviceUrl}/api/v1/access/identifier/items/link?limit=${limit}&page_number=${page}`,
+          {
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        if (!res.ok) {
+          this.logger.warn(`BAS-IP list failed on gate ${gate.id}: HTTP ${res.status}`);
+          return page === 1 ? null : items;
+        }
+        const data = (await res.json()) as {
+          list_items?: {
+            link_id?: string;
+            identifier_type?: string;
+            identifier_owner?: { name?: string };
+          }[];
+        };
+        const pageItems = data.list_items ?? [];
+        if (pageItems.length === 0) break;
+        for (const it of pageItems) {
+          if (!it.link_id) continue;
+          items.push({
+            linkId: it.link_id,
+            name: it.identifier_owner?.name ?? '',
+            type: it.identifier_type ?? '',
+          });
+        }
+        if (pageItems.length < limit) break;
+      } catch (err) {
+        this.logger.warn(`BAS-IP list failed on gate ${gate.id}: ${(err as Error).message}`);
+        return page === 1 ? null : items;
+      }
+    }
+    return items;
+  }
+
+  /**
+   * Removes multiple identifiers from the device's local list by link_id in
+   * one call. Same endpoint as removeIdentifier, generalized to a batch of
+   * link_ids for one-off gate hygiene (bulk clear before a full re-push).
+   */
+  async removeIdentifiers(linkIds: string[], gate: GateRecord): Promise<boolean> {
+    if (linkIds.length === 0) return true;
+    const config = this.configFromGate(gate);
+    const token = await this.authenticate(config);
+    if (!token) return false;
+
+    try {
+      const res = await fetch(
+        `${config.deviceUrl}/api/v1/access/identifier/items/link`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ link_ids: linkIds }),
+        },
+      );
+      if (!res.ok) {
+        this.logger.warn(`BAS-IP bulk remove failed on gate ${gate.id}: HTTP ${res.status}`);
+        return false;
+      }
+      this.logger.log(`Removed ${linkIds.length} identifier(s) from gate ${gate.id}`);
+      return true;
+    } catch (err) {
+      this.logger.warn(`BAS-IP bulk remove failed on gate ${gate.id}: ${(err as Error).message}`);
+      return false;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
