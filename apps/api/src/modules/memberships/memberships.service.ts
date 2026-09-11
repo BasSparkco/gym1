@@ -25,6 +25,7 @@ import {
   MembershipPlan,
   MembershipStatus,
   Prisma,
+  Sex,
 } from '../../generated/prisma/client';
 
 type CreateMembershipPlanInput = {
@@ -850,19 +851,26 @@ export class MembershipsService {
 
   /**
    * Best-effort resync of gate QR access when a member's home branch
-   * changes from editing the member directly (not via a membership
-   * create/renew, which already pushes to the right gates on its own).
-   * Only plans that restrict access to the member's home branch have an
-   * applicable-gate set that depends on homeBranchId at all — for any
-   * other plan shape, old and new gate sets are identical and this is a
-   * no-op. Gates the member is entitled to under both branches are left
-   * untouched; only the actual difference is removed/pushed.
+   * and/or sex changes from editing the member directly (not via a
+   * membership create/renew, which already pushes to the right gates on
+   * its own). Takes both previous values (rather than just homeBranchId)
+   * because applicableGates' gender filter means sex, not just branch
+   * scoping, decides gate access — e.g. every Platinum RSA plan has
+   * `allowAllBranches: true`, so homeBranchId never actually changes
+   * their applicable-gate set on its own; correcting a member's sex
+   * (imported wrong from the old system) is what actually needs to move
+   * them between the men's/women's gate. Gates the member is entitled to
+   * under both old and new state are left untouched; only the actual
+   * difference is removed/pushed.
    */
-  async resyncGatesForHomeBranchChange(
+  async resyncGatesForMemberChange(
     member: Member,
     previousHomeBranchId: string,
+    previousSex: Sex | null,
   ): Promise<void> {
-    if (member.homeBranchId === previousHomeBranchId) return;
+    if (member.homeBranchId === previousHomeBranchId && member.sex === previousSex) {
+      return;
+    }
 
     const membership = await this.prisma.membership.findFirst({
       where: { memberId: member.id, status: 'active' },
@@ -872,11 +880,10 @@ export class MembershipsService {
     if (!membership) return;
 
     const { plan } = membership;
-    if (plan.allowAllBranches || !plan.restrictToHomeBranch) return;
 
     const [oldGates, newGates] = await Promise.all([
       this.applicableGates(
-        { ...member, homeBranchId: previousHomeBranchId },
+        { ...member, homeBranchId: previousHomeBranchId, sex: previousSex },
         plan,
       ),
       this.applicableGates(member, plan),
@@ -885,13 +892,13 @@ export class MembershipsService {
     const oldGateIds = new Set(oldGates.map((gate) => gate.id));
     const newGateIds = new Set(newGates.map((gate) => gate.id));
 
+    const qrCode = member.qrCode ?? memberIdToUuid(member.id);
     for (const gate of oldGates) {
       if (!newGateIds.has(gate.id)) {
-        void this.basIpSyncService.removeIdentifier(member.id, gate);
+        void this.basIpSyncService.removeIdentifier(member.id, gate, qrCode);
       }
     }
 
-    const qrCode = member.qrCode ?? memberIdToUuid(member.id);
     for (const gate of newGates) {
       if (!oldGateIds.has(gate.id)) {
         void this.basIpSyncService.pushQrIdentifier(

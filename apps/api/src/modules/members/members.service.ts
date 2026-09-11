@@ -351,10 +351,11 @@ export class MembersService {
       this.rethrowMemberUniqueConflict(err);
     }
 
-    if (current.homeBranchId !== nextHomeBranchId) {
-      void this.membershipsService.resyncGatesForHomeBranchChange(
+    if (current.homeBranchId !== nextHomeBranchId || current.sex !== updated.sex) {
+      void this.membershipsService.resyncGatesForMemberChange(
         updated,
         current.homeBranchId,
+        current.sex,
       );
     }
 

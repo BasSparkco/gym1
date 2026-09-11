@@ -329,17 +329,27 @@ export class BasIpSyncService {
    * Remove the identifier for a member from the given gate device. Called when
    * a member is deactivated or their membership is cancelled.
    *
+   * link_id must match whatever pushQrIdentifier actually stored: a member
+   * with a qrCode is registered under that code (see
+   * pushToApplicableGates/resyncGatesForMemberChange, which both fall back to
+   * memberIdToUuid only when qrCode is null) — passing the wrong one here
+   * silently deletes nothing, since it just won't match any stored link_id.
+   *
    * Note: expiry is already enforced by valid.time on the device, so this is
    * only needed for immediate revocation.
    */
-  async removeIdentifier(memberId: string, gate?: GateRecord): Promise<void> {
+  async removeIdentifier(
+    memberId: string,
+    gate?: GateRecord,
+    qrCode?: string | null,
+  ): Promise<void> {
     const config = gate ? this.configFromGate(gate) : this.envConfig();
     if (!config) return;
 
     const token = await this.authenticate(config);
     if (!token) return;
 
-    const linkId = memberIdToUuid(memberId);
+    const linkId = qrCode ?? memberIdToUuid(memberId);
 
     try {
       const res = await fetch(
