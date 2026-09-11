@@ -35,6 +35,16 @@ export default function AreaCombobox({ id, name, options, value, defaultValue = 
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // Closing the list moves focus back to the input, which would otherwise
+  // re-trigger onFocus's setOpen(true) and pop the list right back open —
+  // this flag tells the next onFocus to skip that.
+  const suppressReopenRef = useRef(false);
+
+  function closeAndRefocus() {
+    setOpen(false);
+    suppressReopenRef.current = true;
+    inputRef.current?.focus();
+  }
 
   function setText(next: string) {
     if (value === undefined) setInternalText(next);
@@ -52,8 +62,7 @@ export default function AreaCombobox({ id, name, options, value, defaultValue = 
 
   function selectOption(area: Area) {
     setText(area.name);
-    setOpen(false);
-    inputRef.current?.focus();
+    closeAndRefocus();
   }
 
   function focusItem(index: number) {
@@ -83,7 +92,13 @@ export default function AreaCombobox({ id, name, options, value, defaultValue = 
           setText(event.target.value);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          if (suppressReopenRef.current) {
+            suppressReopenRef.current = false;
+            return;
+          }
+          setOpen(true);
+        }}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown" && matches.length > 0) {
             event.preventDefault();
@@ -122,8 +137,7 @@ export default function AreaCombobox({ id, name, options, value, defaultValue = 
                       focusItem(index - 1);
                     }
                   } else if (event.key === "Escape") {
-                    setOpen(false);
-                    inputRef.current?.focus();
+                    closeAndRefocus();
                   }
                 }}
               >
