@@ -10,6 +10,7 @@ import { cn } from "@/components/ui/cn";
 import { UserDetailView } from "@/components/users/user-detail-view";
 import { UserEditForm } from "@/components/users/user-edit-form";
 import type { StaffUser } from "@/lib/users";
+import type { UserRole } from "@/lib/auth";
 import type { Dict } from "@/lib/i18n";
 import { PencilLine, UserRound } from "lucide-react";
 
@@ -23,6 +24,7 @@ type Props = {
   users: StaffUser[];
   employeesById: Record<string, EmployeeOption>;
   currentUserId: string;
+  currentUserRole: UserRole;
   canEdit: boolean;
   linkableEmployeesByUser: Record<string, EmployeeOption[]>;
   roleTone: Record<string, BadgeTone>;
@@ -34,6 +36,7 @@ export function UsersGrid({
   users,
   employeesById,
   currentUserId,
+  currentUserRole,
   canEdit,
   linkableEmployeesByUser,
   roleTone,
@@ -159,6 +162,7 @@ export function UsersGrid({
                     linkableEmployees={linkableEmployeesByUser[user.id] ?? []}
                     apiBaseUrl={apiBaseUrl}
                     t={t}
+                    currentUserRole={currentUserRole}
                     onSuccess={() => handleSuccess(user.id)}
                     onError={(message) => handleError(user.id, message)}
                     onCancel={() => setExpanded(null)}

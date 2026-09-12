@@ -68,6 +68,7 @@ export default async function UserDetailPage({ params }: Props) {
           employeeNumber: e.employeeNumber,
         }))}
         canEdit={canEdit}
+        currentUserRole={session.role}
         apiBaseUrl={apiBaseUrl}
         t={t}
       />

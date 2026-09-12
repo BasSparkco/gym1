@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 import type { StaffUser } from "@/lib/users";
+import type { UserRole } from "@/lib/auth";
 
 const inputClass =
   "rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
@@ -21,6 +22,7 @@ type Props = {
   linkableEmployees: EmployeeOption[];
   apiBaseUrl: string;
   t: Dict;
+  currentUserRole: UserRole;
   onSuccess: (updated: StaffUser) => void;
   onError: (message: string) => void;
   onCancel: () => void;
@@ -32,11 +34,15 @@ export function UserEditForm({
   linkableEmployees,
   apiBaseUrl,
   t,
+  currentUserRole,
   onSuccess,
   onError,
   onCancel,
 }: Props) {
   const [saving, setSaving] = useState(false);
+  // Only an owner may grant the owner role — mirrors the server-side check
+  // in users.controller.ts so managers never see an option that will 403.
+  const canAssignOwner = currentUserRole === "owner";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,10 +52,14 @@ export function UserEditForm({
     const name = (formData.get("name") as string).trim();
     const email = (formData.get("email") as string).trim();
     const employeeId = formData.get("employeeId") as string;
+    const role = formData.get("role") as UserRole;
 
     const body: Record<string, string> = { name, email };
     if (employeeId !== user.employeeId) {
       body.employeeId = employeeId;
+    }
+    if (role !== user.role) {
+      body.role = role;
     }
 
     try {
@@ -104,6 +114,25 @@ export function UserEditForm({
             defaultValue={user.email}
             className={inputClass}
           />
+        </div>
+
+        <div className="grid gap-1.5">
+          <label htmlFor={`role-${userId}`} className="text-sm font-medium">
+            {t.users.role}
+          </label>
+          <select
+            id={`role-${userId}`}
+            name="role"
+            required
+            defaultValue={user.role}
+            className={inputClass}
+          >
+            <option value="front-desk">{t.roles.frontDesk}</option>
+            <option value="manager">{t.roles.manager}</option>
+            {(canAssignOwner || user.role === "owner") && (
+              <option value="owner">{t.roles.owner}</option>
+            )}
+          </select>
         </div>
 
         <div className="grid gap-1.5">

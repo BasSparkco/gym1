@@ -7,6 +7,7 @@ import { PencilLine } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 import type { StaffUser } from "@/lib/users";
 import type { Employee } from "@/lib/employees";
+import type { UserRole } from "@/lib/auth";
 import { UserDetailView } from "@/components/users/user-detail-view";
 import { UserEditForm } from "@/components/users/user-edit-form";
 
@@ -18,6 +19,7 @@ type Props = {
   linkedEmployee: Employee | null;
   linkableEmployees: EmployeeOption[];
   canEdit: boolean;
+  currentUserRole: UserRole;
   apiBaseUrl: string;
   t: Dict;
 };
@@ -28,6 +30,7 @@ export function UserProfileCard({
   linkedEmployee,
   linkableEmployees,
   canEdit,
+  currentUserRole,
   apiBaseUrl,
   t,
 }: Props) {
@@ -88,6 +91,7 @@ export function UserProfileCard({
           linkableEmployees={linkableEmployees}
           apiBaseUrl={apiBaseUrl}
           t={t}
+          currentUserRole={currentUserRole}
           onSuccess={handleSuccess}
           onError={handleError}
           onCancel={() => setMode("view")}

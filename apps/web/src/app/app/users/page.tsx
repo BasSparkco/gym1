@@ -98,6 +98,7 @@ export default async function UsersPage() {
           users={users}
           employeesById={employeesById}
           currentUserId={session.id}
+          currentUserRole={session.role}
           canEdit={canEdit}
           linkableEmployeesByUser={linkableEmployeesByUser}
           roleTone={roleTone}
