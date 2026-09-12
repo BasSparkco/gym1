@@ -1,6 +1,7 @@
 import { getDashboardSummary } from "@/lib/dashboard";
 import { listVisits } from "@/lib/visits";
 import { listMembers } from "@/lib/members";
+import { listAllMemberships } from "@/lib/memberships";
 import { listBranches } from "@/lib/branches";
 import { getExpiringSoonReport } from "@/lib/reports";
 import { requireSession } from "@/lib/session";
@@ -53,13 +54,14 @@ const actionIcon: Record<string, LucideIcon> = {
 export default async function DashboardPage() {
   const session = await requireSession();
   const canViewReports = session.role === "owner" || session.role === "manager";
-  const [t, lang, dashboardSummary, visits, members, settings, expiringSoon, branches] =
+  const [t, lang, dashboardSummary, visits, members, memberships, settings, expiringSoon, branches] =
     await Promise.all([
       getT(),
       getLang(),
       getDashboardSummary(),
       listVisits(),
       listMembers(),
+      listAllMemberships(),
       getSettings(),
       canViewReports
         ? getExpiringSoonReport(7)
@@ -96,6 +98,11 @@ export default async function DashboardPage() {
         ).length,
         todayCheckIns: visits.filter(
           (v) => v.branchId === branch.id && v.checkInTime.startsWith(todayStr),
+        ).length,
+        todayMemberships: memberships.filter(
+          (ms) =>
+            ms.startDate === todayStr &&
+            memberMap.get(ms.memberId)?.homeBranchId === branch.id,
         ).length,
       }))
     : [];
@@ -301,13 +308,13 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold tracking-tight">{t.dashboard.branchesAtGlance}</h2>
             <p className="mt-1 text-sm text-foreground/60">{t.dashboard.branchesAtGlanceHelper}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {branchGlance.map(({ branch, activeMembers, todayCheckIns }) => (
+              {branchGlance.map(({ branch, activeMembers, todayCheckIns, todayMemberships }) => (
                 <div
                   key={branch.id}
                   className="rounded-[10px] border border-line bg-white px-4 py-3.5"
                 >
                   <p className="font-medium">{branch.name}</p>
-                  <div className="mt-2 flex items-center gap-4 text-sm text-foreground/60">
+                  <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-foreground/60">
                     <span>
                       <span className="font-mono font-semibold text-foreground">{activeMembers}</span>{" "}
                       {t.dashboard.cardActiveMemberships}
@@ -315,6 +322,10 @@ export default async function DashboardPage() {
                     <span>
                       <span className="font-mono font-semibold text-foreground">{todayCheckIns}</span>{" "}
                       {t.dashboard.cardTodayCheckIns}
+                    </span>
+                    <span>
+                      <span className="font-mono font-semibold text-foreground">{todayMemberships}</span>{" "}
+                      {t.dashboard.cardTodayMemberships}
                     </span>
                   </div>
                 </div>

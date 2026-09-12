@@ -1111,7 +1111,7 @@ const en: Dict = {
     expiringMemberships: "Memberships expiring soon",
     noExpiringMemberships: "Nothing expiring in the next 7 days.",
     branchesAtGlance: "Branches at a glance",
-    branchesAtGlanceHelper: "Active members and today's check-ins per branch.",
+    branchesAtGlanceHelper: "Active members, today's check-ins, and today's memberships per branch.",
   },
   members: {
     title: "Members",
@@ -2111,7 +2111,7 @@ const ar: Dict = {
     expiringMemberships: "اشتراكات على وشك الانتهاء",
     noExpiringMemberships: "لا يوجد اشتراكات تنتهي خلال 7 أيام.",
     branchesAtGlance: "نظرة سريعة على الفروع",
-    branchesAtGlanceHelper: "الأعضاء النشطون وتسجيلات الدخول اليوم لكل فرع.",
+    branchesAtGlanceHelper: "الأعضاء النشطون وتسجيلات الدخول اليوم واشتراكات اليوم لكل فرع.",
   },
   members: {
     title: "الأعضاء",
@@ -3111,7 +3111,7 @@ const he: Dict = {
     expiringMemberships: "מנויים שעומדים לפוג",
     noExpiringMemberships: "אין מנויים שפגים בתוך 7 הימים הקרובים.",
     branchesAtGlance: "מבט מהיר על הסניפים",
-    branchesAtGlanceHelper: "חברים פעילים וכניסות היום לכל סניף.",
+    branchesAtGlanceHelper: "חברים פעילים, כניסות היום ומנויים חדשים היום לכל סניף.",
   },
   members: {
     title: "חברים",
