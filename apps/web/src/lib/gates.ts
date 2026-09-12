@@ -15,6 +15,7 @@ export type Gate = {
   lockNumber: number;
   enabled: boolean;
   hasDevice: boolean;
+  linkDeviceSerial: string | null;
 };
 
 async function getCookieHeader() {
@@ -81,6 +82,7 @@ export async function updateGate(
     devicePassword: string;
     lockNumber: number;
     enabled: boolean;
+    linkDeviceSerial: string | null;
   }>,
 ): Promise<Gate> {
   const res = await authedFetch(`/gates/${gateId}`, {

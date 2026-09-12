@@ -232,7 +232,8 @@ export class AccessService {
     };
   }
 
-  private async resolveMember(
+  /** Public: also used by bas-ip-link.controller.ts to attribute a Link log event to a member. */
+  async resolveMember(
     tenantId: string,
     identifierNumber: string,
     identifierType: 'card' | 'qr' | 'input_code',
@@ -271,7 +272,8 @@ export class AccessService {
    * ask), so unlike resolveMember there's no 'card' branch here — a 'card'
    * identifier simply won't resolve to an employee.
    */
-  private async resolveEmployee(
+  /** Public: also used by bas-ip-link.controller.ts to attribute a Link log event to an employee. */
+  async resolveEmployee(
     tenantId: string,
     identifierNumber: string,
     identifierType: 'card' | 'qr' | 'input_code',

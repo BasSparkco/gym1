@@ -321,6 +321,11 @@ model Gate {
   devicePassword    String
   lockNumber        Int
   enabled           Boolean @default(true)
+  // Serial number the device presents when it logs into our BAS-IP "Link"
+  // receiver (Network > Management system), used to attribute an incoming
+  // access-log event to this gate — that push carries no branchId/gateId of
+  // its own, unlike the real-time bas-ip.controller.ts callback.
+  linkDeviceSerial  String? @unique
 
   employees      EmployeeGate[]
   visits         Visit[]

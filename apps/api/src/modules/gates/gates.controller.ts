@@ -25,6 +25,7 @@ type CreateGateBody = {
   devicePassword?: string;
   lockNumber?: number;
   enabled?: boolean;
+  linkDeviceSerial?: string | null;
 };
 
 @Controller('gates')
@@ -60,6 +61,7 @@ export class GatesController {
       devicePassword: body.devicePassword ?? '',
       lockNumber: body.lockNumber,
       enabled: body.enabled,
+      linkDeviceSerial: body.linkDeviceSerial,
     };
     const gate = await this.gatesService.createGate(
       session.user.tenant.id,
@@ -87,6 +89,8 @@ export class GatesController {
     if (body.devicePassword != null) input.devicePassword = body.devicePassword;
     if (body.lockNumber != null) input.lockNumber = body.lockNumber;
     if (body.enabled != null) input.enabled = body.enabled;
+    if (body.linkDeviceSerial !== undefined)
+      input.linkDeviceSerial = body.linkDeviceSerial;
 
     const gate = await this.gatesService.updateGate(
       session.user.tenant.id,

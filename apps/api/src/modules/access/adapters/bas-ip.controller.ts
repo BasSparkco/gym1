@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   HttpCode,
+  Logger,
   Post,
   Query,
   Req,
@@ -40,6 +41,8 @@ type OpenGateBody = {
 
 @Controller('access')
 export class BasIpController {
+  private readonly logger = new Logger(BasIpController.name);
+
   constructor(
     private readonly accessService: AccessService,
     private readonly basIpSyncService: BasIpSyncService,
@@ -77,6 +80,13 @@ export class BasIpController {
     @Query('branchId') branchId: string,
     @Query('gateId') gateId?: string,
   ) {
+    // TEMPORARY diagnostic logging (2026-09-12) — investigating why real
+    // gate scans return granted:false with no Visit created. Remove once
+    // root cause is confirmed.
+    this.logger.log(
+      `bas-ip hit: branchId=${branchId} gateId=${gateId} body=${JSON.stringify(body)}`,
+    );
+
     const identifierNumber = body.identifier_number?.trim();
     const identifierType = body.identifier_type;
 
@@ -85,10 +95,12 @@ export class BasIpController {
       !identifierType ||
       !['card', 'input_code', 'qr'].includes(identifierType)
     ) {
+      this.logger.log('bas-ip denied: invalid or missing identifier fields');
       return { handled: true, access: { granted: false } };
     }
 
     if (!branchId) {
+      this.logger.log('bas-ip denied: missing branchId');
       return { handled: true, access: { granted: false } };
     }
 
@@ -100,8 +112,11 @@ export class BasIpController {
     );
 
     if (!result.granted) {
+      this.logger.log(`bas-ip denied: ${result.reason}`);
       return { handled: true, access: { granted: false } };
     }
+
+    this.logger.log('bas-ip granted');
 
     // Resolve the lock number from the gate config if available
     let lockNumber = 1;

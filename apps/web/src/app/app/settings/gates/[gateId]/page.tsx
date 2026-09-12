@@ -44,6 +44,7 @@ export default async function EditGatePage({ params }: Props) {
       ...(password && { devicePassword: password }),
       lockNumber: parseInt(formData.get("lockNumber") as string, 10) || 1,
       enabled: formData.get("enabled") === "on",
+      linkDeviceSerial: (formData.get("linkDeviceSerial") as string).trim() || null,
     });
     redirect("/app/settings/gates");
   }
@@ -156,6 +157,25 @@ export default async function EditGatePage({ params }: Props) {
               defaultValue={gate.lockNumber}
               className="w-24 rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
+          </div>
+
+          {/* BAS-IP Link device serial (Network > Management system log channel) */}
+          <div className="grid gap-1.5">
+            <label htmlFor="linkDeviceSerial" className="text-sm font-medium">
+              Link device serial
+            </label>
+            <input
+              id="linkDeviceSerial"
+              name="linkDeviceSerial"
+              defaultValue={gate.linkDeviceSerial ?? ""}
+              placeholder="e.g. b81b5f1a-0cd7-43d5-9166-f72ac4edadf5"
+              className="rounded-2xl border border-line bg-white px-4 py-3 text-sm font-mono outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            />
+            <p className="text-xs text-foreground/50">
+              Serial number this device reports when it logs into our BAS-IP Link
+              receiver (Network → Management system on the device). Used to attribute
+              access-log events to this gate. See gates.md.
+            </p>
           </div>
 
           {/* Enabled */}

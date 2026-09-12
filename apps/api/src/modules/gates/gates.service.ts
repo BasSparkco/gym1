@@ -15,6 +15,7 @@ export type CreateGateInput = {
   devicePassword: string;
   lockNumber?: number;
   enabled?: boolean;
+  linkDeviceSerial?: string | null;
 };
 
 export type UpdateGateInput = Partial<CreateGateInput>;
@@ -53,6 +54,7 @@ export class GatesService {
         devicePassword: input.devicePassword,
         lockNumber: input.lockNumber ?? 1,
         enabled: input.enabled ?? true,
+        linkDeviceSerial: input.linkDeviceSerial?.trim() || null,
       },
     });
   }
@@ -89,6 +91,9 @@ export class GatesService {
         }),
         ...(input.lockNumber != null && { lockNumber: input.lockNumber }),
         ...(input.enabled != null && { enabled: input.enabled }),
+        ...(input.linkDeviceSerial !== undefined && {
+          linkDeviceSerial: input.linkDeviceSerial?.trim() || null,
+        }),
       },
     });
   }
