@@ -211,6 +211,46 @@ export async function getPlanPerformanceReport(
   return res.json();
 }
 
+export type NewRenewedMembershipRow = {
+  membershipId: string;
+  memberId: string;
+  memberName: string | null;
+  memberNumber: string | null;
+  sex: "male" | "female" | null;
+  branchId: string | null;
+  branchName: string | null;
+  planName: string | null;
+  startDate: string;
+  endDate: string;
+  finalPrice: number;
+  status: string;
+  kind: "new" | "renewal";
+};
+
+export async function getNewRenewedMembershipsReport(
+  dateFrom?: string,
+  dateTo?: string,
+  branchId?: string,
+  sex?: "male" | "female",
+): Promise<{
+  rows: NewRenewedMembershipRow[];
+  total: number;
+  newCount: number;
+  renewalCount: number;
+  dateFrom: string;
+  dateTo: string;
+  currency: string;
+}> {
+  const params = new URLSearchParams();
+  if (dateFrom) params.set("dateFrom", dateFrom);
+  if (dateTo) params.set("dateTo", dateTo);
+  if (branchId) params.set("branchId", branchId);
+  if (sex) params.set("sex", sex);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await authedFetch(`/reports/new-renewed-memberships${qs}`);
+  return res.json();
+}
+
 export type MembershipStatusRow = { status: string; count: number };
 
 export async function getMembershipStatusBreakdownReport(): Promise<{

@@ -96,6 +96,24 @@ export class ReportsController {
     );
   }
 
+  @Get('new-renewed-memberships')
+  async getNewRenewedMemberships(
+    @Req() request: Request,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('branchId') branchId?: string,
+    @Query('sex') sex?: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
+    return this.reportsService.getNewRenewedMembershipsReport(
+      session.user,
+      dateFrom,
+      dateTo,
+      branchId,
+      sex === 'male' || sex === 'female' ? sex : undefined,
+    );
+  }
+
   @Get('membership-status-breakdown')
   async getMembershipStatusBreakdown(@Req() request: Request) {
     const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);

@@ -457,6 +457,71 @@ export class ReportsService {
     };
   }
 
+  async getNewRenewedMembershipsReport(
+    user: SessionUser,
+    dateFrom?: string,
+    dateTo?: string,
+    branchId?: string,
+    sex?: 'male' | 'female',
+  ) {
+    const today = this.membersService.getReportingDate();
+    const from = dateFrom ?? today;
+    const to = dateTo ?? today;
+
+    // Non-owners (and owners scoped to their active branch) are always
+    // pinned to their own branch — an explicit `branchId` filter can only
+    // narrow further when the caller is an owner viewing all branches.
+    const scopeBranchId = await this.dataScopeService.resolveBranchId(user);
+    const effectiveBranchId = scopeBranchId ?? branchId;
+
+    const memberships = await this.prisma.membership.findMany({
+      where: {
+        member: {
+          tenantId: user.tenant.id,
+          ...(effectiveBranchId ? { homeBranchId: effectiveBranchId } : {}),
+          ...(sex ? { sex } : {}),
+        },
+        startDate: this.utcDayRange(from, to),
+      },
+      include: { member: { include: { homeBranch: true } }, plan: true },
+      orderBy: { startDate: 'desc' },
+    });
+
+    const rows = memberships.map((ms) => ({
+      membershipId: ms.id,
+      memberId: ms.memberId,
+      memberName: ms.member?.fullName ?? null,
+      memberNumber: ms.member?.memberNumber ?? null,
+      sex: ms.member?.sex ?? null,
+      branchId: ms.member?.homeBranchId ?? null,
+      branchName: ms.member?.homeBranch?.name ?? null,
+      planName: ms.plan?.name ?? null,
+      startDate: toDateOnlyString(ms.startDate),
+      endDate: toDateOnlyString(ms.endDate),
+      finalPrice: toNumber(ms.finalPrice),
+      status: ms.status,
+      kind: (ms.previousMembershipId ? 'renewal' : 'new') as 'renewal' | 'new',
+    }));
+
+    const newCount = rows.filter((r) => r.kind === 'new').length;
+    const renewalCount = rows.filter((r) => r.kind === 'renewal').length;
+
+    const currency = await this.dataScopeService.resolveCurrencyCode(
+      user,
+      effectiveBranchId,
+    );
+
+    return {
+      rows,
+      total: rows.length,
+      newCount,
+      renewalCount,
+      dateFrom: from,
+      dateTo: to,
+      currency,
+    };
+  }
+
   async getMembershipStatusBreakdownReport(user: SessionUser) {
     const today = this.membersService.getReportingDate();
     const branchId = await this.dataScopeService.resolveBranchId(user);

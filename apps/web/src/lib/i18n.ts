@@ -722,6 +722,17 @@ export type Dict = {
     birthdayCol: string;
     phoneCol: string;
     noResults: string;
+    newRenewedMemberships: string;
+    newRenewedMembershipsCardDescription: string;
+    typeCol: string;
+    newLabel: string;
+    renewalLabel: string;
+    allSexesLabel: string;
+    rangeToday: string;
+    rangeYesterday: string;
+    rangeWeek: string;
+    rangeMonth: string;
+    rangeCustom: string;
   };
   settings: {
     title: string;
@@ -1705,6 +1716,17 @@ const en: Dict = {
     birthdayCol: "Birthday",
     phoneCol: "Phone",
     noResults: "No data found for this report.",
+    newRenewedMemberships: "New & renewed memberships",
+    newRenewedMembershipsCardDescription: "Memberships that started or renewed in a given period.",
+    typeCol: "Type",
+    newLabel: "New",
+    renewalLabel: "Renewal",
+    allSexesLabel: "All",
+    rangeToday: "Today",
+    rangeYesterday: "Yesterday",
+    rangeWeek: "This week",
+    rangeMonth: "This month",
+    rangeCustom: "Custom",
   },
   settings: {
     title: "Settings",
@@ -2688,6 +2710,17 @@ const ar: Dict = {
     birthdayCol: "تاريخ الميلاد",
     phoneCol: "الهاتف",
     noResults: "لا توجد بيانات لهذا التقرير.",
+    newRenewedMemberships: "الاشتراكات الجديدة والمجدَّدة",
+    newRenewedMembershipsCardDescription: "الاشتراكات التي بدأت أو تجدَّدت خلال فترة معيّنة.",
+    typeCol: "النوع",
+    newLabel: "جديد",
+    renewalLabel: "تجديد",
+    allSexesLabel: "الكل",
+    rangeToday: "اليوم",
+    rangeYesterday: "أمس",
+    rangeWeek: "هذا الأسبوع",
+    rangeMonth: "هذا الشهر",
+    rangeCustom: "مخصص",
   },
   settings: {
     title: "الإعدادات",
@@ -3671,6 +3704,17 @@ const he: Dict = {
     birthdayCol: "יום הולדת",
     phoneCol: "טלפון",
     noResults: "לא נמצאו נתונים עבור דוח זה.",
+    newRenewedMemberships: "מנויים חדשים ומחודשים",
+    newRenewedMembershipsCardDescription: "מנויים שהתחילו או התחדשו בתקופה נתונה.",
+    typeCol: "סוג",
+    newLabel: "חדש",
+    renewalLabel: "חידוש",
+    allSexesLabel: "הכל",
+    rangeToday: "היום",
+    rangeYesterday: "אתמול",
+    rangeWeek: "השבוע",
+    rangeMonth: "החודש",
+    rangeCustom: "מותאם אישית",
   },
   settings: {
     title: "הגדרות",

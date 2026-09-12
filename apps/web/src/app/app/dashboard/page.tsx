@@ -37,10 +37,10 @@ const cardIcon: Record<CardId, LucideIcon> = {
 };
 
 const cardHref: Record<CardId, string> = {
-  "active-memberships": "/app/reports",
-  "expiring-memberships": "/app/reports",
+  "active-memberships": "/app/reports/active-memberships",
+  "expiring-memberships": "/app/reports/expiring-soon",
   "today-check-ins": "/app/visits",
-  "today-memberships": "/app/reports",
+  "today-memberships": "/app/reports/new-renewed-memberships?range=today",
 };
 
 const actionIcon: Record<string, LucideIcon> = {
