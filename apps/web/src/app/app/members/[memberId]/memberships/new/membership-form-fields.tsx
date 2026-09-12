@@ -36,6 +36,10 @@ function monthsForPlan(plan?: Plan) {
   return plan?.durationDays ? Math.max(1, Math.round(plan.durationDays / 30)) : 1;
 }
 
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
 export default function MembershipFormFields({
   plans,
   lockers,
@@ -86,6 +90,7 @@ export default function MembershipFormFields({
   const [startDate, setStartDate] = useState(today);
   const [discountTypeId, setDiscountTypeId] = useState("");
   const [discountPercent, setDiscountPercent] = useState<number | "">("");
+  const [finalPrice, setFinalPrice] = useState<number | "">(0);
   const [rentLocker, setRentLocker] = useState(false);
   const [lockerId, setLockerId] = useState("");
   const [lockerPrice, setLockerPrice] = useState<number | "">("");
@@ -98,13 +103,18 @@ export default function MembershipFormFields({
       : "";
 
   const regularPrice = selectedPlan?.price ?? 0;
-  const effectiveDiscountPercent = discountTypeId ? Number(discountPercent) || 0 : 0;
-  const finalPrice = regularPrice - (regularPrice * effectiveDiscountPercent) / 100;
 
   function handlePlanChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const id = e.target.value;
     setPlanId(id);
     const plan = plans.find((p) => p.id === id);
+    const newRegularPrice = plan?.price ?? 0;
+    if (discountTypeId) {
+      const percent = Number(discountPercent) || 0;
+      setFinalPrice(round2(newRegularPrice - (newRegularPrice * percent) / 100));
+    } else {
+      setFinalPrice(newRegularPrice);
+    }
     if (selectedLocker) setLockerPrice(selectedLocker.monthlyPrice * monthsForPlan(plan));
   }
 
@@ -112,7 +122,30 @@ export default function MembershipFormFields({
     const id = e.target.value;
     setDiscountTypeId(id);
     const type = discountTypes.find((t) => t.id === id);
-    setDiscountPercent(type ? type.defaultPercent : "");
+    if (type) {
+      setDiscountPercent(type.defaultPercent);
+      setFinalPrice(round2(regularPrice - (regularPrice * type.defaultPercent) / 100));
+    } else {
+      setDiscountPercent("");
+      setFinalPrice(regularPrice);
+    }
+  }
+
+  function handleDiscountPercentChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value === "" ? "" : Number(e.target.value);
+    setDiscountPercent(value);
+    const percent = value === "" ? 0 : value;
+    setFinalPrice(round2(regularPrice - (regularPrice * percent) / 100));
+  }
+
+  function handleFinalPriceChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value === "" ? "" : Number(e.target.value);
+    setFinalPrice(value);
+    if (regularPrice > 0) {
+      const priceNum = value === "" ? 0 : value;
+      const percent = Math.max(0, Math.min(100, round2(((regularPrice - priceNum) / regularPrice) * 100)));
+      setDiscountPercent(percent);
+    }
   }
 
   function handleLockerChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -188,7 +221,7 @@ export default function MembershipFormFields({
       </div>
 
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">{labels.regularPrice}</label>
+        <label className="text-sm font-bold text-brand">{labels.regularPrice}</label>
         <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm text-foreground/70">
           {currencySymbol}
           {regularPrice}
@@ -217,7 +250,7 @@ export default function MembershipFormFields({
         </div>
 
         <div className="grid gap-1.5">
-          <label htmlFor="discountPercent" className="text-sm font-medium">
+          <label htmlFor="discountPercent" className="text-sm font-bold text-danger">
             {labels.discountPercent}
           </label>
           <input
@@ -229,18 +262,31 @@ export default function MembershipFormFields({
             step="0.01"
             disabled={!discountTypeId}
             value={discountPercent}
-            onChange={(e) => setDiscountPercent(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={handleDiscountPercentChange}
             className="rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-line/20 disabled:text-foreground/40"
           />
         </div>
       </div>
 
       <div className="grid gap-1.5">
-        <label className="text-sm font-medium">{labels.finalPrice}</label>
-        <p className="rounded-2xl border border-line bg-white/50 px-4 py-3 text-sm font-semibold text-foreground">
-          {currencySymbol}
-          {finalPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        </p>
+        <label htmlFor="finalPrice" className="text-sm font-bold text-brand">
+          {labels.finalPrice}
+        </label>
+        <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 start-4 flex items-center text-sm text-foreground/60">
+            {currencySymbol}
+          </span>
+          <input
+            id="finalPrice"
+            type="number"
+            min="0"
+            step="0.01"
+            disabled={!discountTypeId}
+            value={finalPrice}
+            onChange={handleFinalPriceChange}
+            className="w-full rounded-2xl border border-line bg-white py-3 pe-4 ps-8 text-sm font-semibold outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-white/50 disabled:text-foreground/70"
+          />
+        </div>
       </div>
 
       <div className="grid gap-1.5">
