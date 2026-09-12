@@ -733,6 +733,12 @@ export type Dict = {
     rangeWeek: string;
     rangeMonth: string;
     rangeCustom: string;
+    memberDebt: string;
+    memberDebtCardDescription: string;
+    memberDebtDescription: string;
+    debtCol: string;
+    totalDebtLabel: string;
+    noMemberDebt: string;
   };
   settings: {
     title: string;
@@ -1727,6 +1733,12 @@ const en: Dict = {
     rangeWeek: "This week",
     rangeMonth: "This month",
     rangeCustom: "Custom",
+    memberDebt: "Member debt",
+    memberDebtCardDescription: "Members who currently owe a balance.",
+    memberDebtDescription: "{total} member{plural} with an outstanding balance, totaling {currencySymbol}{totalDebt}.",
+    debtCol: "Debt",
+    totalDebtLabel: "Total debt",
+    noMemberDebt: "No members currently owe a balance.",
   },
   settings: {
     title: "Settings",
@@ -2721,6 +2733,12 @@ const ar: Dict = {
     rangeWeek: "هذا الأسبوع",
     rangeMonth: "هذا الشهر",
     rangeCustom: "مخصص",
+    memberDebt: "مديونية الأعضاء",
+    memberDebtCardDescription: "الأعضاء الذين عليهم رصيد مستحق حاليًا.",
+    memberDebtDescription: "{total} عضو{plural} عليه رصيد مستحق، بإجمالي {currencySymbol}{totalDebt}.",
+    debtCol: "المديونية",
+    totalDebtLabel: "إجمالي المديونية",
+    noMemberDebt: "لا يوجد أعضاء عليهم رصيد مستحق حاليًا.",
   },
   settings: {
     title: "الإعدادات",
@@ -3715,6 +3733,12 @@ const he: Dict = {
     rangeWeek: "השבוע",
     rangeMonth: "החודש",
     rangeCustom: "מותאם אישית",
+    memberDebt: "חוב חברים",
+    memberDebtCardDescription: "חברים עם יתרת חוב פתוחה כרגע.",
+    memberDebtDescription: "{total} חבר{plural} עם יתרת חוב פתוחה, בסך הכל {currencySymbol}{totalDebt}.",
+    debtCol: "חוב",
+    totalDebtLabel: "סך החוב",
+    noMemberDebt: "אין כרגע חברים עם יתרת חוב פתוחה.",
   },
   settings: {
     title: "הגדרות",

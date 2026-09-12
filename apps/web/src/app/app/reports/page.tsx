@@ -13,6 +13,7 @@ import {
   getUpcomingBirthdaysReport,
   getNewMembersGrowthReport,
   getNewRenewedMembershipsReport,
+  getMemberDebtReport,
 } from "@/lib/reports";
 import { getEmployeeAttendanceReport } from "@/lib/employee-attendance";
 import Link from "next/link";
@@ -46,6 +47,7 @@ export default async function ReportsPage() {
     upcomingBirthdays,
     newMembersGrowth,
     newRenewedMemberships,
+    memberDebt,
     attendance,
   ] = await Promise.all([
     getActiveMembershipsReport(),
@@ -60,6 +62,7 @@ export default async function ReportsPage() {
     getUpcomingBirthdaysReport(),
     getNewMembersGrowthReport(),
     getNewRenewedMembershipsReport(),
+    getMemberDebtReport(),
     getEmployeeAttendanceReport(defaultAttendanceRange.dateFrom, defaultAttendanceRange.dateTo),
   ]);
 
@@ -140,6 +143,12 @@ export default async function ReportsPage() {
       title: t.reports.newRenewedMemberships,
       description: t.reports.newRenewedMembershipsCardDescription,
       count: newRenewedMemberships.total,
+    },
+    {
+      href: "/app/reports/member-debt",
+      title: t.reports.memberDebt,
+      description: t.reports.memberDebtCardDescription,
+      count: memberDebt.total,
     },
     {
       href: "/app/employees/attendance-report",

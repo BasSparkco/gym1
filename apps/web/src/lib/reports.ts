@@ -251,6 +251,29 @@ export async function getNewRenewedMembershipsReport(
   return res.json();
 }
 
+export type MemberDebtRow = {
+  memberId: string;
+  memberName: string;
+  memberNumber: string;
+  phone: string | null;
+  branchId: string;
+  branchName: string | null;
+  debt: number;
+};
+
+export async function getMemberDebtReport(branchId?: string): Promise<{
+  rows: MemberDebtRow[];
+  total: number;
+  totalDebt: number;
+  currency: string;
+}> {
+  const params = new URLSearchParams();
+  if (branchId) params.set("branchId", branchId);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await authedFetch(`/reports/member-debt${qs}`);
+  return res.json();
+}
+
 export type MembershipStatusRow = { status: string; count: number };
 
 export async function getMembershipStatusBreakdownReport(): Promise<{

@@ -522,6 +522,42 @@ export class ReportsService {
     };
   }
 
+  async getMemberDebtReport(user: SessionUser, branchId?: string) {
+    // Non-owners (and owners scoped to their active branch) are always
+    // pinned to their own branch — same rule as every other scoped report.
+    const scopeBranchId = await this.dataScopeService.resolveBranchId(user);
+    const effectiveBranchId = scopeBranchId ?? branchId;
+
+    const members = await this.prisma.member.findMany({
+      where: {
+        tenantId: user.tenant.id,
+        ...(effectiveBranchId ? { homeBranchId: effectiveBranchId } : {}),
+        debt: { gt: 0 },
+      },
+      include: { homeBranch: true },
+      orderBy: { debt: 'desc' },
+    });
+
+    const rows = members.map((m) => ({
+      memberId: m.id,
+      memberName: m.fullName,
+      memberNumber: m.memberNumber,
+      phone: m.phone,
+      branchId: m.homeBranchId,
+      branchName: m.homeBranch?.name ?? null,
+      debt: toNumber(m.debt),
+    }));
+
+    const totalDebt = rows.reduce((sum, r) => sum + r.debt, 0);
+
+    const currency = await this.dataScopeService.resolveCurrencyCode(
+      user,
+      effectiveBranchId,
+    );
+
+    return { rows, total: rows.length, totalDebt, currency };
+  }
+
   async getMembershipStatusBreakdownReport(user: SessionUser) {
     const today = this.membersService.getReportingDate();
     const branchId = await this.dataScopeService.resolveBranchId(user);

@@ -114,6 +114,15 @@ export class ReportsController {
     );
   }
 
+  @Get('member-debt')
+  async getMemberDebt(
+    @Req() request: Request,
+    @Query('branchId') branchId?: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
+    return this.reportsService.getMemberDebtReport(session.user, branchId);
+  }
+
   @Get('membership-status-breakdown')
   async getMembershipStatusBreakdown(@Req() request: Request) {
     const session = await this.getRequiredSession(request.headers.cookie, ['owner', 'manager']);
