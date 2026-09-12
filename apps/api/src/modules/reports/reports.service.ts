@@ -15,7 +15,7 @@ type DashboardCard = {
     | 'active-memberships'
     | 'expiring-memberships'
     | 'today-check-ins'
-    | 'payments-logged';
+    | 'today-memberships';
   label: string;
   value: string;
   tone: 'bg-white' | 'bg-surface-muted';
@@ -74,22 +74,11 @@ export class ReportsService {
       await this.visitsService.listVisitsForScope(user.tenant.id, branchId)
     ).filter((visit) => this.toDateKey(visit.checkInTime) === reportDate);
 
-    const paidPaymentsToday = (
-      await this.paymentsService.listPaymentsForScope(user.tenant.id, branchId)
-    ).filter(
-      (payment) =>
-        payment.status === 'paid' &&
-        this.toDateKey(payment.paymentDate) === reportDate,
-    );
-
-    const paymentTotal = paidPaymentsToday.reduce(
-      (sum, payment) => sum + payment.amount,
-      0,
-    );
-
-    const currencyCode = await this.dataScopeService.resolveCurrencyCode(
-      user,
-      branchId,
+    // New or renewed memberships taking effect today (branch-scoped like the
+    // other operational cards) — counted by startDate rather than a created
+    // timestamp, since Membership has no createdAt field.
+    const todaysMemberships = allTenantMemberships.filter(
+      (m) => m.startDate === reportDate,
     );
 
     const cards: DashboardCard[] = [
@@ -117,13 +106,11 @@ export class ReportsService {
           : `${visitsToday.length} visits logged across all branches today.`,
       },
       {
-        id: 'payments-logged',
-        label: 'Payments today',
-        value: this.formatCurrency(paymentTotal, currencyCode),
+        id: 'today-memberships',
+        label: "Today's memberships",
+        value: String(todaysMemberships.length),
         tone: 'bg-surface-muted',
-        helperText: branchId
-          ? `${paidPaymentsToday.length} paid transactions at ${user.branch.name}.`
-          : `${paidPaymentsToday.length} paid transactions across all branches.`,
+        helperText: `${todaysMemberships.length} new or renewed memberships starting today.`,
       },
     ];
 
@@ -670,14 +657,5 @@ export class ReportsService {
       year: 'numeric',
       timeZone: 'UTC',
     }).format(new Date(`${dateKey}T00:00:00.000Z`));
-  }
-
-  private formatCurrency(value: number, currencyCode: string) {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
   }
 }

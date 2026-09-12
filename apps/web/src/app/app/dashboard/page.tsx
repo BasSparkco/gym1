@@ -27,13 +27,20 @@ type CardId =
   | "active-memberships"
   | "expiring-memberships"
   | "today-check-ins"
-  | "payments-logged";
+  | "today-memberships";
 
 const cardIcon: Record<CardId, LucideIcon> = {
   "active-memberships": Users,
   "expiring-memberships": CalendarClock,
   "today-check-ins": DoorOpen,
-  "payments-logged": Wallet,
+  "today-memberships": Wallet,
+};
+
+const cardHref: Record<CardId, string> = {
+  "active-memberships": "/app/reports",
+  "expiring-memberships": "/app/reports",
+  "today-check-ins": "/app/visits",
+  "today-memberships": "/app/reports",
 };
 
 const actionIcon: Record<string, LucideIcon> = {
@@ -97,14 +104,14 @@ export default async function DashboardPage() {
     "active-memberships": t.dashboard.cardActiveMemberships,
     "expiring-memberships": t.dashboard.cardExpiringWeek,
     "today-check-ins": t.dashboard.cardTodayCheckIns,
-    "payments-logged": t.dashboard.cardPaymentsLogged,
+    "today-memberships": t.dashboard.cardTodayMemberships,
   };
 
   const cardHelper: Record<CardId, string> = {
     "active-memberships": t.dashboard.cardActiveMembershipsHelper,
     "expiring-memberships": t.dashboard.cardExpiringWeekHelper,
     "today-check-ins": t.dashboard.cardTodayCheckInsHelper,
-    "payments-logged": t.dashboard.cardPaymentsLoggedHelper,
+    "today-memberships": t.dashboard.cardTodayMembershipsHelper,
   };
 
   const actionLabel: Record<string, string> = {
@@ -127,7 +134,7 @@ export default async function DashboardPage() {
     "active-memberships": "border-s-4 border-s-accent-strong",
     "expiring-memberships": "border-s-4 border-s-amber-500",
     "today-check-ins": "border-s-4 border-s-blue-500",
-    "payments-logged": "border-s-4 border-s-brand-deeper",
+    "today-memberships": "border-s-4 border-s-brand-deeper",
   };
 
   const actionBorder: Record<string, string> = {
@@ -183,6 +190,7 @@ export default async function DashboardPage() {
           return (
             <StatCard
               key={card.id}
+              href={cardHref[id]}
               icon={Icon && <Icon className="h-4 w-4" strokeWidth={2} />}
               label={cardLabel[id] ?? card.label}
               value={card.value}

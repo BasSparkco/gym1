@@ -100,8 +100,8 @@ export type Dict = {
     cardExpiringWeekHelper: string;
     cardTodayCheckIns: string;
     cardTodayCheckInsHelper: string;
-    cardPaymentsLogged: string;
-    cardPaymentsLoggedHelper: string;
+    cardTodayMemberships: string;
+    cardTodayMembershipsHelper: string;
     actionCreateMember: string;
     actionSellMembership: string;
     actionRecordPayment: string;
@@ -1083,8 +1083,8 @@ const en: Dict = {
     cardExpiringWeekHelper: "Active plans ending within 7 days",
     cardTodayCheckIns: "Today's check-ins",
     cardTodayCheckInsHelper: "Visits logged at this branch today",
-    cardPaymentsLogged: "Payments today",
-    cardPaymentsLoggedHelper: "Paid transactions at this branch",
+    cardTodayMemberships: "Today's memberships",
+    cardTodayMembershipsHelper: "New or renewed memberships starting today",
     actionCreateMember: "Add member",
     actionSellMembership: "Sell membership",
     actionRecordPayment: "Record payment",
@@ -2066,8 +2066,8 @@ const ar: Dict = {
     cardExpiringWeekHelper: "خطط نشطة تنتهي خلال 7 أيام",
     cardTodayCheckIns: "تسجيلات الدخول اليوم",
     cardTodayCheckInsHelper: "زيارات مسجلة في هذا الفرع اليوم",
-    cardPaymentsLogged: "مدفوعات اليوم",
-    cardPaymentsLoggedHelper: "معاملات مدفوعة في هذا الفرع",
+    cardTodayMemberships: "اشتراكات اليوم",
+    cardTodayMembershipsHelper: "اشتراكات جديدة أو مجدَّدة تبدأ اليوم",
     actionCreateMember: "إضافة عضو",
     actionSellMembership: "بيع اشتراك",
     actionRecordPayment: "تسجيل دفعة",
@@ -3049,8 +3049,8 @@ const he: Dict = {
     cardExpiringWeekHelper: "תוכניות פעילות שפגות תוך 7 ימים",
     cardTodayCheckIns: "כניסות היום",
     cardTodayCheckInsHelper: "ביקורים שנרשמו בסניף זה היום",
-    cardPaymentsLogged: "תשלומים היום",
-    cardPaymentsLoggedHelper: "עסקאות ששולמו בסניף זה",
+    cardTodayMemberships: "מנויים היום",
+    cardTodayMembershipsHelper: "מנויים חדשים או מחודשים שמתחילים היום",
     actionCreateMember: "הוסף חבר",
     actionSellMembership: "מכור מנוי",
     actionRecordPayment: "רשום תשלום",

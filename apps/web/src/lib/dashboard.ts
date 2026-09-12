@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 type DashboardCard = {
-  id: "active-memberships" | "expiring-memberships" | "today-check-ins" | "payments-logged";
+  id: "active-memberships" | "expiring-memberships" | "today-check-ins" | "today-memberships";
   label: string;
   value: string;
   tone: "bg-white" | "bg-surface-muted";

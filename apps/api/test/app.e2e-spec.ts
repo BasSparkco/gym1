@@ -173,8 +173,8 @@ describe('API (e2e)', () => {
           value: '0',
         }),
         expect.objectContaining({
-          label: 'Payments today',
-          value: '₪0',
+          label: "Today's memberships",
+          value: '0',
         }),
       ]),
     );
@@ -308,8 +308,8 @@ describe('API (e2e)', () => {
           value: '1',
         }),
         expect.objectContaining({
-          label: 'Payments today',
-          value: '₪130',
+          label: "Today's memberships",
+          value: '1',
         }),
       ]),
     );
