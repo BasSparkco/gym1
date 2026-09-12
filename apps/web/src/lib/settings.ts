@@ -69,6 +69,10 @@ export type OwnerDataScope = "all" | "activeBranch";
  * branch have its own. */
 export type LogoMode = "shared" | "perBranch";
 
+/** How long to keep sent/failed notification records before the daily
+ * cleanup job purges them. 'never' disables the purge entirely. */
+export type NotificationRetention = "week" | "month" | "threeMonths" | "never";
+
 export type TenantSettings = {
   name: string;
   tenantId: string;
@@ -83,6 +87,7 @@ export type TenantSettings = {
   reportingCurrencyCode: string;
   logoMode: LogoMode;
   logoUrl: string | null;
+  notificationRetention: NotificationRetention;
 };
 
 export const LANGUAGE_LABELS: Record<Language, string> = {
@@ -142,6 +147,7 @@ export async function updateSettings(data: {
   ownerDataScope?: OwnerDataScope;
   reportingCurrencyCode?: string;
   logoMode?: LogoMode;
+  notificationRetention?: NotificationRetention;
 }): Promise<TenantSettings> {
   const response = await authedFetch("/settings", {
     method: "PATCH",

@@ -628,6 +628,8 @@ export type Dict = {
     sendButtonCount: string;
     sendSuccess: string;
     sendErrorGeneric: string;
+    showingResults: string;
+    itemsPerPage: string;
   };
   messages: {
     title: string;
@@ -830,6 +832,12 @@ export type Dict = {
     dataVisibilityActiveBranchHelp: string;
     reportingCurrencyTitle: string;
     reportingCurrencyHelp: string;
+    notificationRetentionTitle: string;
+    notificationRetentionHelp: string;
+    notificationRetentionWeek: string;
+    notificationRetentionMonth: string;
+    notificationRetentionThreeMonths: string;
+    notificationRetentionNever: string;
     whatsapp: string;
     whatsappTitle: string;
     whatsappDescription: string;
@@ -1628,6 +1636,8 @@ const en: Dict = {
     sendButtonCount: "Send to {count} member{plural}",
     sendSuccess: "Notification sent.",
     sendErrorGeneric: "Couldn't send the notification. Try again.",
+    showingResults: "Showing {from}–{to} of {total}",
+    itemsPerPage: "Items per page",
   },
   messages: {
     title: "Messages",
@@ -1830,6 +1840,12 @@ const en: Dict = {
     dataVisibilityActiveBranchHelp: "See only the branch you're currently switched into (change it under Branches).",
     reportingCurrencyTitle: "Reporting currency",
     reportingCurrencyHelp: "Used for company-wide reports across all branches. Each branch's own operating currency (set under Branches) is used for its day-to-day payments.",
+    notificationRetentionTitle: "Notification history",
+    notificationRetentionHelp: "Automatically delete old notification records after this period.",
+    notificationRetentionWeek: "After 1 week",
+    notificationRetentionMonth: "After 1 month",
+    notificationRetentionThreeMonths: "After 3 months",
+    notificationRetentionNever: "Never delete",
     whatsapp: "WhatsApp",
     whatsappTitle: "WhatsApp connection",
     whatsappDescription: "Connect your gym's WhatsApp number so that member notifications are sent from your own number.",
@@ -2628,6 +2644,8 @@ const ar: Dict = {
     sendButtonCount: "إرسال إلى {count} عضو",
     sendSuccess: "تم إرسال الإشعار.",
     sendErrorGeneric: "تعذر إرسال الإشعار. حاول مرة أخرى.",
+    showingResults: "عرض {from}–{to} من {total}",
+    itemsPerPage: "عناصر لكل صفحة",
   },
   messages: {
     title: "الرسائل",
@@ -2830,6 +2848,12 @@ const ar: Dict = {
     dataVisibilityActiveBranchHelp: "اعرض فقط الفرع الذي أنت متصل به حاليًا (يمكن تغييره من صفحة الفروع).",
     reportingCurrencyTitle: "عملة التقارير",
     reportingCurrencyHelp: "تُستخدم للتقارير على مستوى الشركة عبر جميع الفروع. كل فرع يستخدم عملته التشغيلية الخاصة (يتم تعيينها من صفحة الفروع) لمدفوعاته اليومية.",
+    notificationRetentionTitle: "سجل الإشعارات",
+    notificationRetentionHelp: "حذف سجلات الإشعارات القديمة تلقائيًا بعد هذه المدة.",
+    notificationRetentionWeek: "بعد أسبوع واحد",
+    notificationRetentionMonth: "بعد شهر واحد",
+    notificationRetentionThreeMonths: "بعد ثلاثة أشهر",
+    notificationRetentionNever: "عدم الحذف مطلقًا",
     whatsapp: "واتساب",
     whatsappTitle: "ربط واتساب",
     whatsappDescription: "اربط رقم واتساب الصالة حتى تُرسل إشعارات الأعضاء من رقمك الخاص.",
@@ -3628,6 +3652,8 @@ const he: Dict = {
     sendButtonCount: "שליחה ל-{count} חברים",
     sendSuccess: "ההתראה נשלחה.",
     sendErrorGeneric: "שליחת ההתראה נכשלה. נסה שוב.",
+    showingResults: "מציג {from}–{to} מתוך {total}",
+    itemsPerPage: "פריטים בעמוד",
   },
   messages: {
     title: "התכתבויות",
@@ -3830,6 +3856,12 @@ const he: Dict = {
     dataVisibilityActiveBranchHelp: "הצג רק את הסניף שאתה מחובר אליו כרגע (ניתן לשנות תחת סניפים).",
     reportingCurrencyTitle: "מטבע דיווח",
     reportingCurrencyHelp: "משמש לדוחות ברמת החברה על פני כל הסניפים. לכל סניף מטבע תפעולי משלו (מוגדר תחת סניפים) המשמש לתשלומים היומיים שלו.",
+    notificationRetentionTitle: "היסטוריית התראות",
+    notificationRetentionHelp: "מחיקה אוטומטית של רשומות התראות ישנות לאחר תקופה זו.",
+    notificationRetentionWeek: "לאחר שבוע אחד",
+    notificationRetentionMonth: "לאחר חודש אחד",
+    notificationRetentionThreeMonths: "לאחר שלושה חודשים",
+    notificationRetentionNever: "לעולם לא למחוק",
     whatsapp: "WhatsApp",
     whatsappTitle: "חיבור WhatsApp",
     whatsappDescription: "חבר את מספר ה-WhatsApp של המכון כדי שהתראות לחברים יישלחו מהמספר שלך.",

@@ -42,6 +42,23 @@ export class NotificationsSchedulerService {
           `[${tenantId}] birthday scan failed: ${(error as Error).message}`,
         );
       }
+
+      try {
+        const deleted =
+          await this.notificationsService.purgeExpiredNotificationsForTenant(
+            tenantId,
+          );
+
+        if (deleted > 0) {
+          this.logger.log(
+            `[${tenantId}] retention cleanup purged ${deleted} old notification(s).`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `[${tenantId}] retention cleanup failed: ${(error as Error).message}`,
+        );
+      }
     }
   }
 

@@ -3,6 +3,7 @@ import {
   DateFormat,
   Language,
   LogoMode,
+  NotificationRetention,
   NotificationSenderSettings,
   NotificationSettings,
   OwnerDataScope,
@@ -19,6 +20,12 @@ const VALID_OWNER_DATA_SCOPES = new Set<OwnerDataScope>([
   'activeBranch',
 ]);
 const VALID_LOGO_MODES = new Set<LogoMode>(['shared', 'perBranch']);
+const VALID_NOTIFICATION_RETENTIONS = new Set<NotificationRetention>([
+  'week',
+  'month',
+  'threeMonths',
+  'never',
+]);
 
 export type UpdateSettingsInput = {
   name?: string;
@@ -31,6 +38,7 @@ export type UpdateSettingsInput = {
   ownerDataScope?: string;
   reportingCurrencyCode?: string;
   logoMode?: string;
+  notificationRetention?: string;
 };
 
 // Organization name lives on Tenant, not TenantSettings — merged in here so
@@ -81,6 +89,9 @@ export class SettingsService {
         found.reportingCurrencyCode ?? defaults.reportingCurrencyCode,
       logoMode: found.logoMode ?? defaults.logoMode,
       logoUrl: found.logoUrl ?? defaults.logoUrl,
+      notificationRetention:
+        (found.notificationRetention as NotificationRetention) ??
+        defaults.notificationRetention,
     };
   }
 
@@ -160,6 +171,14 @@ export class SettingsService {
       ? (rawLogoMode as LogoMode)
       : current.logoMode;
 
+    const rawNotificationRetention =
+      input.notificationRetention ?? current.notificationRetention;
+    const notificationRetention = VALID_NOTIFICATION_RETENTIONS.has(
+      rawNotificationRetention as NotificationRetention,
+    )
+      ? (rawNotificationRetention as NotificationRetention)
+      : current.notificationRetention;
+
     const next: TenantSettingsResponse = {
       name: input.name !== undefined ? input.name.trim() : current.name,
       tenantId,
@@ -173,6 +192,7 @@ export class SettingsService {
       reportingCurrencyCode,
       logoMode,
       logoUrl: current.logoUrl,
+      notificationRetention,
     };
 
     await this.prisma.tenantSettings.upsert({
@@ -188,6 +208,7 @@ export class SettingsService {
         ownerDataScope,
         reportingCurrencyCode,
         logoMode,
+        notificationRetention,
       },
       update: {
         defaultLanguage,
@@ -199,6 +220,7 @@ export class SettingsService {
         ownerDataScope,
         reportingCurrencyCode,
         logoMode,
+        notificationRetention,
       },
     });
 
@@ -225,6 +247,7 @@ export class SettingsService {
         reportingCurrencyCode: current.reportingCurrencyCode,
         logoMode: current.logoMode,
         logoUrl,
+        notificationRetention: current.notificationRetention,
       },
       update: { logoUrl },
     });

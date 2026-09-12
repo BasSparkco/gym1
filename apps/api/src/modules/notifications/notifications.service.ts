@@ -8,6 +8,7 @@ import { localDateString, toDateOnlyString } from '../../common/date';
 import {
   getDefaultTenantSettings,
   Language,
+  NotificationRetention,
   NotificationSettings,
 } from '../../data/settings-seed';
 import { NotificationDispatchService } from './notification-dispatch.service';
@@ -20,6 +21,12 @@ import {
 import { NotificationTemplateKey } from '../../data/notification-templates-seed';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+const RETENTION_DAYS: Record<Exclude<NotificationRetention, 'never'>, number> = {
+  week: 7,
+  month: 30,
+  threeMonths: 90,
+};
 
 // SMS is reserved for a future paid tier and hidden from every manual-send
 // surface (see Settings -> Notifications), so it's excluded here too even if
@@ -82,6 +89,36 @@ export class NotificationsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Deletes notification records older than the tenant's configured
+   * retention window (Settings -> Options -> Notification history). Returns
+   * the number of rows removed; a 'never' retention is a no-op. Driven daily
+   * by NotificationsSchedulerService.
+   */
+  async purgeExpiredNotificationsForTenant(tenantId: string): Promise<number> {
+    const found = await this.prisma.tenantSettings.findUnique({
+      where: { tenantId },
+      select: { notificationRetention: true },
+    });
+    const retention = (found?.notificationRetention as
+      | NotificationRetention
+      | undefined) ?? getDefaultTenantSettings(tenantId).notificationRetention;
+
+    if (retention === 'never') {
+      return 0;
+    }
+
+    const cutoff = new Date(
+      Date.now() - RETENTION_DAYS[retention] * MS_PER_DAY,
+    );
+
+    const result = await this.prisma.notification.deleteMany({
+      where: { tenantId, createdAt: { lt: cutoff } },
+    });
+
+    return result.count;
   }
 
   async getNotificationForTenant(tenantId: string, notificationId: string) {

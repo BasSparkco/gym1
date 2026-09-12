@@ -33,6 +33,7 @@ type UpdateSettingsRequestBody = {
   ownerDataScope?: string;
   reportingCurrencyCode?: string;
   logoMode?: string;
+  notificationRetention?: string;
 };
 
 @Controller('settings')

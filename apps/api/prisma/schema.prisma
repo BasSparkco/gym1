@@ -874,6 +874,7 @@ model TenantSettings {
   reportingCurrencyCode   String   @default("ILS")
   logoMode                LogoMode @default(shared)
   logoUrl                 String?
+  notificationRetention   String   @default("never")
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

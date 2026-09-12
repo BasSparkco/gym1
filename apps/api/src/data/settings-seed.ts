@@ -48,6 +48,10 @@ export type OwnerDataScope = 'all' | 'activeBranch';
  * branch have its own. */
 export type LogoMode = 'shared' | 'perBranch';
 
+/** How long to keep sent/failed notification records before the daily
+ * cleanup job purges them. 'never' disables the purge entirely. */
+export type NotificationRetention = 'week' | 'month' | 'threeMonths' | 'never';
+
 export type TenantSettingsRecord = {
   tenantId: string;
   defaultLanguage: Language;
@@ -60,6 +64,7 @@ export type TenantSettingsRecord = {
   reportingCurrencyCode: string;
   logoMode: LogoMode;
   logoUrl: string | null;
+  notificationRetention: NotificationRetention;
 };
 
 const defaultNotificationSettings: NotificationSettings = {
@@ -106,5 +111,8 @@ export function getDefaultTenantSettings(
     reportingCurrencyCode: 'ILS',
     logoMode: 'shared',
     logoUrl: null,
+    // Off by default: an existing tenant's notification history shouldn't
+    // start silently disappearing just because this setting was introduced.
+    notificationRetention: 'never',
   };
 }

@@ -6,6 +6,7 @@ import {
   Language,
   DateFormat,
   OwnerDataScope,
+  NotificationRetention,
   getSettings,
   updateSettings,
 } from "@/lib/settings";
@@ -26,6 +27,7 @@ const ALL_LANGUAGES: Language[] = ["en", "ar", "he"];
 const DATE_FORMATS: DateFormat[] = ["dd/mm/yyyy", "mm/dd/yyyy"];
 const OWNER_DATA_SCOPES: OwnerDataScope[] = ["all", "activeBranch"];
 const LOGO_MODES: LogoMode[] = ["shared", "perBranch"];
+const NOTIFICATION_RETENTIONS: NotificationRetention[] = ["week", "month", "threeMonths", "never"];
 
 export default async function OptionsSettingsPage() {
   const session = await requireSession();
@@ -49,6 +51,9 @@ export default async function OptionsSettingsPage() {
       | string
       | null;
     const logoMode = formData.get("logoMode") as LogoMode | null;
+    const notificationRetention = formData.get("notificationRetention") as
+      | NotificationRetention
+      | null;
     const name = formData.get("name") as string | null;
 
     const saved = await updateSettings({
@@ -60,6 +65,7 @@ export default async function OptionsSettingsPage() {
       ...(ownerDataScope ? { ownerDataScope } : {}),
       ...(reportingCurrencyCode ? { reportingCurrencyCode } : {}),
       ...(logoMode ? { logoMode } : {}),
+      ...(notificationRetention ? { notificationRetention } : {}),
     });
 
     const cookieStore = await cookies();
@@ -398,6 +404,42 @@ export default async function OptionsSettingsPage() {
                   </span>
                 </span>
               </label>
+            </div>
+          </div>
+
+          <div className="h-px bg-line" />
+
+          {/* Notification retention */}
+          <div className="grid gap-4">
+            <div>
+              <p className="text-base font-semibold">{t.settings.notificationRetentionTitle}</p>
+              <p className="mt-1 text-xs text-foreground/60">{t.settings.notificationRetentionHelp}</p>
+            </div>
+
+            <div className="grid gap-2 rounded-2xl border border-line bg-white px-4 py-3">
+              {NOTIFICATION_RETENTIONS.map((retention) => (
+                <label
+                  key={retention}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-background"
+                >
+                  <input
+                    type="radio"
+                    name="notificationRetention"
+                    value={retention}
+                    defaultChecked={(settings.notificationRetention ?? "never") === retention}
+                    className="h-4 w-4 accent-brand"
+                  />
+                  <span className="text-sm font-medium">
+                    {retention === "week"
+                      ? t.settings.notificationRetentionWeek
+                      : retention === "month"
+                        ? t.settings.notificationRetentionMonth
+                        : retention === "threeMonths"
+                          ? t.settings.notificationRetentionThreeMonths
+                          : t.settings.notificationRetentionNever}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
 
