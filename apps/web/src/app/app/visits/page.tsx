@@ -1,7 +1,7 @@
 import { listVisits } from "@/lib/visits";
 import { listMembers } from "@/lib/members";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { formatDateTime } from "@/lib/date-format";
 import Link from "next/link";
@@ -105,7 +105,7 @@ export default async function VisitsPage(props: {
         title={t.visits.title}
         description={
           <>
-            {filtered.length} visit{filtered.length !== 1 ? "s" : ""} &middot;{" "}
+            {formatDict(t.visits.countDescription, { total: filtered.length, plural: filtered.length !== 1 ? "s" : "" })} &middot;{" "}
             {periodLabel[period]}
             {presence !== "all" && <> &middot; {presenceLabel[presence]}</>}
           </>

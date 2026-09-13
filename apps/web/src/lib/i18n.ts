@@ -420,6 +420,7 @@ export type Dict = {
   };
   visits: {
     title: string;
+    countDescription: string;
     allVisits: string;
     visitDetail: string;
     visitInfo: string;
@@ -725,6 +726,7 @@ export type Dict = {
     phoneCol: string;
     noResults: string;
     newRenewedMemberships: string;
+    newRenewedMembershipsDescription: string;
     newRenewedMembershipsCardDescription: string;
     typeCol: string;
     newLabel: string;
@@ -1428,6 +1430,7 @@ const en: Dict = {
   },
   visits: {
     title: "Visits",
+    countDescription: "{total} visit{plural}",
     allVisits: "All visits",
     visitDetail: "Visit detail",
     visitInfo: "Visit info",
@@ -1733,6 +1736,7 @@ const en: Dict = {
     phoneCol: "Phone",
     noResults: "No data found for this report.",
     newRenewedMemberships: "New & renewed memberships",
+    newRenewedMembershipsDescription: "{total} membership{plural} from {dateFrom} to {dateTo}",
     newRenewedMembershipsCardDescription: "Memberships that started or renewed in a given period.",
     typeCol: "Type",
     newLabel: "New",
@@ -2436,6 +2440,7 @@ const ar: Dict = {
   },
   visits: {
     title: "الزيارات",
+    countDescription: "{total} زيارة",
     allVisits: "جميع الزيارات",
     visitDetail: "تفاصيل الزيارة",
     visitInfo: "معلومات الزيارة",
@@ -2741,6 +2746,7 @@ const ar: Dict = {
     phoneCol: "الهاتف",
     noResults: "لا توجد بيانات لهذا التقرير.",
     newRenewedMemberships: "الاشتراكات الجديدة والمجدَّدة",
+    newRenewedMembershipsDescription: "{total} اشتراك من {dateFrom} إلى {dateTo}",
     newRenewedMembershipsCardDescription: "الاشتراكات التي بدأت أو تجدَّدت خلال فترة معيّنة.",
     typeCol: "النوع",
     newLabel: "جديد",
@@ -3444,6 +3450,7 @@ const he: Dict = {
   },
   visits: {
     title: "ביקורים",
+    countDescription: "{total} ביקורים",
     allVisits: "כל הביקורים",
     visitDetail: "פרטי ביקור",
     visitInfo: "מידע על ביקור",
@@ -3749,6 +3756,7 @@ const he: Dict = {
     phoneCol: "טלפון",
     noResults: "לא נמצאו נתונים עבור דוח זה.",
     newRenewedMemberships: "מנויים חדשים ומחודשים",
+    newRenewedMembershipsDescription: "{total} מנויים מ-{dateFrom} עד {dateTo}",
     newRenewedMembershipsCardDescription: "מנויים שהתחילו או התחדשו בתקופה נתונה.",
     typeCol: "סוג",
     newLabel: "חדש",

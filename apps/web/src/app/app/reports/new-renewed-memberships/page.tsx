@@ -1,7 +1,7 @@
 import { getNewRenewedMembershipsReport } from "@/lib/reports";
 import { listBranches } from "@/lib/branches";
 import { requireSession } from "@/lib/session";
-import { getT } from "@/lib/i18n";
+import { getT, formatDict } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { formatDate, addDaysToDateString } from "@/lib/date-format";
@@ -97,7 +97,7 @@ export default async function NewRenewedMembershipsReportPage({
         title={t.reports.newRenewedMemberships}
         description={
           <>
-            {report.total} membership{report.total !== 1 ? "s" : ""} from {dateFrom} to {dateTo} —{" "}
+            {formatDict(t.reports.newRenewedMembershipsDescription, { total: report.total, plural: report.total !== 1 ? "s" : "", dateFrom, dateTo })} —{" "}
             {report.newCount} {t.reports.newLabel.toLowerCase()}, {report.renewalCount}{" "}
             {t.reports.renewalLabel.toLowerCase()}.
           </>
