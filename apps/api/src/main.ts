@@ -26,6 +26,21 @@ async function bootstrap() {
     });
   });
 
+  // InBody 270 capture route (see inbody-capture.controller.ts): we don't
+  // know the device's Content-Type or body format yet, so read the raw
+  // bytes ourselves before Nest's default parser gets a chance to reject or
+  // mangle them. Registered before app.listen() (which is where Nest wires
+  // up its own body-parser middleware), so this runs first for this path —
+  // same technique as the bas-ip-link raw-text middleware above.
+  app.use('/api/inbody-capture', (req: Request, _res: Response, next: NextFunction) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      (req as Request & { rawCaptureBody: Buffer }).rawCaptureBody = Buffer.concat(chunks);
+      next();
+    });
+  });
+
   // Traefik terminates TLS one hop in front of us; trust it so req.ip is the
   // real client address (sign-in throttling keys on it).
   app.getHttpAdapter().getInstance().set('trust proxy', 1);

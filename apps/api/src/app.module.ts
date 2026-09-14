@@ -14,6 +14,7 @@ import { DiscountTypesModule } from './modules/discount-types/discount-types.mod
 import { EmployeeAttendanceModule } from './modules/employee-attendance/employee-attendance.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { GatesModule } from './modules/gates/gates.module';
+import { InbodyCaptureModule } from './modules/inbody-capture/inbody-capture.module';
 import { LockersModule } from './modules/lockers/lockers.module';
 import { MemberAuthModule } from './modules/member-auth/member-auth.module';
 import { MembersModule } from './modules/members/members.module';
@@ -66,6 +67,7 @@ import { RedisModule } from './redis/redis.module';
     EmployeeAttendanceModule,
     PlatformAdminModule,
     WebhooksModule,
+    InbodyCaptureModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -195,6 +195,8 @@ model Tenant {
   closedDates      ClosedDate[]
   notificationTemplates NotificationTemplate[]
   messages         Message[]
+  inbodyCapture    InbodyCapture?
+  inbodyCaptureRequests InbodyCaptureRequest[]
 }
 
 // Operator-level account for onboarding new tenants (SaaS admin). Deliberately
@@ -955,4 +957,48 @@ model MemberDeviceToken {
 
   @@unique([memberId, token])
   @@index([memberId])
+}
+
+// ── InBody capture (diagnostic, per-tenant paid add-on candidate) ─────────────
+// Deliberately separate from TenantSettings: this isn't a core setting every
+// tenant can toggle for themselves, it's a hardware integration enabled per
+// tenant by us (see inbody-capture.controller.ts). One row per tenant that
+// has ever been given a capture URL; `enabled` gates whether the route
+// accepts requests at all.
+model InbodyCapture {
+  tenantId   String   @id
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  secret     String   @unique
+  enabled    Boolean  @default(false)
+  // Running total of stored body bytes for this tenant, checked against the
+  // 100 MiB cap before each write (cheaper than summing InbodyCaptureRequest
+  // on every request).
+  totalBytes Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+// One row per request received on the capture route, metadata only — the
+// raw body itself lives in MinIO (bucket/inbody-captures/<tenantId>/<id>.bin)
+// so this table stays cheap to query. Purged after 7 days by
+// InbodyCaptureCleanupService.
+model InbodyCaptureRequest {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  receivedAt  DateTime @default(now())
+  method      String
+  // Static route path only — the secret itself is never stored.
+  path        String
+  query       Json?
+  // Headers with credential-looking values (authorization, cookie) redacted
+  // before storage.
+  headers     Json
+  contentType String?
+  bodyLength  Int
+  // Set when the body was written to MinIO; null for an empty body or when
+  // storage failed (see storageError).
+  objectKey   String?
+  storageError String?
+
+  @@index([tenantId, receivedAt])
 }
