@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -17,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { MinioService } from '../../minio/minio.service';
 import { DataScopeService } from '../../common/data-scope.service';
+import { requireRole } from '../../common/require-role';
 import { validateImageUpload } from '../../common/image-upload';
 import { AuthService } from '../auth/auth.service';
 import { MembersService } from './members.service';
@@ -180,6 +182,25 @@ export class MembersController {
         body,
       ),
     };
+  }
+
+  // Owner-only hard delete — see MembersService.deleteMember for why it's
+  // gated to members with no payment/visit/membership/locker/course history.
+  @Delete(':memberId')
+  @HttpCode(200)
+  async deleteMember(
+    @Req() request: Request,
+    @Param('memberId') memberId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner']);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+    await this.membersService.deleteMember(
+      session.user.tenant.id,
+      branchId,
+      memberId,
+    );
+    return { deleted: true };
   }
 
   @Get(':memberId/debt')

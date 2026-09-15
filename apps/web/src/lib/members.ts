@@ -71,6 +71,10 @@ export async function getMember(memberId: string): Promise<Member> {
   return payload.member;
 }
 
+export async function deleteMember(memberId: string): Promise<void> {
+  await authedFetch(`/members/${memberId}`, { method: "DELETE" });
+}
+
 export type PinDispatchResult = {
   whatsapp?: { sent: boolean; reason?: string };
   email?: { sent: boolean; reason?: string };

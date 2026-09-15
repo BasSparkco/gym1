@@ -748,6 +748,62 @@ export class MembersService {
     return this.debtService.recomputeForTenant(tenantId, memberId);
   }
 
+  /**
+   * Hard-delete — owner-only, and only when the member has no real activity
+   * on record. Every child table cascade-deletes on Member, so without this
+   * guard a delete would silently wipe payment/visit/membership history;
+   * this is meant for cleaning up duplicate/abandoned records caught before
+   * any activity happens, not for removing an established member.
+   */
+  async deleteMember(
+    tenantId: string,
+    branchId: string | undefined,
+    memberId: string,
+  ): Promise<void> {
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        tenantId,
+        ...(branchId ? { homeBranchId: branchId } : {}),
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Member not found.');
+    }
+
+    const [
+      paymentCount,
+      visitCount,
+      membershipCount,
+      lockerRentalCount,
+      enrollmentCount,
+      bookingCount,
+    ] = await Promise.all([
+      this.prisma.payment.count({ where: { memberId } }),
+      this.prisma.visit.count({ where: { memberId } }),
+      this.prisma.membership.count({ where: { memberId } }),
+      this.prisma.lockerRental.count({ where: { memberId } }),
+      this.prisma.programEnrollment.count({ where: { memberId } }),
+      this.prisma.classBooking.count({ where: { memberId } }),
+    ]);
+
+    if (
+      paymentCount ||
+      visitCount ||
+      membershipCount ||
+      lockerRentalCount ||
+      enrollmentCount ||
+      bookingCount
+    ) {
+      throw new BadRequestException(
+        'This member has payment, visit, membership, locker, or course history and cannot be deleted.',
+      );
+    }
+
+    await this.prisma.member.delete({ where: { id: memberId } });
+  }
+
   private normalizeMemberName(fullName: string) {
     const normalizedFullName = fullName.trim();
 
