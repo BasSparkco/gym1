@@ -60,6 +60,7 @@ export default async function MemberProfilePage({ params, searchParams }: Props)
       .sort((a, b) => b.startDate.localeCompare(a.startDate))
       .map((ms) => ({
         id: ms.id,
+        planId: ms.planId,
         planName: ms.plan?.name ?? ms.planId,
         startDate: ms.startDate,
         endDate: ms.endDate,

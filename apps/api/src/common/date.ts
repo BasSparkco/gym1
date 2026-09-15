@@ -55,6 +55,17 @@ export function toDateOnlyString(
   return date.toISOString().slice(0, 10);
 }
 
+/**
+ * Whole-day difference (b − a) between two "YYYY-MM-DD" date strings. Date-only
+ * strings are parsed by the JS engine as UTC midnight (see addDays above), so
+ * this stays correct regardless of the server's local timezone offset.
+ */
+export function daysBetween(aDateStr: string, bDateStr: string): number {
+  const a = new Date(aDateStr);
+  const b = new Date(bDateStr);
+  return Math.round((b.getTime() - a.getTime()) / 86_400_000);
+}
+
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
 

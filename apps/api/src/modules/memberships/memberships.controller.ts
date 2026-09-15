@@ -55,6 +55,9 @@ type UpdateMembershipRequestBody = {
   startDate?: string;
   endDate?: string;
   finalPrice?: number;
+  planId?: string;
+  discountTypeId?: string | null;
+  discountPercent?: number;
 };
 
 @Controller('memberships')
@@ -294,6 +297,9 @@ export class MembershipsController {
     @Body() body: UpdateMembershipRequestBody,
   ) {
     const session = await this.getRequiredSession(request.headers.cookie);
+    if ((body.discountPercent ?? 0) >= 100) {
+      requireRole(session.user, ['owner', 'manager']);
+    }
 
     return {
       membership: await this.membershipsService.updateMembership(

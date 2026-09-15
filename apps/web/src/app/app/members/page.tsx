@@ -177,6 +177,7 @@ export default async function MembersPage({
       .sort((a, b) => b.startDate.localeCompare(a.startDate))
       .map((ms) => ({
         id: ms.id,
+        planId: ms.planId,
         planName: planMap.get(ms.planId)?.name ?? ms.planId,
         startDate: ms.startDate,
         endDate: ms.endDate,

@@ -37,6 +37,7 @@ import { MemberPinDialog } from "@/components/members/member-pin-dialog";
 
 export type MembershipRow = {
   id: string;
+  planId: string;
   planName: string;
   startDate: string;
   endDate: string;
@@ -459,6 +460,7 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                 const totalDays = daysBetween(ms.startDate, ms.endDate);
                 const remainingDays = Math.max(0, daysBetween(todayStr, ms.endDate));
                 const pct = totalDays > 0 ? Math.max(0, Math.min(100, Math.round((remainingDays / totalDays) * 100))) : 0;
+                const canEditPlan = isActiveMs && daysBetween(ms.startDate, todayStr) <= 14;
 
                 return (
                   <div key={ms.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-white px-4 py-4">
@@ -496,6 +498,16 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                       {isActiveMs && <span className="h-[6px] w-[6px] rounded-full bg-accent-strong" />}
                       {statusLabel(t, ms.status)}
                     </span>
+                    {canEditPlan && (
+                      <Link
+                        href={`/app/members/${member.id}/memberships/${ms.id}/edit`}
+                        title={t.memberships.editPlan}
+                        aria-label={t.memberships.editPlan}
+                        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line text-foreground/50 transition-colors hover:border-brand hover:text-brand"
+                      >
+                        <PencilLine className="h-3.5 w-3.5" strokeWidth={2} />
+                      </Link>
+                    )}
                   </div>
                 );
               })}

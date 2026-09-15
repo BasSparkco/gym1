@@ -95,6 +95,22 @@ export async function renewMembership(
   return payload.membership;
 }
 
+export async function updateMembership(
+  membershipId: string,
+  data: {
+    planId?: string;
+    discountTypeId?: string | null;
+    discountPercent?: number;
+  },
+): Promise<Membership> {
+  const res = await authedFetch(`/memberships/${membershipId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+  const payload = (await res.json()) as { membership: Membership };
+  return payload.membership;
+}
+
 export async function listFreezesForMembership(membershipId: string): Promise<Freeze[]> {
   const res = await authedFetch(`/memberships/${membershipId}/freezes`);
   const payload = (await res.json()) as { freezes: Freeze[] };

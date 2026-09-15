@@ -6,6 +6,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import {
   addDays,
+  daysBetween,
   localDateString,
   parseDateOnly,
   toDateOnlyString,
@@ -69,7 +70,17 @@ type UpdateMembershipInput = {
   startDate?: string;
   endDate?: string;
   finalPrice?: number;
+  planId?: string;
+  discountTypeId?: string | null;
+  discountPercent?: number;
 };
+
+// Owner's "cooling-off" window: a member who upgrades their mind about a
+// plan shortly after starting (e.g. monthly → 3-month) can have the same
+// membership row switched to the new plan, rather than needing a cancel +
+// re-sell. Past this many days from the original start date, the plan is
+// locked and a renewal/new sale is the only path.
+const PLAN_CHANGE_WINDOW_DAYS = 14;
 
 const validMembershipStatuses = new Set<MembershipStatus>([
   'draft',
@@ -408,6 +419,7 @@ export class MembershipsService {
   ) {
     const current = await this.prisma.membership.findFirst({
       where: { id: membershipId, member: { tenantId } },
+      include: { member: true },
     });
 
     if (!current) {
@@ -421,6 +433,86 @@ export class MembershipsService {
       throw new BadRequestException('Membership status is invalid.');
     }
 
+    const changingPlan =
+      input.planId !== undefined && input.planId !== current.planId;
+    const changingDiscount =
+      input.discountTypeId !== undefined || input.discountPercent !== undefined;
+
+    let plan: MembershipPlan | null = null;
+    let regularPrice = current.regularPrice;
+    let discountTypeId = current.discountTypeId;
+    let discountPercent = current.discountPercent;
+    let endDate =
+      input.endDate === undefined ? undefined : toDateOnly(input.endDate);
+
+    if (changingPlan) {
+      // Member-upgrade cooling-off window (feature request 2026-09-14): only
+      // an active membership that started recently can have its plan
+      // swapped in place; anything older must go through renew/cancel
+      // instead, since backdating a plan swap could retroactively change
+      // gate access history, notifications already sent, etc.
+      if (current.status !== 'active') {
+        throw new BadRequestException(
+          'Only an active membership can have its plan changed.',
+        );
+      }
+      const startDateStr = toDateOnlyString(current.startDate);
+      if (
+        daysBetween(startDateStr, localDateString()) > PLAN_CHANGE_WINDOW_DAYS
+      ) {
+        throw new BadRequestException(
+          `This membership started more than ${PLAN_CHANGE_WINDOW_DAYS} days ago and can no longer have its plan changed.`,
+        );
+      }
+
+      plan = await this.prisma.membershipPlan.findFirst({
+        where: { id: input.planId, tenantId },
+      });
+      if (!plan) {
+        throw new BadRequestException(
+          'Membership plan is invalid for this tenant.',
+        );
+      }
+      regularPrice = plan.price;
+
+      if (endDate === undefined) {
+        if (plan.planType === 'duration' && plan.durationDays) {
+          endDate = toDateOnly(addDays(startDateStr, plan.durationDays));
+        } else {
+          throw new BadRequestException(
+            'Cannot auto-compute end date for this plan type; provide endDate.',
+          );
+        }
+      }
+
+      const overlapping = await this.prisma.membership.findFirst({
+        where: {
+          id: { not: membershipId },
+          memberId: current.memberId,
+          status: { in: ['active', 'frozen', 'draft'] },
+          startDate: { lte: endDate },
+          endDate: { gte: current.startDate },
+        },
+        orderBy: { endDate: 'desc' },
+      });
+      if (overlapping) {
+        throw new BadRequestException(
+          `Member already has a membership covering this period (through ${toDateOnlyString(overlapping.endDate)}). Choose a different plan, or expire/cancel it first.`,
+        );
+      }
+    }
+
+    if (changingDiscount) {
+      const resolved = await this.resolveDiscount(tenantId, input);
+      discountTypeId = resolved.discountTypeId;
+      discountPercent = resolved.discountPercent;
+    }
+
+    const finalPrice =
+      changingPlan || changingDiscount
+        ? computeFinalPrice(regularPrice, discountPercent)
+        : (input.finalPrice ?? current.finalPrice);
+
     const membership = await this.prisma.membership.update({
       where: { id: membershipId },
       data: {
@@ -429,11 +521,21 @@ export class MembershipsService {
           input.startDate === undefined
             ? undefined
             : toDateOnly(input.startDate),
-        endDate:
-          input.endDate === undefined ? undefined : toDateOnly(input.endDate),
-        finalPrice: input.finalPrice ?? current.finalPrice,
+        endDate,
+        planId: plan?.id,
+        regularPrice,
+        discountTypeId,
+        discountPercent,
+        finalPrice,
       },
     });
+
+    // Plan swap can change which branches/gates the member is entitled to
+    // (allowAllBranches/restrictToHomeBranch differ per plan) — resync the
+    // device QR list the same way a fresh sale would.
+    if (changingPlan && plan && membership.status === 'active') {
+      this.syncToDevice(current.member, membership, plan);
+    }
 
     await this.debtService.recompute(membership.memberId);
 
