@@ -3,6 +3,8 @@
 import { performCheckIn } from "@/lib/check-in";
 import { checkInEmployee } from "@/lib/employee-attendance";
 import { listGates } from "@/lib/gates";
+import { listBranches } from "@/lib/branches";
+import { getSettings } from "@/lib/settings";
 import { requireSession } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { redirect } from "next/navigation";
@@ -26,7 +28,16 @@ export default async function CheckInPage({ searchParams }: Props) {
   const employeeGranted = params.type === "employee" && params.result === "granted";
   const employeeDenied = params.type === "employee" && params.result === "denied";
 
-  const gates = await listGates(session.branch.id).catch(() => []);
+  // Owners set to "all branches" data visibility also get gate-open buttons
+  // for every branch here, not just their active one — same scoping rule
+  // DataScopeService applies elsewhere (see DataScopeService.resolveBranchId).
+  const settings = await getSettings();
+  const viewingAllBranches = session.role === "owner" && settings.ownerDataScope === "all";
+  const [gates, branches] = await Promise.all([
+    (viewingAllBranches ? listGates() : listGates(session.branch.id)).catch(() => []),
+    viewingAllBranches ? listBranches().catch(() => []) : Promise.resolve([]),
+  ]);
+  const branchMap = Object.fromEntries(branches.map((b) => [b.id, b.name]));
   const enabledGates = gates.filter((g) => g.enabled);
 
   async function handleMemberCheckIn(formData: FormData) {
@@ -87,7 +98,11 @@ export default async function CheckInPage({ searchParams }: Props) {
                 <GateOpenButton
                   key={gate.id}
                   gateId={gate.id}
-                  label={gate.name}
+                  label={
+                    viewingAllBranches && branchMap[gate.branchId]
+                      ? `${gate.name} (${branchMap[gate.branchId]})`
+                      : gate.name
+                  }
                   successLabel={t.checkIn.gateOpened}
                   failLabel={t.checkIn.gateOpenFailed}
                 />
