@@ -73,6 +73,10 @@ export type LogoMode = "shared" | "perBranch";
  * cleanup job purges them. 'never' disables the purge entirely. */
 export type NotificationRetention = "week" | "month" | "threeMonths" | "never";
 
+/** Whether the "Last Member Check-in" popup shows scans from every branch or
+ * only the viewer's own — applies to every role, unlike OwnerDataScope. */
+export type CheckinPopupScope = "all" | "activeBranch";
+
 export type TenantSettings = {
   name: string;
   tenantId: string;
@@ -88,6 +92,7 @@ export type TenantSettings = {
   logoMode: LogoMode;
   logoUrl: string | null;
   notificationRetention: NotificationRetention;
+  checkinPopupScope: CheckinPopupScope;
 };
 
 export const LANGUAGE_LABELS: Record<Language, string> = {
@@ -148,6 +153,7 @@ export async function updateSettings(data: {
   reportingCurrencyCode?: string;
   logoMode?: LogoMode;
   notificationRetention?: NotificationRetention;
+  checkinPopupScope?: CheckinPopupScope;
 }): Promise<TenantSettings> {
   const response = await authedFetch("/settings", {
     method: "PATCH",

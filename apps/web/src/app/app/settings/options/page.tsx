@@ -7,6 +7,7 @@ import {
   DateFormat,
   OwnerDataScope,
   NotificationRetention,
+  CheckinPopupScope,
   getSettings,
   updateSettings,
 } from "@/lib/settings";
@@ -28,6 +29,7 @@ const DATE_FORMATS: DateFormat[] = ["dd/mm/yyyy", "mm/dd/yyyy"];
 const OWNER_DATA_SCOPES: OwnerDataScope[] = ["all", "activeBranch"];
 const LOGO_MODES: LogoMode[] = ["shared", "perBranch"];
 const NOTIFICATION_RETENTIONS: NotificationRetention[] = ["week", "month", "threeMonths", "never"];
+const CHECKIN_POPUP_SCOPES: CheckinPopupScope[] = ["activeBranch", "all"];
 
 export default async function OptionsSettingsPage() {
   const session = await requireSession();
@@ -54,6 +56,9 @@ export default async function OptionsSettingsPage() {
     const notificationRetention = formData.get("notificationRetention") as
       | NotificationRetention
       | null;
+    const checkinPopupScope = formData.get("checkinPopupScope") as
+      | CheckinPopupScope
+      | null;
     const name = formData.get("name") as string | null;
 
     const saved = await updateSettings({
@@ -66,6 +71,7 @@ export default async function OptionsSettingsPage() {
       ...(reportingCurrencyCode ? { reportingCurrencyCode } : {}),
       ...(logoMode ? { logoMode } : {}),
       ...(notificationRetention ? { notificationRetention } : {}),
+      ...(checkinPopupScope ? { checkinPopupScope } : {}),
     });
 
     const cookieStore = await cookies();
@@ -404,6 +410,32 @@ export default async function OptionsSettingsPage() {
                   </span>
                 </span>
               </label>
+            </div>
+
+            <div className="grid gap-2 rounded-2xl border border-line bg-white px-4 py-3">
+              <p className="text-sm font-medium">{t.settings.checkinPopupScopeTitle}</p>
+              <p className="text-xs text-foreground/60">{t.settings.checkinPopupScopeHelp}</p>
+              <div className="mt-1 grid gap-2">
+                {CHECKIN_POPUP_SCOPES.map((scope) => (
+                  <label
+                    key={scope}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-background"
+                  >
+                    <input
+                      type="radio"
+                      name="checkinPopupScope"
+                      value={scope}
+                      defaultChecked={(settings.checkinPopupScope ?? "activeBranch") === scope}
+                      className="h-4 w-4 accent-brand"
+                    />
+                    <span className="text-sm font-medium">
+                      {scope === "all"
+                        ? t.settings.checkinPopupScopeAllBranches
+                        : t.settings.checkinPopupScopeActiveBranch}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 

@@ -75,6 +75,26 @@ export class VisitsService {
     });
   }
 
+  /** Powers the "Last Member Check-in" popup's poll loop — just the single
+   * newest check-in, with only the fields the popup needs to render. */
+  async getLatestVisitForPopup(tenantId: string, branchId: string | undefined) {
+    const visit = await this.prisma.visit.findFirst({
+      where: { member: { tenantId }, ...(branchId ? { branchId } : {}) },
+      orderBy: { checkInTime: 'desc' },
+      include: {
+        member: { select: { id: true, fullName: true, pictureUrl: true } },
+      },
+    });
+
+    return visit
+      ? {
+          id: visit.id,
+          checkInTime: visit.checkInTime,
+          member: visit.member,
+        }
+      : null;
+  }
+
   async checkIn(
     tenantId: string,
     branchId: string,

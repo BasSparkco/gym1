@@ -34,6 +34,7 @@ type UpdateSettingsRequestBody = {
   reportingCurrencyCode?: string;
   logoMode?: string;
   notificationRetention?: string;
+  checkinPopupScope?: string;
 };
 
 @Controller('settings')

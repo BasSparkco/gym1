@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  CheckinPopupScope,
   DateFormat,
   Language,
   LogoMode,
@@ -26,6 +27,10 @@ const VALID_NOTIFICATION_RETENTIONS = new Set<NotificationRetention>([
   'threeMonths',
   'never',
 ]);
+const VALID_CHECKIN_POPUP_SCOPES = new Set<CheckinPopupScope>([
+  'all',
+  'activeBranch',
+]);
 
 export type UpdateSettingsInput = {
   name?: string;
@@ -39,6 +44,7 @@ export type UpdateSettingsInput = {
   reportingCurrencyCode?: string;
   logoMode?: string;
   notificationRetention?: string;
+  checkinPopupScope?: string;
 };
 
 // Organization name lives on Tenant, not TenantSettings — merged in here so
@@ -92,6 +98,9 @@ export class SettingsService {
       notificationRetention:
         (found.notificationRetention as NotificationRetention) ??
         defaults.notificationRetention,
+      checkinPopupScope:
+        (found.checkinPopupScope as CheckinPopupScope) ??
+        defaults.checkinPopupScope,
     };
   }
 
@@ -179,6 +188,14 @@ export class SettingsService {
       ? (rawNotificationRetention as NotificationRetention)
       : current.notificationRetention;
 
+    const rawCheckinPopupScope =
+      input.checkinPopupScope ?? current.checkinPopupScope;
+    const checkinPopupScope = VALID_CHECKIN_POPUP_SCOPES.has(
+      rawCheckinPopupScope as CheckinPopupScope,
+    )
+      ? (rawCheckinPopupScope as CheckinPopupScope)
+      : current.checkinPopupScope;
+
     const next: TenantSettingsResponse = {
       name: input.name !== undefined ? input.name.trim() : current.name,
       tenantId,
@@ -193,6 +210,7 @@ export class SettingsService {
       logoMode,
       logoUrl: current.logoUrl,
       notificationRetention,
+      checkinPopupScope,
     };
 
     await this.prisma.tenantSettings.upsert({
@@ -209,6 +227,7 @@ export class SettingsService {
         reportingCurrencyCode,
         logoMode,
         notificationRetention,
+        checkinPopupScope,
       },
       update: {
         defaultLanguage,
@@ -221,6 +240,7 @@ export class SettingsService {
         reportingCurrencyCode,
         logoMode,
         notificationRetention,
+        checkinPopupScope,
       },
     });
 
@@ -248,6 +268,7 @@ export class SettingsService {
         logoMode: current.logoMode,
         logoUrl,
         notificationRetention: current.notificationRetention,
+        checkinPopupScope: current.checkinPopupScope,
       },
       update: { logoUrl },
     });

@@ -877,6 +877,10 @@ model TenantSettings {
   logoMode                LogoMode @default(shared)
   logoUrl                 String?
   notificationRetention   String   @default("never")
+  // Whether the "Last Member Check-in" popup (BAS-IP Link scans) shows
+  // check-ins from every branch or only the viewer's own branch — applies to
+  // all roles, unlike ownerDataScope which only affects the owner's view.
+  checkinPopupScope       String   @default("activeBranch")
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

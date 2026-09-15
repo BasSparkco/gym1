@@ -11,6 +11,7 @@ import {
 import type { Request } from 'express';
 import { DataScopeService } from '../../common/data-scope.service';
 import { AuthService } from '../auth/auth.service';
+import { SettingsService } from '../settings/settings.service';
 import { VisitsService } from './visits.service';
 
 type CreateVisitRequestBody = {
@@ -31,6 +32,7 @@ export class VisitsController {
     private readonly authService: AuthService,
     private readonly visitsService: VisitsService,
     private readonly dataScopeService: DataScopeService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   @Get()
@@ -40,6 +42,24 @@ export class VisitsController {
 
     return {
       visits: await this.visitsService.listVisitsForScope(
+        session.user.tenant.id,
+        branchId,
+      ),
+    };
+  }
+
+  // Declared before ':visitId' so "latest" isn't swallowed as a visitId param.
+  @Get('latest')
+  async getLatestVisit(@Req() request: Request) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    const settings = await this.settingsService.getSettingsForTenant(
+      session.user.tenant.id,
+    );
+    const branchId =
+      settings.checkinPopupScope === 'all' ? undefined : session.user.branch.id;
+
+    return {
+      visit: await this.visitsService.getLatestVisitForPopup(
         session.user.tenant.id,
         branchId,
       ),

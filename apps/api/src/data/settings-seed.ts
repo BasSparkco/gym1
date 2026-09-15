@@ -52,6 +52,10 @@ export type LogoMode = 'shared' | 'perBranch';
  * cleanup job purges them. 'never' disables the purge entirely. */
 export type NotificationRetention = 'week' | 'month' | 'threeMonths' | 'never';
 
+/** Whether the "Last Member Check-in" popup shows scans from every branch or
+ * only the viewer's own — applies to every role, unlike OwnerDataScope. */
+export type CheckinPopupScope = 'all' | 'activeBranch';
+
 export type TenantSettingsRecord = {
   tenantId: string;
   defaultLanguage: Language;
@@ -65,6 +69,7 @@ export type TenantSettingsRecord = {
   logoMode: LogoMode;
   logoUrl: string | null;
   notificationRetention: NotificationRetention;
+  checkinPopupScope: CheckinPopupScope;
 };
 
 const defaultNotificationSettings: NotificationSettings = {
@@ -114,5 +119,6 @@ export function getDefaultTenantSettings(
     // Off by default: an existing tenant's notification history shouldn't
     // start silently disappearing just because this setting was introduced.
     notificationRetention: 'never',
+    checkinPopupScope: 'activeBranch',
   };
 }

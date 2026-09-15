@@ -5,6 +5,7 @@ import { MessagesBell } from "@/components/layout/messages-bell";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { NavMenu } from "@/components/layout/nav-menu";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { LastCheckinPopup } from "@/components/layout/last-checkin-popup";
 import type { SessionUser } from "@/lib/auth";
 import type { Dict } from "@/lib/i18n";
 
@@ -100,6 +101,8 @@ export function AppShell({ children, user, t, viewingAllBranches, logoUrl }: App
           <main className="flex-1 px-6 py-6 lg:overflow-y-auto">{children}</main>
         </div>
       </div>
+
+      <LastCheckinPopup title={t.checkIn.lastCheckinTitle} closeLabel={t.checkIn.closePopup} />
     </div>
   );
 }

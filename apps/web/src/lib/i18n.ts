@@ -303,6 +303,11 @@ export type Dict = {
     days: string;
     rentLocker: string;
     lockerFinalPrice: string;
+    editPlan: string;
+    changePlan: string;
+    changePlanDescription: string;
+    currentPlan: string;
+    newPlan: string;
   };
   payments: {
     title: string;
@@ -417,6 +422,8 @@ export type Dict = {
     openGate: string;
     gateOpened: string;
     gateOpenFailed: string;
+    lastCheckinTitle: string;
+    closePopup: string;
   };
   visits: {
     title: string;
@@ -826,6 +833,10 @@ export type Dict = {
     checkInOutSectionTitle: string;
     checkOutToggleLabel: string;
     checkOutToggleHelp: string;
+    checkinPopupScopeTitle: string;
+    checkinPopupScopeHelp: string;
+    checkinPopupScopeAllBranches: string;
+    checkinPopupScopeActiveBranch: string;
     dataVisibilityTitle: string;
     dataVisibilityHelp: string;
     dataVisibilityAllBranches: string;
@@ -1313,6 +1324,11 @@ const en: Dict = {
     days: "days",
     rentLocker: "Rent a locker",
     lockerFinalPrice: "Rental price",
+    editPlan: "Edit plan",
+    changePlan: "Change Plan",
+    changePlanDescription: "Switch this membership to a different plan. Any amount already paid still counts — the price difference is added as a new debt.",
+    currentPlan: "Current plan",
+    newPlan: "New plan",
   },
   payments: {
     title: "Payments",
@@ -1427,6 +1443,8 @@ const en: Dict = {
     openGate: "Open Gate",
     gateOpened: "Gate opened",
     gateOpenFailed: "Failed to open gate",
+    lastCheckinTitle: "Last Member Check-in",
+    closePopup: "Close",
   },
   visits: {
     title: "Visits",
@@ -1836,6 +1854,10 @@ const en: Dict = {
     checkInOutSectionTitle: "Check-in / Check-out",
     checkOutToggleLabel: "Enable member check-out registration",
     checkOutToggleHelp: "When off, members only scan in at the gate — the visits list won't track or show check-out times.",
+    checkinPopupScopeTitle: "Last check-in popup",
+    checkinPopupScopeHelp: "Which branches' member check-ins pop up on screen when someone scans their QR at a gate.",
+    checkinPopupScopeAllBranches: "All branches",
+    checkinPopupScopeActiveBranch: "Current branch only",
     dataVisibilityTitle: "Data visibility",
     dataVisibilityHelp: "As the owner, choose whether members, employees, users, visits, payments, and reports show every branch or only the branch you're currently switched into.",
     dataVisibilityAllBranches: "All branches",
@@ -2323,6 +2345,11 @@ const ar: Dict = {
     days: "أيام",
     rentLocker: "استئجار خزانة",
     lockerFinalPrice: "سعر الإيجار",
+    editPlan: "تعديل الخطة",
+    changePlan: "تغيير الخطة",
+    changePlanDescription: "قم بتحويل هذا الاشتراك إلى خطة مختلفة. أي مبلغ تم دفعه سابقًا يبقى محسوبًا — يُضاف فرق السعر كدين جديد.",
+    currentPlan: "الخطة الحالية",
+    newPlan: "الخطة الجديدة",
   },
   payments: {
     title: "المدفوعات",
@@ -2437,6 +2464,8 @@ const ar: Dict = {
     openGate: "فتح البوابة",
     gateOpened: "تم فتح البوابة",
     gateOpenFailed: "فشل فتح البوابة",
+    lastCheckinTitle: "آخر تسجيل دخول لعضو",
+    closePopup: "إغلاق",
   },
   visits: {
     title: "الزيارات",
@@ -2846,6 +2875,10 @@ const ar: Dict = {
     checkInOutSectionTitle: "تسجيل الدخول / الخروج",
     checkOutToggleLabel: "تفعيل تسجيل خروج الأعضاء",
     checkOutToggleHelp: "عند التعطيل، يقوم الأعضاء بمسح الدخول فقط عند البوابة — ولن تعرض قائمة الزيارات أوقات الخروج أو تتتبعها.",
+    checkinPopupScopeTitle: "نافذة آخر تسجيل دخول",
+    checkinPopupScopeHelp: "تسجيلات دخول أي الفروع تظهر كنافذة منبثقة عند مسح عضو لرمز QR الخاص به عند البوابة.",
+    checkinPopupScopeAllBranches: "جميع الفروع",
+    checkinPopupScopeActiveBranch: "الفرع الحالي فقط",
     dataVisibilityTitle: "رؤية البيانات",
     dataVisibilityHelp: "بصفتك المالك، اختر ما إذا كانت صفحات الأعضاء والموظفين والمستخدمين والزيارات والمدفوعات والتقارير تعرض جميع الفروع أو الفرع النشط فقط.",
     dataVisibilityAllBranches: "جميع الفروع",
@@ -3333,6 +3366,11 @@ const he: Dict = {
     days: "ימים",
     rentLocker: "השכר תא",
     lockerFinalPrice: "מחיר השכרה",
+    editPlan: "עריכת תוכנית",
+    changePlan: "החלפת תוכנית",
+    changePlanDescription: "החלף את המנוי הזה לתוכנית אחרת. כל סכום ששולם כבר עדיין נספר — הפרש המחיר יתווסף כחוב חדש.",
+    currentPlan: "התוכנית הנוכחית",
+    newPlan: "תוכנית חדשה",
   },
   payments: {
     title: "תשלומים",
@@ -3447,6 +3485,8 @@ const he: Dict = {
     openGate: "פתח שער",
     gateOpened: "השער נפתח",
     gateOpenFailed: "פתיחת השער נכשלה",
+    lastCheckinTitle: "צ'ק-אין אחרון של חבר",
+    closePopup: "סגור",
   },
   visits: {
     title: "ביקורים",
@@ -3856,6 +3896,10 @@ const he: Dict = {
     checkInOutSectionTitle: "כניסה / יציאה",
     checkOutToggleLabel: "הפעל רישום יציאת חברים",
     checkOutToggleHelp: "כשזה כבוי, חברים רק סורקים כניסה בשער — רשימת הביקורים לא תעקוב או תציג זמני יציאה.",
+    checkinPopupScopeTitle: "חלון קופץ של צ'ק-אין אחרון",
+    checkinPopupScopeHelp: "מאילו סניפים צ'ק-אין של חברים יופיע כחלון קופץ כשמישהו סורק את קוד ה-QR שלו בשער.",
+    checkinPopupScopeAllBranches: "כל הסניפים",
+    checkinPopupScopeActiveBranch: "הסניף הנוכחי בלבד",
     dataVisibilityTitle: "נראות נתונים",
     dataVisibilityHelp: "כבעלים, בחר האם עמודי החברים, העובדים, המשתמשים, הביקורים, התשלומים והדוחות יציגו את כל הסניפים או רק את הסניף הפעיל שלך.",
     dataVisibilityAllBranches: "כל הסניפים",
