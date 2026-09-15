@@ -60,3 +60,11 @@ export async function createPayment(data: {
   const payload = (await res.json()) as { payment: Payment };
   return payload.payment;
 }
+
+export async function cancelPayment(paymentId: string): Promise<Payment> {
+  const res = await authedFetch(`/payments/${paymentId}/cancel`, {
+    method: "POST",
+  });
+  const payload = (await res.json()) as { payment: Payment };
+  return payload.payment;
+}

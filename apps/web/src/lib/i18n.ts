@@ -218,6 +218,10 @@ export type Dict = {
     searchPlaceholder: string;
     filterAllPlans: string;
     showingResults: string;
+    dangerZone: string;
+    deleteMember: string;
+    deleteMemberConfirm: string;
+    errorMemberHasHistory: string;
   };
   plans: {
     title: string;
@@ -327,6 +331,9 @@ export type Dict = {
     paidOfTotal: string;
     paymentsMade: string;
     noPayments: string;
+    cancelPayment: string;
+    cancelPaymentConfirm: string;
+    errorPaymentAlreadyCancelled: string;
     statusLabel: string;
     currentDebt: string;
   };
@@ -486,6 +493,7 @@ export type Dict = {
     role: string;
     homeBranch: string;
     password: string;
+    changePasswordHelp: string;
     noUsers: string;
     createUser: string;
     viewRoles: string;
@@ -1239,6 +1247,10 @@ const en: Dict = {
     searchPlaceholder: "Search by name, phone or ID…",
     filterAllPlans: "All plans",
     showingResults: "Showing {from}–{to} of {total}",
+    dangerZone: "Danger zone",
+    deleteMember: "Delete member",
+    deleteMemberConfirm: "Delete this member? This cannot be undone.",
+    errorMemberHasHistory: "This member has payment, visit, membership, locker, or course history and cannot be deleted.",
   },
   plans: {
     title: "Membership plans",
@@ -1348,6 +1360,9 @@ const en: Dict = {
     paidOfTotal: "{paid} paid of {total}",
     paymentsMade: "Payments made",
     noPayments: "No payments recorded.",
+    cancelPayment: "Cancel payment",
+    cancelPaymentConfirm: "Cancel this payment? It stays on record as cancelled and no longer counts toward the amount paid.",
+    errorPaymentAlreadyCancelled: "This payment is already cancelled.",
     statusLabel: "Status",
     currentDebt: "Current debt",
   },
@@ -1507,6 +1522,7 @@ const en: Dict = {
     role: "Role",
     homeBranch: "Home branch",
     password: "Password",
+    changePasswordHelp: "Leave blank to keep the current password.",
     noUsers: "No staff users found.",
     createUser: "Create user",
     viewRoles: "View roles and permissions →",
@@ -2260,6 +2276,10 @@ const ar: Dict = {
     searchPlaceholder: "ابحث بالاسم أو الهاتف أو الرقم…",
     filterAllPlans: "جميع الخطط",
     showingResults: "عرض {from}–{to} من {total}",
+    dangerZone: "منطقة الخطر",
+    deleteMember: "حذف العضو",
+    deleteMemberConfirm: "هل تريد حذف هذا العضو؟ لا يمكن التراجع عن هذا الإجراء.",
+    errorMemberHasHistory: "لدى هذا العضو سجل مدفوعات أو زيارات أو اشتراكات أو خزانات أو دورات، ولا يمكن حذفه.",
   },
   plans: {
     title: "خطط الاشتراك",
@@ -2369,6 +2389,9 @@ const ar: Dict = {
     paidOfTotal: "تم دفع {paid} من {total}",
     paymentsMade: "الدفعات السابقة",
     noPayments: "لا توجد مدفوعات مسجلة.",
+    cancelPayment: "إلغاء الدفعة",
+    cancelPaymentConfirm: "هل تريد إلغاء هذه الدفعة؟ ستبقى مسجلة كملغاة ولن تُحتسب ضمن المبلغ المدفوع.",
+    errorPaymentAlreadyCancelled: "هذه الدفعة ملغاة بالفعل.",
     statusLabel: "الحالة",
     currentDebt: "الدين الحالي",
   },
@@ -2528,6 +2551,7 @@ const ar: Dict = {
     role: "الدور",
     homeBranch: "الفرع الرئيسي",
     password: "كلمة المرور",
+    changePasswordHelp: "اتركه فارغًا للإبقاء على كلمة المرور الحالية.",
     noUsers: "لم يتم العثور على موظفين.",
     createUser: "إنشاء مستخدم",
     viewRoles: "عرض الأدوار والصلاحيات ←",
@@ -3281,6 +3305,10 @@ const he: Dict = {
     searchPlaceholder: "חיפוש לפי שם, טלפון או מספר…",
     filterAllPlans: "כל המנויים",
     showingResults: "מציג {from}–{to} מתוך {total}",
+    dangerZone: "אזור סכנה",
+    deleteMember: "מחק חבר",
+    deleteMemberConfirm: "למחוק את החבר הזה? לא ניתן לבטל פעולה זו.",
+    errorMemberHasHistory: "לחבר זה יש היסטוריית תשלומים, ביקורים, מנויים, לוקרים או קורסים, ולא ניתן למחוק אותו.",
   },
   plans: {
     title: "תוכניות מנוי",
@@ -3390,6 +3418,9 @@ const he: Dict = {
     paidOfTotal: "שולם {paid} מתוך {total}",
     paymentsMade: "תשלומים שבוצעו",
     noPayments: "לא נרשמו תשלומים.",
+    cancelPayment: "בטל תשלום",
+    cancelPaymentConfirm: "לבטל את התשלום הזה? הוא יישאר רשום כמבוטל ולא יימנה עוד בסכום ששולם.",
+    errorPaymentAlreadyCancelled: "התשלום הזה כבר בוטל.",
     statusLabel: "סטטוס",
     currentDebt: "חוב נוכחי",
   },
@@ -3549,6 +3580,7 @@ const he: Dict = {
     role: "תפקיד",
     homeBranch: "סניף בית",
     password: "סיסמה",
+    changePasswordHelp: "השאר ריק כדי לשמור על הסיסמה הנוכחית.",
     noUsers: "לא נמצאו משתמשי צוות.",
     createUser: "צור משתמש",
     viewRoles: "הצג תפקידים והרשאות ←",

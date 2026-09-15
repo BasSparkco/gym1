@@ -32,6 +32,7 @@ import {
   KeySquare,
   GraduationCap,
   MessageCircle,
+  XCircle,
 } from "lucide-react";
 import { MemberPinDialog } from "@/components/members/member-pin-dialog";
 
@@ -102,6 +103,10 @@ type Props = {
   editHref?: string;
   /** Members-list inline usage: toggles the inline edit panel instead. */
   onEditClick?: () => void;
+  /** Owner-only server action (see MemberProfilePage) that flips a payment
+   * to 'cancelled'. Reads the target payment's id from a hidden input
+   * ("paymentId") in the submitted form. */
+  onCancelPayment?: (formData: FormData) => Promise<void>;
 };
 
 function EditTrigger({
@@ -129,7 +134,7 @@ function EditTrigger({
   );
 }
 
-export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }: Props) {
+export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick, onCancelPayment }: Props) {
   const member = data.member;
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -648,6 +653,22 @@ export function MemberProfileView({ data, t, dateFormat, editHref, onEditClick }
                   >
                     {statusLabel(t, pmt.status)}
                   </span>
+                  {onCancelPayment && pmt.status !== "cancelled" && (
+                    <form action={onCancelPayment}>
+                      <input type="hidden" name="paymentId" value={pmt.id} />
+                      <button
+                        type="submit"
+                        title={t.payments.cancelPayment}
+                        aria-label={t.payments.cancelPayment}
+                        onClick={(e) => {
+                          if (!confirm(t.payments.cancelPaymentConfirm)) e.preventDefault();
+                        }}
+                        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line text-foreground/50 transition-colors hover:border-danger hover:text-danger"
+                      >
+                        <XCircle className="h-3.5 w-3.5" strokeWidth={2} />
+                      </button>
+                    </form>
+                  )}
                 </div>
               ))}
             </div>

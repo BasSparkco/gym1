@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
   Req,
@@ -9,6 +10,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { DataScopeService } from '../../common/data-scope.service';
+import { requireRole } from '../../common/require-role';
 import { AuthService } from '../auth/auth.service';
 import { PaymentsService } from './payments.service';
 
@@ -75,12 +77,36 @@ export class PaymentsController {
   }
 
   @Get(':paymentId')
-  async getPayment(@Req() request: Request, @Param('paymentId') paymentId: string) {
+  async getPayment(
+    @Req() request: Request,
+    @Param('paymentId') paymentId: string,
+  ) {
     const session = await this.getRequiredSession(request.headers.cookie);
     const branchId = await this.dataScopeService.resolveBranchId(session.user);
 
     return {
       payment: await this.paymentsService.getPaymentForScope(
+        session.user.tenant.id,
+        branchId,
+        paymentId,
+      ),
+    };
+  }
+
+  // Owner-only — see PaymentsService.cancelPayment for why this is a status
+  // flip rather than a delete.
+  @Post(':paymentId/cancel')
+  @HttpCode(200)
+  async cancelPayment(
+    @Req() request: Request,
+    @Param('paymentId') paymentId: string,
+  ) {
+    const session = await this.getRequiredSession(request.headers.cookie);
+    requireRole(session.user, ['owner']);
+    const branchId = await this.dataScopeService.resolveBranchId(session.user);
+
+    return {
+      payment: await this.paymentsService.cancelPayment(
         session.user.tenant.id,
         branchId,
         paymentId,

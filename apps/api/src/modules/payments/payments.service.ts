@@ -151,6 +151,40 @@ export class PaymentsService {
     return this.serialize(payment);
   }
 
+  /**
+   * Owner-only. Accounting-safe alternative to deleting a payment voucher:
+   * the row is kept exactly as recorded (amount, date, method all untouched)
+   * and only its status flips to 'cancelled', which DebtService already
+   * excludes from the paid total (see computeMemberDebt) — same financial
+   * effect as a reversal, without mutating any of the original figures.
+   */
+  async cancelPayment(
+    tenantId: string,
+    branchId: string | undefined,
+    paymentId: string,
+  ) {
+    const payment = await this.prisma.payment.findFirst({
+      where: { id: paymentId, tenantId, ...(branchId ? { branchId } : {}) },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found.');
+    }
+
+    if (payment.status === 'cancelled') {
+      throw new BadRequestException('This payment is already cancelled.');
+    }
+
+    const updated = await this.prisma.payment.update({
+      where: { id: paymentId },
+      data: { status: 'cancelled' },
+    });
+
+    await this.debtService.recompute(updated.memberId);
+
+    return this.serialize(updated);
+  }
+
   // Postgres Decimal columns come back from Prisma as Decimal objects; the
   // API contract (and the web app, which calls `.toLocaleString()` on
   // amount) expects a plain number, same as the old JSON store.

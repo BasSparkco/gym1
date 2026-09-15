@@ -1,6 +1,6 @@
-import { getMember, getMemberPhotoUrl } from "@/lib/members";
+import { deleteMember, getMember, getMemberPhotoUrl } from "@/lib/members";
 import { listMembershipsForMember } from "@/lib/memberships";
-import { listPaymentsForMember } from "@/lib/payments";
+import { cancelPayment, listPaymentsForMember } from "@/lib/payments";
 import { listLockerRentalsForMember } from "@/lib/lockers";
 import { listEnrollmentsForMember } from "@/lib/training-programs";
 import { listBranches } from "@/lib/branches";
@@ -11,20 +11,74 @@ import { getT } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import { getCurrencySymbol } from "@/lib/currencies";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { computeAge, computeBmi, initials } from "@/components/members/member-profile-shared";
 import { MemberProfileView, type MemberProfileData } from "@/components/members/member-profile-view";
-import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Trash2 } from "lucide-react";
 
 type Props = {
   params: Promise<{ memberId: string }>;
-  searchParams: Promise<{ pinSent?: string; pinWaError?: string; pinEmailError?: string }>;
+  searchParams: Promise<{
+    pinSent?: string;
+    pinWaError?: string;
+    pinEmailError?: string;
+    deleteError?: string;
+    cancelPaymentError?: string;
+  }>;
+};
+
+const MEMBER_ERROR_TRANSLATIONS: Record<string, (t: Awaited<ReturnType<typeof getT>>) => string> = {
+  "This member has payment, visit, membership, locker, or course history and cannot be deleted.": (t) =>
+    t.members.errorMemberHasHistory,
+};
+
+const PAYMENT_ERROR_TRANSLATIONS: Record<string, (t: Awaited<ReturnType<typeof getT>>) => string> = {
+  "This payment is already cancelled.": (t) => t.payments.errorPaymentAlreadyCancelled,
 };
 
 export default async function MemberProfilePage({ params, searchParams }: Props) {
   const { memberId } = await params;
-  const { pinSent, pinWaError, pinEmailError } = await searchParams;
-  await requireSession();
+  const { pinSent, pinWaError, pinEmailError, deleteError, cancelPaymentError } = await searchParams;
+  const session = await requireSession();
   const t = await getT();
+
+  async function handleDelete() {
+    "use server";
+    try {
+      await deleteMember(memberId);
+    } catch (err) {
+      let message = err instanceof Error ? err.message : String(err);
+      try {
+        const parsed = JSON.parse(message) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // not JSON, use as-is
+      }
+      message = MEMBER_ERROR_TRANSLATIONS[message]?.(t) ?? message;
+      redirect(`/app/members/${memberId}?deleteError=${encodeURIComponent(message)}`);
+    }
+    redirect("/app/members");
+  }
+
+  async function handleCancelPayment(formData: FormData) {
+    "use server";
+    const paymentId = formData.get("paymentId") as string;
+    try {
+      await cancelPayment(paymentId);
+    } catch (err) {
+      let message = err instanceof Error ? err.message : String(err);
+      try {
+        const parsed = JSON.parse(message) as { message?: string };
+        if (parsed.message) message = parsed.message;
+      } catch {
+        // not JSON, use as-is
+      }
+      message = PAYMENT_ERROR_TRANSLATIONS[message]?.(t) ?? message;
+      redirect(`/app/members/${memberId}?cancelPaymentError=${encodeURIComponent(message)}`);
+    }
+    redirect(`/app/members/${memberId}`);
+  }
 
   const [member, memberships, payments, lockerRentals, courseEnrollments, branches, areas, employees, settings] =
     await Promise.all([
@@ -131,8 +185,36 @@ export default async function MemberProfilePage({ params, searchParams }: Props)
           {pinEmailError && ` Email: ${decodeURIComponent(pinEmailError)}.`}
         </div>
       )}
+      {deleteError && (
+        <div className="animate-scale-in mb-5 rounded-2xl bg-red-50 border border-red-200 px-5 py-4 text-sm text-red-700">
+          {decodeURIComponent(deleteError)}
+        </div>
+      )}
+      {cancelPaymentError && (
+        <div className="animate-scale-in mb-5 rounded-2xl bg-red-50 border border-red-200 px-5 py-4 text-sm text-red-700">
+          {decodeURIComponent(cancelPaymentError)}
+        </div>
+      )}
 
-      <MemberProfileView data={data} t={t} dateFormat={dateFormat} editHref={`/app/members/${member.id}/edit`} />
+      <MemberProfileView
+        data={data}
+        t={t}
+        dateFormat={dateFormat}
+        editHref={`/app/members/${member.id}/edit`}
+        onCancelPayment={session.role === "owner" ? handleCancelPayment : undefined}
+      />
+
+      {session.role === "owner" && (
+        <section className="mt-5 rounded-[2rem] border border-red-200 bg-red-50 px-6 py-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-red-500">{t.members.dangerZone}</p>
+          <p className="mt-2 text-sm text-red-700">{t.members.deleteMemberConfirm}</p>
+          <form action={handleDelete} className="mt-4">
+            <Button type="submit" variant="danger" icon={<Trash2 className="h-4 w-4" strokeWidth={2} />}>
+              {t.members.deleteMember}
+            </Button>
+          </form>
+        </section>
+      )}
     </div>
   );
 }
