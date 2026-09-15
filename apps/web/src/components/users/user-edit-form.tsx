@@ -53,6 +53,7 @@ export function UserEditForm({
     const email = (formData.get("email") as string).trim();
     const employeeId = formData.get("employeeId") as string;
     const role = formData.get("role") as UserRole;
+    const password = (formData.get("password") as string).trim();
 
     const body: Record<string, string> = { name, email };
     if (employeeId !== user.employeeId) {
@@ -60,6 +61,11 @@ export function UserEditForm({
     }
     if (role !== user.role) {
       body.role = role;
+    }
+    // Blank means "keep the current password" — only send it when staff
+    // actually typed a new one.
+    if (password) {
+      body.password = password;
     }
 
     try {
@@ -153,6 +159,22 @@ export function UserEditForm({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="grid gap-1.5">
+          <label htmlFor={`password-${userId}`} className="text-sm font-medium">
+            {t.users.password}
+          </label>
+          <input
+            id={`password-${userId}`}
+            name="password"
+            type="password"
+            minLength={6}
+            autoComplete="new-password"
+            placeholder="••••••••"
+            className={inputClass}
+          />
+          <p className="text-xs text-foreground/50">{t.users.changePasswordHelp}</p>
         </div>
 
         <div className="flex gap-3 pt-2">

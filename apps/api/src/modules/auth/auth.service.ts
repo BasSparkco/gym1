@@ -177,7 +177,11 @@ export class AuthService {
     const now = Date.now();
     const expiresAt = now + SESSION_DURATION_MS;
 
-    const stored: StoredSession = { userId: user.id, createdAt: now, expiresAt };
+    const stored: StoredSession = {
+      userId: user.id,
+      createdAt: now,
+      expiresAt,
+    };
     await this.redis.set(
       this.sessionKey(token),
       JSON.stringify(stored),
@@ -298,9 +302,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new BadRequestException(
-        'A user with this email already exists.',
-      );
+      throw new BadRequestException('A user with this email already exists.');
     }
 
     const newUser = await this.prisma.$transaction(async (tx) => {
@@ -398,8 +400,16 @@ export class AuthService {
       );
     }
 
+    // Password is optional on update — an empty/omitted value means "keep
+    // the current password" (the edit form always renders it blank), so
+    // only a non-empty value is validated and applied.
+    if (input.password && input.password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters.');
+    }
+
     const employeeIdChanged =
-      input.employeeId !== undefined && input.employeeId !== existing.employeeId;
+      input.employeeId !== undefined &&
+      input.employeeId !== existing.employeeId;
 
     if (employeeIdChanged && input.employeeId) {
       await this.assertEmployeeLinkable(tenantId, input.employeeId);
@@ -443,7 +453,7 @@ export class AuthService {
           ...(input.branchName !== undefined && {
             branchName: input.branchName,
           }),
-          ...(input.password !== undefined && {
+          ...(input.password && {
             passwordHash: hashPassword(input.password),
           }),
           ...(employeeIdChanged && { employeeId: input.employeeId }),
@@ -493,5 +503,4 @@ export class AuthService {
       branch: { id: user.branchId, name: user.branchName },
     };
   }
-
 }
