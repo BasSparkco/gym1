@@ -113,6 +113,7 @@ export default async function EmployeesPage({ searchParams }: Props) {
           gateAccessByEmployee={gateAccessByEmployee}
           recentVisitsByEmployee={recentVisitsByEmployee}
           dateFormat={dateFormat}
+          checkOutTrackingEnabled={settings.checkOutTrackingEnabled}
           t={t}
         />
       )}

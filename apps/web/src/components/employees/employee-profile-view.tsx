@@ -40,6 +40,7 @@ type Props = {
   gateAccess?: EmployeeGateAccess;
   setGatesAction?: (formData: FormData) => void | Promise<void>;
   recentVisits?: EmployeeVisit[];
+  checkOutTrackingEnabled?: boolean;
 };
 
 // All editable fields, tracked as strings/booleans (matching how every
@@ -97,6 +98,7 @@ export function EmployeeProfileView({
   gateAccess,
   setGatesAction,
   recentVisits,
+  checkOutTrackingEnabled = true,
 }: Props) {
   const formId = `employee-form-${employee.id}`;
   const fid = (name: string) => `${name}-${employee.id}`;
@@ -589,11 +591,13 @@ export function EmployeeProfileView({
                   className="flex items-center justify-between rounded-xl border border-line px-3 py-2"
                 >
                   <span>{new Date(visit.checkInTime).toLocaleString()}</span>
-                  <span className="text-foreground/60">
-                    {visit.checkOutTime
-                      ? new Date(visit.checkOutTime).toLocaleString()
-                      : t.attendance.stillCheckedIn}
-                  </span>
+                  {checkOutTrackingEnabled && (
+                    <span className="text-foreground/60">
+                      {visit.checkOutTime
+                        ? new Date(visit.checkOutTime).toLocaleString()
+                        : t.attendance.stillCheckedIn}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

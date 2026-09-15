@@ -80,6 +80,7 @@ export default async function EmployeeDetailPage({ params }: Props) {
         gateAccess={gateAccess}
         setGatesAction={setEmployeeGatesAction}
         recentVisits={recentVisits}
+        checkOutTrackingEnabled={settings.checkOutTrackingEnabled}
       />
     </div>
   );

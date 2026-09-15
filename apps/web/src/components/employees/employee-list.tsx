@@ -12,13 +12,15 @@ import {
   resendEmployeeQrAction,
 } from "@/app/app/employees/actions";
 import { EmployeeProfileView } from "@/components/employees/employee-profile-view";
+import { EmployeeInfoView } from "@/components/employees/employee-info-view";
+import { getCurrencySymbol } from "@/lib/currencies";
 import type { Employee, CoachProfile } from "@/lib/employees";
 import type { Branch } from "@/lib/branches";
 import type { Gate } from "@/lib/gates";
 import type { EmployeeGateAccess, EmployeeVisit } from "@/lib/employee-attendance";
 import type { DateFormat } from "@/lib/settings";
 import type { Dict } from "@/lib/i18n";
-import { UserRound, PencilLine, MessageCircle } from "lucide-react";
+import { UserRound, PencilLine, MessageCircle, ChevronDown } from "lucide-react";
 
 // Card accent border color by gender (css.md convention): blue for male,
 // rose for female, black when unspecified — kept as its own helper since
@@ -38,8 +40,11 @@ type Props = {
   gateAccessByEmployee: Record<string, EmployeeGateAccess>;
   recentVisitsByEmployee: Record<string, EmployeeVisit[]>;
   dateFormat: DateFormat;
+  checkOutTrackingEnabled: boolean;
   t: Dict;
 };
+
+type ExpandedPanel = { id: string; mode: "info" | "edit" };
 
 export function EmployeeList({
   employees,
@@ -50,26 +55,39 @@ export function EmployeeList({
   gateAccessByEmployee,
   recentVisitsByEmployee,
   dateFormat,
+  checkOutTrackingEnabled,
   t,
 }: Props) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<ExpandedPanel | null>(null);
   const expandedPanelRef = useRef<HTMLDivElement | null>(null);
 
-  // The expanded edit panel renders as a new full-width grid row right after
-  // its card, which can land well below the fold when the card being edited
-  // is further down the page — scroll it into view so the opened form is
-  // actually visible instead of silently appearing off-screen.
+  // The expanded panel renders as a new full-width grid row right after its
+  // card, which can land well below the fold when the card is further down
+  // the page — scroll it into view so it's actually visible instead of
+  // silently appearing off-screen.
   useEffect(() => {
-    if (expandedId) {
+    if (expanded) {
       expandedPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [expandedId]);
+  }, [expanded]);
+
+  function toggleInfo(id: string) {
+    setExpanded((prev) => (prev?.id === id && prev.mode === "info" ? null : { id, mode: "info" }));
+  }
+
+  function toggleEdit(id: string) {
+    setExpanded((prev) => (prev?.id === id && prev.mode === "edit" ? null : { id, mode: "edit" }));
+  }
 
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {employees.map((emp, index) => {
-        const expanded = expandedId === emp.id;
+        const isExpandedInfo = expanded?.id === emp.id && expanded.mode === "info";
+        const isExpandedEdit = expanded?.id === emp.id && expanded.mode === "edit";
         const isCoach = coachProfilesByEmployee[emp.id] != null;
+        const currencySymbol = getCurrencySymbol(
+          branches.find((b) => b.id === emp.branchId)?.operatingCurrencyCode,
+        );
 
         return (
           <Fragment key={emp.id}>
@@ -81,42 +99,59 @@ export function EmployeeList({
                 "flex flex-col border-s-4 transition-shadow",
                 genderBorderClass(emp.sex),
                 isCoach && "border-e-4 border-e-violet-500",
-                expanded && "ring-2 ring-brand ring-offset-2 ring-offset-background",
+                (isExpandedInfo || isExpandedEdit) && "ring-2 ring-brand ring-offset-2 ring-offset-background",
               )}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-white text-foreground/30">
-                    <UserRound className="h-5 w-5" strokeWidth={1.75} />
+              <button
+                type="button"
+                onClick={() => toggleInfo(emp.id)}
+                aria-expanded={isExpandedInfo}
+                aria-label={`${t.actions.details}: ${emp.fullName}`}
+                className="-m-1 block w-full rounded-xl p-1 text-start transition-colors hover:bg-surface-muted/60"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-line bg-white text-foreground/30">
+                      <UserRound className="h-5 w-5" strokeWidth={1.75} />
+                    </div>
+                    <h2 className="mt-1.5 text-lg font-semibold tracking-tight">{emp.fullName}</h2>
                   </div>
-                  <h2 className="mt-1.5 text-lg font-semibold tracking-tight">{emp.fullName}</h2>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Badge tone={emp.status === "active" ? "success" : "neutral"}>
+                      {emp.status === "active" ? t.employees.active : t.employees.inactive}
+                    </Badge>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 text-foreground/35 transition-transform",
+                        isExpandedInfo && "rotate-180",
+                      )}
+                      strokeWidth={2}
+                    />
+                  </div>
                 </div>
-                <Badge tone={emp.status === "active" ? "success" : "neutral"}>
-                  {emp.status === "active" ? t.employees.active : t.employees.inactive}
-                </Badge>
-              </div>
 
-              <div className="mt-3 min-h-10">
-                <p className="text-sm text-foreground/55 font-mono">{emp.employeeNumber}</p>
-                <p className="mt-0.5 text-sm text-foreground/60">
-                  {t.employees.branch}: {branchMap[emp.branchId] ?? emp.branchId}
-                </p>
-                {emp.user && (
+                <div className="mt-3 min-h-10">
+                  <p className="text-sm text-foreground/55 font-mono">{emp.employeeNumber}</p>
                   <p className="mt-0.5 text-sm text-foreground/60">
-                    {t.users.email}: <span className="font-mono">{emp.user.email}</span>
+                    {t.employees.branch}: {branchMap[emp.branchId] ?? emp.branchId}
                   </p>
-                )}
-              </div>
+                  {emp.user && (
+                    <p className="mt-0.5 text-sm text-foreground/60">
+                      {t.users.email}: <span className="font-mono">{emp.user.email}</span>
+                    </p>
+                  )}
+                </div>
+              </button>
 
               <div className="mt-4 flex gap-2 border-t border-line pt-4">
                 <Button
                   type="button"
-                  variant={expanded ? "primary" : "secondary"}
+                  variant={isExpandedEdit ? "primary" : "secondary"}
                   size="sm"
                   className="flex-1"
-                  aria-pressed={expanded}
+                  aria-pressed={isExpandedEdit}
                   icon={<PencilLine className="h-3.5 w-3.5" strokeWidth={2} />}
-                  onClick={() => setExpandedId(expanded ? null : emp.id)}
+                  onClick={() => toggleEdit(emp.id)}
                 >
                   {t.actions.edit}
                 </Button>
@@ -137,27 +172,44 @@ export function EmployeeList({
               </div>
             </Card>
 
-            {expanded && (
+            {(isExpandedInfo || isExpandedEdit) && (
               <div
                 ref={expandedPanelRef}
                 className="animate-fade-in-up rounded-[18px] border border-line bg-surface-muted/40 px-5 py-6 sm:px-7 md:col-span-2 xl:col-span-3"
               >
-                <EmployeeProfileView
-                  employee={emp}
-                  coachProfile={coachProfilesByEmployee[emp.id] ?? null}
-                  branches={branches}
-                  branchMap={branchMap}
-                  dateFormat={dateFormat}
-                  currencySymbol=""
-                  canEdit
-                  t={t}
-                  updateAction={updateEmployeeAction}
-                  toggleStatusAction={toggleEmployeeStatusAction}
-                  gates={allGates}
-                  gateAccess={gateAccessByEmployee[emp.id]}
-                  setGatesAction={setEmployeeGatesAction}
-                  recentVisits={recentVisitsByEmployee[emp.id]}
-                />
+                {isExpandedInfo ? (
+                  <EmployeeInfoView
+                    employee={emp}
+                    coachProfile={coachProfilesByEmployee[emp.id] ?? null}
+                    branchMap={branchMap}
+                    currencySymbol={currencySymbol}
+                    dateFormat={dateFormat}
+                    t={t}
+                    gates={allGates}
+                    gateAccess={gateAccessByEmployee[emp.id]}
+                    recentVisits={recentVisitsByEmployee[emp.id]}
+                    checkOutTrackingEnabled={checkOutTrackingEnabled}
+                    onEditClick={() => toggleEdit(emp.id)}
+                  />
+                ) : (
+                  <EmployeeProfileView
+                    employee={emp}
+                    coachProfile={coachProfilesByEmployee[emp.id] ?? null}
+                    branches={branches}
+                    branchMap={branchMap}
+                    dateFormat={dateFormat}
+                    currencySymbol={currencySymbol}
+                    canEdit
+                    t={t}
+                    updateAction={updateEmployeeAction}
+                    toggleStatusAction={toggleEmployeeStatusAction}
+                    gates={allGates}
+                    gateAccess={gateAccessByEmployee[emp.id]}
+                    setGatesAction={setEmployeeGatesAction}
+                    recentVisits={recentVisitsByEmployee[emp.id]}
+                    checkOutTrackingEnabled={checkOutTrackingEnabled}
+                  />
+                )}
               </div>
             )}
           </Fragment>
